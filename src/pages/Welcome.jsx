@@ -6,66 +6,65 @@ export default function Welcome() {
 
   return (
     <main className="welcome-page" dir="rtl">
-      <section className="welcome-shell">
-        <div className="hero-wrap">
-          <img src="/hero.png" alt="TripMatch" className="hero-img" />
+      <header className="top-bar">
+        <div className="site-logo" dir="ltr">
+          Trip<span>Match</span>
         </div>
 
-        <section className="welcome-card">
-          <div className="handle"></div>
+        <button className="top-login" onClick={() => navigate("/discover")}>
+          כניסה
+        </button>
+      </header>
 
-          <h1>
-            מוצאים שותף או שותפה
-            <br />
-            לטיול הגדול שלך
-          </h1>
+      <section className="welcome-screen">
+        <div className="image-side">
+          <img src="/hero.png" alt="TripMatch travelers" />
+        </div>
 
-          <p className="subtitle">
-            התאמות חכמות לפי יעד, תאריכים, תקציב וסגנון טיול.
-            כי כל מסע גדול מתחיל באנשים הנכונים.
-          </p>
+        <div className="content-side">
+          <div className="login-card">
+            <p className="tagline">לטייל יחד, בלי להתחיל לבד</p>
 
-          <div className="features">
-            <div className="feature">
-              <strong>יעדים</strong>
-              <span>התאמה לפי מסלול ויעד</span>
+            <h1>
+              מוצאים שותף או שותפה
+              <br />
+              לטיול הגדול שלך
+            </h1>
+
+            <p className="subtitle">
+              התאמות למטיילים ישראלים לפי יעד, תאריכים וסגנון טיול.
+            </p>
+
+            <div className="actions">
+              <button
+                className="primary-btn"
+                onClick={() => navigate("/phone-login")}
+              >
+                התחברות עם טלפון
+              </button>
+
+              <button
+                className="secondary-btn"
+                onClick={() => navigate("/register")}
+              >
+                הרשמה
+              </button>
             </div>
 
-            <div className="feature">
-              <strong>תאריכים</strong>
-              <span>התאמה לפי זמן וגמישות</span>
+            <div className="divider">
+              <span>או</span>
             </div>
 
-            <div className="feature">
-              <strong>שותפים</strong>
-              <span>מטיילים עם תוכניות דומות</span>
-            </div>
+            <button
+              className="email-btn"
+              onClick={() => navigate("/discover")}
+            >
+              כניסה עם אימייל
+            </button>
 
-            <div className="feature">
-              <strong>סגנון</strong>
-              <span>התאמה לפי אופי הטיול</span>
-            </div>
+            <p className="note">מיועד למטיילים ישראלים</p>
           </div>
-
-          <button className="primary-btn" onClick={() => navigate("/phone-login")}>
-            התחברות עם טלפון
-          </button>
-
-          <button className="outline-btn" onClick={() => navigate("/register")}>
-            הרשמה
-          </button>
-
-          <div className="divider">או</div>
-
-          <button className="email-btn" onClick={() => navigate("/discover")}>
-            כניסה עם אימייל
-          </button>
-
-          <div className="note">
-            <span>IL</span>
-            <p>מיועד למטיילים ישראלים</p>
-          </div>
-        </section>
+        </div>
       </section>
     </main>
   );
