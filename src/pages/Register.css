@@ -1,0 +1,219 @@
+.register-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.register-shell {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: #f0f2f5;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.register-header {
+  background: #1a1a2e;
+  color: #ffffff;
+  padding: 52px 24px 20px;
+}
+
+.register-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.register-header p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.register-content {
+  padding-bottom: 100px;
+}
+
+.register-error-banner {
+  background: #fff0f0;
+  border: 1px solid #ffcccc;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 16px 0;
+  font-size: 13px;
+  color: #cc0000;
+  display: none;
+  font-weight: 700;
+}
+
+.register-error-banner.show {
+  display: block;
+}
+
+.register-section {
+  background: #ffffff;
+  margin: 12px 16px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.register-section-title {
+  padding: 16px 18px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #888888;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.register-field {
+  padding: 0 18px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.register-field:last-child {
+  border-bottom: none;
+}
+
+.register-field label,
+.register-chip-field label {
+  display: block;
+  font-size: 12px;
+  color: #888888;
+  font-weight: 700;
+  padding-top: 14px;
+  margin-bottom: 4px;
+}
+
+.register-field input,
+.register-field select,
+.register-field textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #1a1a2e;
+  padding-bottom: 14px;
+  appearance: none;
+}
+
+.register-field textarea {
+  resize: none;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.register-field input::placeholder,
+.register-field textarea::placeholder {
+  color: #b0b0bd;
+}
+
+.register-field.error label {
+  color: #ff4444;
+}
+
+.register-field.error input,
+.register-field.error select {
+  color: #ff4444;
+}
+
+.register-chip-field {
+  padding: 0 18px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.register-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 14px;
+}
+
+.register-chip {
+  padding: 7px 14px;
+  border-radius: 50px;
+  border: 1.5px solid #e0e0e0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #555555;
+  transition: all 0.15s;
+  background: #ffffff;
+}
+
+.register-chip.selected {
+  background: #1a1aff;
+  color: #ffffff;
+  border-color: #1a1aff;
+}
+
+.register-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  margin: 0 16px;
+  cursor: pointer;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.register-checkbox-row.error {
+  border: 1px solid #ffaaaa;
+  background: #fff7f7;
+}
+
+.register-checkbox-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #1a1aff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.register-checkbox-row span {
+  font-size: 14px;
+  color: #1a1a2e;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.register-primary-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 16px;
+  padding: 18px;
+  background: #1a1aff;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.register-primary-btn:active {
+  transform: scale(0.97);
+  background: #1212cc;
+}
+
+@media (min-width: 431px) {
+  .register-page {
+    background: #0f0f2e;
+  }
+
+  .register-shell {
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  }
+}

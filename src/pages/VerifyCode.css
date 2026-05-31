@@ -1,0 +1,147 @@
+.verify-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+}
+
+.verify-shell {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px 40px;
+  position: relative;
+}
+
+.verify-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.verify-circle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+  font-weight: 800;
+}
+
+.verify-skip-btn {
+  color: #666666;
+  font-size: 18px;
+}
+
+.verify-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1.4;
+  margin-bottom: 36px;
+}
+
+.verify-code-boxes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 18px;
+  direction: ltr;
+}
+
+.verify-code-box {
+  width: 52px;
+  height: 62px;
+  background: #ffffff;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 14px;
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  color: #1a1a2e;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: #1a1aff;
+}
+
+.verify-code-box:focus {
+  border-color: #1a1aff;
+  box-shadow: 0 0 0 3px rgba(26, 26, 255, 0.12);
+}
+
+.verify-code-box.filled {
+  border-color: #1a1aff;
+}
+
+.verify-helper {
+  font-size: 13px;
+  color: #888888;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.verify-spacer {
+  flex: 1;
+}
+
+.verify-primary-btn {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  background: #b0b0c8;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: not-allowed;
+  text-align: center;
+  margin-bottom: 16px;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.verify-primary-btn.active {
+  background: #1a1aff;
+  cursor: pointer;
+}
+
+.verify-primary-btn.active:active {
+  transform: scale(0.97);
+  background: #1212cc;
+}
+
+.verify-resend-link {
+  display: block;
+  text-align: center;
+  font-size: 15px;
+  color: #1a1aff;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+@media (min-width: 431px) {
+  .verify-page {
+    background: #0f0f2e;
+  }
+
+  .verify-shell {
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  }
+}
