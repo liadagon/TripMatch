@@ -41,7 +41,32 @@ export default function PhoneLogin() {
 
       <section className="phone-login-screen">
         <div className="phone-login-card">
-          <div className="phone-icon">📱</div>
+          <div className="phone-icon" aria-hidden="true">
+            <svg
+              width="34"
+              height="34"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                x="7"
+                y="2.75"
+                width="10"
+                height="18.5"
+                rx="2.6"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="M10.25 5.75H13.75"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <circle cx="12" cy="17.75" r="1" fill="currentColor" />
+            </svg>
+          </div>
 
           <h1>התחברות עם טלפון</h1>
 
