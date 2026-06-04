@@ -11,8 +11,8 @@ export default function Welcome() {
           Trip<span>Match</span>
         </div>
 
-        <button className="top-login" onClick={() => navigate("/discover")}>
-          כניסה
+        <button className="top-login" onClick={() => navigate("/phone-login")}>
+          כניסה לחשבון
         </button>
       </header>
 
@@ -35,32 +35,23 @@ export default function Welcome() {
               התאמות למטיילים ישראלים לפי יעד, תאריכים וסגנון טיול.
             </p>
 
-            <div className="actions">
-              <button
-                className="primary-btn"
-                onClick={() => navigate("/phone-login")}
-              >
-                התחברות עם טלפון
-              </button>
+            <button
+              className="main-action-btn"
+              onClick={() => navigate("/phone-login")}
+            >
+              התחברות עם טלפון
+            </button>
+
+            <div className="signup-row">
+              <span>אין לך חשבון?</span>
 
               <button
-                className="secondary-btn"
+                className="signup-link"
                 onClick={() => navigate("/register")}
               >
                 הרשמה
               </button>
             </div>
-
-            <div className="divider">
-              <span>או</span>
-            </div>
-
-            <button
-              className="email-btn"
-              onClick={() => navigate("/discover")}
-            >
-              כניסה עם אימייל
-            </button>
 
             <p className="note">מיועד למטיילים ישראלים</p>
           </div>
