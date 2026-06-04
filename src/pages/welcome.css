@@ -67,7 +67,7 @@ body {
   margin: 0 auto;
   padding: 18px 0 42px;
   display: grid;
-  grid-template-columns: minmax(390px, 520px) minmax(360px, 465px);
+  grid-template-columns: minmax(360px, 465px) minmax(440px, 590px);
   align-items: center;
   justify-content: center;
   gap: 58px;
@@ -75,10 +75,11 @@ body {
 
 .image-side {
   width: 100%;
-  height: clamp(500px, calc(100dvh - 150px), 620px);
-  border-radius: 38px;
+  max-width: 590px;
+  aspect-ratio: 3 / 2;
+  border-radius: 34px;
   overflow: hidden;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.45);
   box-shadow: 0 30px 80px rgba(16, 24, 40, 0.2);
 }
 
@@ -87,23 +88,17 @@ body {
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: left center;
-  transform: scale(1.018);
-  transform-origin: left center;
-  animation: heroFadeIn 0.8s ease both;
+  object-position: center center;
+  animation: heroFadeIn 0.75s ease both;
 }
 
 @keyframes heroFadeIn {
   from {
     opacity: 0;
-    transform: scale(1.035);
-    transform-origin: left center;
   }
 
   to {
     opacity: 1;
-    transform: scale(1.018);
-    transform-origin: left center;
   }
 }
 
@@ -219,12 +214,8 @@ body {
 
 @media (max-width: 1080px) {
   .welcome-screen {
-    grid-template-columns: minmax(360px, 480px) minmax(330px, 430px);
+    grid-template-columns: minmax(330px, 430px) minmax(390px, 540px);
     gap: 38px;
-  }
-
-  .image-side {
-    height: clamp(460px, calc(100dvh - 155px), 580px);
   }
 
   .login-card h1 {
@@ -251,9 +242,7 @@ body {
 
   .image-side {
     order: 2;
-    width: min(100%, 520px);
-    height: auto;
-    aspect-ratio: 4 / 5;
+    width: min(100%, 590px);
     margin: 0 auto;
   }
 
