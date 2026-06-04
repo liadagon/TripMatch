@@ -18,7 +18,7 @@ export default function Welcome() {
       setCurrentImageIndex((previousIndex) => {
         return (previousIndex + 1) % heroImages.length;
       });
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(intervalId);
   }, []);
