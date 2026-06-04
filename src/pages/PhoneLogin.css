@@ -36,14 +36,15 @@ body {
 }
 
 .phone-logo {
-  color: #101828;
+  color: #ffffff;
   font-size: 34px;
   font-weight: 900;
   letter-spacing: -1.45px;
+  text-shadow: 0 12px 28px rgba(16, 24, 40, 0.22);
 }
 
 .phone-logo span {
-  color: #20d7cf;
+  color: #20e0d3;
 }
 
 .back-button {
@@ -75,11 +76,11 @@ body {
 
 .phone-login-card {
   width: 100%;
-  min-height: 610px;
-  padding: 62px 56px;
+  min-height: 560px;
+  padding: 56px 52px;
   border-radius: 34px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.86);
   box-shadow: 0 30px 80px rgba(16, 24, 40, 0.12);
   backdrop-filter: blur(18px);
   display: flex;
@@ -91,9 +92,9 @@ body {
 }
 
 .phone-icon {
-  width: 78px;
-  height: 78px;
-  margin-bottom: 28px;
+  width: 76px;
+  height: 76px;
+  margin-bottom: 26px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -105,7 +106,7 @@ body {
 .phone-login-card h1 {
   margin: 0;
   color: #101828;
-  font-size: clamp(34px, 3vw, 46px);
+  font-size: clamp(34px, 3vw, 44px);
   line-height: 1.15;
   font-weight: 900;
   letter-spacing: -0.045em;
@@ -121,7 +122,7 @@ body {
 
 .phone-form {
   width: 100%;
-  margin-top: 42px;
+  margin-top: 40px;
 }
 
 .phone-input-row {
@@ -136,25 +137,27 @@ body {
 }
 
 .country-code {
-  height: 64px;
-  padding: 0 18px;
+  height: 62px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 9px;
   border-right: 1.5px solid rgba(16, 24, 40, 0.08);
   color: #101828;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 900;
 }
 
-.country-code span {
+.country-arrow {
   color: #101828;
+  font-size: 10px;
+  transform: translateY(1px);
 }
 
 .phone-input-row input {
   width: 100%;
-  height: 64px;
+  height: 62px;
   padding: 0 24px;
   border: none;
   outline: none;
@@ -177,14 +180,14 @@ body {
 
 .phone-submit {
   width: 100%;
-  height: 62px;
-  margin-top: 36px;
+  height: 60px;
+  margin-top: 34px;
   border: none;
   border-radius: 999px;
   color: #ffffff;
   background: linear-gradient(135deg, #005cff, #8735ff);
   box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 900;
   cursor: pointer;
   transition:
@@ -214,7 +217,7 @@ body {
 
 .divider {
   width: 100%;
-  margin: 34px 0 22px;
+  margin: 32px 0 20px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -246,115 +249,20 @@ body {
 }
 
 .phone-visual-card {
-  position: relative;
   width: 100%;
-  min-height: 610px;
-  padding: 72px 62px;
+  aspect-ratio: 1 / 1;
   border-radius: 34px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.4);
   box-shadow: 0 30px 80px rgba(16, 24, 40, 0.14);
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.34)),
-    linear-gradient(135deg, rgba(0, 92, 255, 0.14), rgba(45, 212, 191, 0.16)),
-    url("/pic2.png");
-  background-size: cover;
-  background-position: center;
-  direction: rtl;
 }
 
-.phone-visual-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 85% 18%, rgba(255, 255, 255, 0.72), transparent 22%),
-    radial-gradient(circle at 20% 92%, rgba(255, 255, 255, 0.5), transparent 24%);
-  pointer-events: none;
-}
-
-.phone-visual-card::after {
-  content: "";
-  position: absolute;
-  right: 58px;
-  top: 82px;
-  width: 160px;
-  height: 2px;
-  border-top: 3px dashed rgba(32, 215, 207, 0.7);
-  border-radius: 999px;
-  transform: rotate(-12deg);
-  pointer-events: none;
-}
-
-.plane-badge {
-  position: relative;
-  z-index: 2;
-  width: 74px;
-  height: 74px;
-  margin-bottom: 46px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  color: #20d7cf;
-  font-size: 34px;
-  box-shadow: 0 16px 34px rgba(16, 24, 40, 0.1);
-}
-
-.visual-content {
-  position: relative;
-  z-index: 2;
-  max-width: 380px;
-}
-
-.visual-content h2 {
-  margin: 0;
-  color: #101828;
-  font-size: clamp(40px, 4vw, 58px);
-  line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.045em;
-}
-
-.visual-content h2::first-line {
-  color: #101828;
-}
-
-.visual-line {
-  width: 54px;
-  height: 3px;
-  margin: 24px 0 30px auto;
-  border-radius: 999px;
-  background: #20d7cf;
-}
-
-.benefits-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 22px;
-}
-
-.benefits-list li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: #101828;
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.benefits-list span {
-  width: 46px;
-  height: 46px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
-  color: #20d7cf;
-  font-size: 20px;
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+.phone-visual-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
 }
 
 @media (max-width: 1040px) {
@@ -367,12 +275,11 @@ body {
   .phone-login-card,
   .phone-visual-card {
     max-width: 620px;
-    min-height: auto;
     margin: 0 auto;
   }
 
-  .phone-visual-card {
-    min-height: 460px;
+  .phone-login-card {
+    min-height: auto;
   }
 }
 
@@ -446,33 +353,6 @@ body {
   }
 
   .phone-visual-card {
-    min-height: 390px;
-    padding: 40px 26px;
     border-radius: 28px;
-  }
-
-  .plane-badge {
-    width: 58px;
-    height: 58px;
-    margin-bottom: 30px;
-    font-size: 26px;
-  }
-
-  .visual-content h2 {
-    font-size: 34px;
-  }
-
-  .benefits-list {
-    gap: 16px;
-  }
-
-  .benefits-list li {
-    font-size: 15px;
-  }
-
-  .benefits-list span {
-    width: 38px;
-    height: 38px;
-    font-size: 17px;
   }
 }

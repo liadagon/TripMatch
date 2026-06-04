@@ -52,6 +52,7 @@ export default function PhoneLogin() {
               <div className="country-code">
                 <span>IL</span>
                 <strong>+972</strong>
+                <span className="country-arrow">▼</span>
               </div>
 
               <input
@@ -87,34 +88,11 @@ export default function PhoneLogin() {
         </div>
 
         <div className="phone-visual-card">
-          <div className="plane-badge">✈</div>
-
-          <div className="visual-content">
-            <h2>
-              לטייל יחד,
-              <br />
-              להתחבר בקלות
-            </h2>
-
-            <div className="visual-line"></div>
-
-            <ul className="benefits-list">
-              <li>
-                <span>📍</span>
-                התאמות לפי יעד
-              </li>
-
-              <li>
-                <span>👥</span>
-                מטיילים ישראלים
-              </li>
-
-              <li>
-                <span>⚡</span>
-                חוויה פשוטה ומהירה
-              </li>
-            </ul>
-          </div>
+          <img
+            src="/phone.png"
+            alt="לטייל יחד, להתחבר בקלות"
+            className="phone-visual-image"
+          />
         </div>
       </section>
     </main>
