@@ -1,8 +1,27 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./welcome.css";
 
+const heroImages = [
+  "/pic2.png",
+  "/pic3.png",
+  "/pic4.png",
+  "/pic5.png",
+];
+
 export default function Welcome() {
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentImageIndex((previousIndex) => {
+        return (previousIndex + 1) % heroImages.length;
+      });
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
     <main className="welcome-page" dir="rtl">
@@ -18,7 +37,12 @@ export default function Welcome() {
 
       <section className="welcome-screen">
         <div className="image-side">
-          <img src="/hero.png" alt="TripMatch travelers" />
+          <img
+            key={heroImages[currentImageIndex]}
+            className="hero-image"
+            src={heroImages[currentImageIndex]}
+            alt="TripMatch travelers"
+          />
         </div>
 
         <div className="content-side">
