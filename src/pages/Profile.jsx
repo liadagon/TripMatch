@@ -1,179 +1,183 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  Camera,
+  MapPin,
+  CalendarDays,
+  Plane,
+  Wallet,
+  Heart,
+  Settings,
+  MessageCircle,
+  Search,
+  User,
+  Pencil,
+  ShieldCheck,
+} from "lucide-react";
+import "./Profile.css";
 
 export default function Profile() {
-  const [tab, setTab] = useState("preferences");
-
-  return (
-    <div className="page profile-page">
-      <header className="profile-header">
-        <div className="profile-top">
-          <button className="edit-button">✏️</button>
-
-          <div className="profile-name-box">
-            <h1>ליה</h1>
-            <p>📍 רחובות</p>
-          </div>
-
-          <div className="profile-avatar">
-            <img
-              src="https://api.dicebear.com/8.x/lorelei/svg?seed=Noa&backgroundColor=b6e3f4"
-              alt="ליה"
-            />
-            <span>!</span>
-          </div>
-        </div>
-
-        <div className="photo-strip">
-          <img
-            src="https://api.dicebear.com/8.x/lorelei/svg?seed=Noa&backgroundColor=b6e3f4"
-            alt=""
-          />
-          <img
-            src="https://api.dicebear.com/8.x/lorelei/svg?seed=Maya&backgroundColor=ffd5dc"
-            alt=""
-          />
-          <img
-            src="https://api.dicebear.com/8.x/lorelei/svg?seed=Ido&backgroundColor=c0aede"
-            alt=""
-          />
-          <button>＋</button>
-        </div>
-
-        <div className="tabs">
-          <button
-            className={tab === "preferences" ? "active" : ""}
-            onClick={() => setTab("preferences")}
-          >
-            ⚙️ העדפות
-          </button>
-
-          <button
-            className={tab === "settings" ? "active" : ""}
-            onClick={() => setTab("settings")}
-          >
-            🔧 הגדרות
-          </button>
-        </div>
-      </header>
-
-      <main className="profile-content">
-        <section className="profile-card">
-          <div className="card-title-row">
-            <h2>📋 השלמת פרופיל</h2>
-            <strong>72%</strong>
-          </div>
-
-          <div className="mini-progress">
-            <span style={{ width: "72%" }}></span>
-          </div>
-
-          <div className="profile-task done">
-            <span>✓</span>
-            <p>פרטים בסיסיים מלאים</p>
-            <strong>הושלם</strong>
-          </div>
-
-          <div className="profile-task">
-            <span>🖼</span>
-            <p>להוסיף עוד תמונות</p>
-            <strong>הוסיפי</strong>
-          </div>
-
-          <div className="profile-task">
-            <span>❓</span>
-            <p>לענות על עוד שאלות</p>
-            <strong>עני</strong>
-          </div>
-        </section>
-
-        <section className="profile-card dark-card">
-          <h2>שאלות שענינו</h2>
-
-          <div className="question-scale">
-            <div>
-              <strong>45</strong>
-              <span>שאלות</span>
-            </div>
-
-            <div>
-              <strong>100</strong>
-              <span>אלופה</span>
-            </div>
-
-            <div>
-              <strong>500+</strong>
-              <span>עילוי</span>
-            </div>
-          </div>
-
-          <div className="scale-track">
-            <span style={{ width: "9%" }}></span>
-          </div>
-
-          <p>ככל שעונים על יותר שאלות, ההתאמות נעשות מדויקות יותר.</p>
-        </section>
-
-        <section className="question-box">
-          <p>מענה על עוד שאלות</p>
-          <h2>מה יותר חשוב לך בטיול משותף?</h2>
-
-          <div>
-            <button className="btn btn-primary">תכנון מראש</button>
-            <button className="btn btn-outline">זרימה וספונטניות</button>
-          </div>
-        </section>
-      </main>
-
-      <BottomNav active="profile" />
-    </div>
-  );
-}
-
-function BottomNav({ active }) {
   const navigate = useNavigate();
 
   return (
-    <nav className="bottom-nav">
-      <button
-        className={active === "discover" ? "active" : ""}
-        onClick={() => navigate("/discover")}
-      >
-        <span>🔍</span>
-        גילוי
-      </button>
+    <div className="profile-page" dir="rtl">
+      <main className="profile-layout">
+        <header className="profile-header">
+          <button className="profile-back-btn" onClick={() => navigate("/discover")}>
+            <ArrowRight size={20} />
+            חזרה
+          </button>
 
-      <button
-        className={active === "likes" ? "active" : ""}
-        onClick={() => navigate("/likes")}
-      >
-        <span>♡</span>
-        לייקים
-      </button>
+          <h1 className="profile-logo">
+            Trip<span>Match</span>
+          </h1>
+        </header>
 
-      <button
-        className={active === "matches" ? "active" : ""}
-        onClick={() => navigate("/matches")}
-      >
-        <span>💬</span>
-        הודעות
-      </button>
+        <section className="profile-card">
+          <div className="profile-cover">
+            <button className="profile-edit-photo">
+              <Camera size={18} />
+              שינוי תמונה
+            </button>
+          </div>
 
-      <button
-        className={active === "preferences" ? "active" : ""}
-        onClick={() => navigate("/preferences")}
-      >
-        <span>⚙️</span>
-        העדפות
-      </button>
+          <div className="profile-avatar-wrap">
+            <img
+              className="profile-avatar"
+              src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=90"
+              alt="תמונת פרופיל"
+            />
+          </div>
 
-      <button
-        className={active === "profile" ? "active" : ""}
-        onClick={() => navigate("/profile")}
-      >
-        <span>👤</span>
-        פרופיל
-      </button>
-    </nav>
+          <div className="profile-content">
+            <div className="profile-title-row">
+              <div>
+                <h2>נועה, 23</h2>
+                <p>
+                  <MapPin size={16} />
+                  תל אביב
+                </p>
+              </div>
+
+              <button className="profile-edit-btn">
+                <Pencil size={17} />
+                עריכה
+              </button>
+            </div>
+
+            <div className="profile-stats">
+              <div>
+                <strong>91%</strong>
+                <span>התאמה ממוצעת</span>
+              </div>
+
+              <div>
+                <strong>12</strong>
+                <span>לייקים</span>
+              </div>
+
+              <div>
+                <strong>5</strong>
+                <span>שיחות</span>
+              </div>
+            </div>
+
+            <section className="profile-section">
+              <h3>הטיול שלי</h3>
+
+              <div className="profile-info-grid">
+                <div className="profile-info-item">
+                  <Plane size={22} />
+                  <div>
+                    <span>יעד</span>
+                    <strong>דרום אמריקה</strong>
+                  </div>
+                </div>
+
+                <div className="profile-info-item">
+                  <CalendarDays size={22} />
+                  <div>
+                    <span>תאריכים</span>
+                    <strong>ספטמבר עד דצמבר</strong>
+                  </div>
+                </div>
+
+                <div className="profile-info-item">
+                  <Wallet size={22} />
+                  <div>
+                    <span>תקציב</span>
+                    <strong>בינוני</strong>
+                  </div>
+                </div>
+
+                <div className="profile-info-item">
+                  <Heart size={22} />
+                  <div>
+                    <span>סגנון</span>
+                    <strong>טרקים ותרמילאות</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="profile-section">
+              <h3>קצת עליי</h3>
+
+              <p className="profile-about">
+                מחפשת שותפה או שותף לטיול בדרום אמריקה. אוהבת טבע, טרקים,
+                אוכל מקומי וחוויות ספונטניות, אבל כן חשוב לי לתכנן מסגרת בסיסית מראש.
+              </p>
+            </section>
+
+            <section className="profile-section">
+              <h3>מה חשוב לי בשותף לטיול</h3>
+
+              <div className="profile-tags">
+                <span>אמינות</span>
+                <span>ראש פתוח</span>
+                <span>תקציב דומה</span>
+                <span>אהבה לטבע</span>
+                <span>תקשורת טובה</span>
+              </div>
+            </section>
+
+            <section className="profile-safe-box">
+              <ShieldCheck size={24} />
+              <div>
+                <strong>הפרופיל שלך מוגן</strong>
+                <p>המידע מוצג רק למשתמשים רלוונטיים בתוך TripMatch.</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <nav className="profile-bottom-nav">
+          <button onClick={() => navigate("/discover")}>
+            <Search size={22} />
+            גילוי
+          </button>
+
+          <button onClick={() => navigate("/likes")}>
+            <Heart size={22} />
+            לייקים
+          </button>
+
+          <button onClick={() => navigate("/matches")}>
+            <MessageCircle size={22} />
+            הודעות
+          </button>
+
+          <button onClick={() => navigate("/preferences")}>
+            <Settings size={22} />
+            העדפות
+          </button>
+
+          <button onClick={() => navigate("/profile")} className="active">
+            <User size={22} />
+            פרופיל
+          </button>
+        </nav>
+      </main>
+    </div>
   );
 }

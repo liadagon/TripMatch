@@ -10,6 +10,7 @@ import Discover from "./pages/Discover";
 import Likes from "./pages/Likes";
 import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/likes" element={<Likes />} />
         <Route path="/matches" element={<Matches />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/profile" element={<Profile />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
