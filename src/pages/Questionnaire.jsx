@@ -101,12 +101,12 @@ export default function Questionnaire() {
       <div className="questionnaire-shell">
         <header className="questionnaire-header">
           <div className="questionnaire-header-top">
-            <div className="questionnaire-logo">
-              Trip<span>Match</span>
-            </div>
-
             <div className="questionnaire-counter">
               שאלה {currentQuestion + 1} מתוך {questions.length}
+            </div>
+
+            <div className="questionnaire-logo">
+              Trip<span>Match</span>
             </div>
           </div>
 
@@ -147,7 +147,8 @@ export default function Questionnaire() {
         <div className="questionnaire-nav-row">
           {currentQuestion > 0 && (
             <button className="questionnaire-back-btn" onClick={goBack}>
-              אחורה ›
+              <span>אחורה</span>
+              <span className="btn-arrow">→</span>
             </button>
           )}
 
@@ -161,7 +162,14 @@ export default function Questionnaire() {
             }
             onClick={goNext}
           >
-            {isLastQuestion ? "מצאי התאמות ✨" : "‹ הבא"}
+            {isLastQuestion ? (
+              <span>מצאי התאמות ✨</span>
+            ) : (
+              <>
+                <span>הבא</span>
+                <span className="btn-arrow">←</span>
+              </>
+            )}
           </button>
         </div>
       </div>
