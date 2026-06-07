@@ -86,7 +86,7 @@
   width: 100%;
   border-radius: 34px;
   overflow: hidden;
-  touch-action: pan-y;
+  touch-action: none;
   user-select: none;
   transition: transform 0.22s ease, opacity 0.22s ease;
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.22);
@@ -94,13 +94,17 @@
   background: #ffffff;
 }
 
+.discover-card.dragging {
+  transition: none;
+}
+
 .discover-card.like {
-  transform: translateX(620px) rotate(16deg) !important;
+  transform: translateX(720px) rotate(18deg) !important;
   opacity: 0;
 }
 
 .discover-card.skip {
-  transform: translateX(-620px) rotate(-16deg) !important;
+  transform: translateX(-720px) rotate(-18deg) !important;
   opacity: 0;
 }
 
@@ -110,7 +114,11 @@
   min-height: 500px;
   overflow: hidden;
   background: #111827;
-  cursor: pointer;
+  cursor: grab;
+}
+
+.discover-card.dragging .discover-image-wrap {
+  cursor: grabbing;
 }
 
 .discover-image-wrap img {
@@ -377,6 +385,44 @@
 
 .discover-bottom-nav button.active {
   color: #145cff;
+}
+
+.discover-empty {
+  width: min(520px, 100%);
+  margin: 80px auto 0;
+  padding: 60px 34px;
+  border-radius: 34px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.14);
+  color: #111827;
+}
+
+.discover-empty svg {
+  color: #00b8c7;
+}
+
+.discover-empty h2 {
+  margin: 18px 0 8px;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.discover-empty p {
+  margin: 0 0 28px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.discover-empty button {
+  border: none;
+  border-radius: 999px;
+  padding: 16px 34px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(90deg, #8b2cff, #145cff);
 }
 
 @media (max-width: 768px) {

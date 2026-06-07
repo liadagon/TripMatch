@@ -12,12 +12,12 @@ import {
   User,
   Settings,
   CalendarDays,
-  Wallet,
 } from "lucide-react";
 import "./Discover.css";
 
-const profiles = [
+const initialProfiles = [
   {
+    id: 1,
     name: "נועה",
     age: 23,
     city: "תל אביב",
@@ -32,6 +32,7 @@ const profiles = [
     tags: ["טרקים", "תרמילאות", "תקציב בינוני", "אוהבת לתכנן"],
   },
   {
+    id: 2,
     name: "מאיה",
     age: 22,
     city: "חיפה",
@@ -46,6 +47,7 @@ const profiles = [
     tags: ["הוסטלים", "יוגה", "תרבות", "טיול גמיש"],
   },
   {
+    id: 3,
     name: "עידו",
     age: 24,
     city: "רחובות",
@@ -64,90 +66,137 @@ const profiles = [
 export default function Discover() {
   const navigate = useNavigate();
 
-  const [profileIndex, setProfileIndex] = useState(0);
+  const [profiles, setProfiles] = useState(initialProfiles);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
   const startXRef = useRef(0);
-  const draggingRef = useRef(false);
+  const dragXRef = useRef(0);
   const didSwipeRef = useRef(false);
+  const isAnimatingRef = useRef(false);
 
-  const profile = profiles[profileIndex];
-  const currentImage = profile.images[photoIndex];
+  const profile = profiles[0];
 
-  const dragPower = Math.min(Math.abs(dragX) / 120, 1);
-  const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
+  if (!profile) {
+    return (
+      <div className="discover-page" dir="rtl">
+        <main className="discover-layout">
+          <header className="discover-header">
+            <h1 className="discover-logo">
+              Trip<span>Match</span>
+            </h1>
+          </header>
 
-  function resetForNextProfile() {
-    setPhotoIndex(0);
-    setDragX(0);
+          <section className="discover-empty">
+            <Sparkles size={44} />
+            <h2>אין עוד התאמות כרגע</h2>
+            <p>נסי לעדכן העדפות או לחזור מאוחר יותר.</p>
+
+            <button onClick={() => setProfiles(initialProfiles)}>
+              התחילי מחדש
+            </button>
+          </section>
+        </main>
+      </div>
+    );
   }
 
-  function nextProfile(type) {
+  const currentImage = profile.images[photoIndex];
+  const dragPower = Math.min(Math.abs(dragX) / 130, 1);
+  const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
+
+  function moveToNextProfile(type) {
+    if (isAnimatingRef.current) return;
+
+    isAnimatingRef.current = true;
     setFeedback(type);
 
     setTimeout(() => {
-      setProfileIndex((prev) => (prev + 1) % profiles.length);
+      setProfiles((prevProfiles) => prevProfiles.slice(1));
+      setPhotoIndex(0);
+      setDragX(0);
+      dragXRef.current = 0;
       setFeedback("");
-      resetForNextProfile();
-    }, 260);
+      setIsDragging(false);
+      isAnimatingRef.current = false;
+    }, 280);
   }
 
   function likeProfile() {
-    nextProfile("like");
+    moveToNextProfile("like");
   }
 
   function skipProfile() {
-    nextProfile("skip");
+    moveToNextProfile("skip");
   }
 
   function nextPhoto() {
+    if (isAnimatingRef.current) return;
     setPhotoIndex((prev) => (prev + 1) % profile.images.length);
   }
 
   function handlePointerDown(event) {
-    draggingRef.current = true;
-    didSwipeRef.current = false;
+    if (isAnimatingRef.current) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+
     startXRef.current = event.clientX;
+    dragXRef.current = 0;
+    didSwipeRef.current = false;
+
+    setIsDragging(true);
+    setFeedback("");
   }
 
   function handlePointerMove(event) {
-    if (!draggingRef.current) return;
+    if (!isDragging || isAnimatingRef.current) return;
 
     const diff = event.clientX - startXRef.current;
+
+    dragXRef.current = diff;
     setDragX(diff);
 
-    if (Math.abs(diff) > 10) {
+    if (Math.abs(diff) > 8) {
       didSwipeRef.current = true;
     }
   }
 
-  function handlePointerUp() {
-    if (!draggingRef.current) return;
+  function handlePointerUp(event) {
+    if (!isDragging || isAnimatingRef.current) return;
 
-    draggingRef.current = false;
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Ignore if pointer capture was already released.
+    }
 
-    if (dragX > 110) {
+    setIsDragging(false);
+
+    const finalDragX = dragXRef.current;
+
+    if (finalDragX > 120) {
       likeProfile();
       return;
     }
 
-    if (dragX < -110) {
+    if (finalDragX < -120) {
       skipProfile();
       return;
     }
 
+    dragXRef.current = 0;
     setDragX(0);
   }
 
   function handleImageClick() {
-    if (didSwipeRef.current) return;
+    if (didSwipeRef.current || isAnimatingRef.current) return;
     nextPhoto();
   }
 
   const cardStyle = {
-    transform: `translateX(${dragX}px) rotate(${dragX / 24}deg)`,
+    transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
     "--drag-power": dragPower,
   };
 
@@ -180,7 +229,10 @@ export default function Discover() {
 
         <section className="discover-main">
           <section
-            className={`discover-card ${feedback} ${dragMode}`}
+            key={profile.id}
+            className={`discover-card ${feedback} ${dragMode} ${
+              isDragging ? "dragging" : ""
+            }`}
             style={cardStyle}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
