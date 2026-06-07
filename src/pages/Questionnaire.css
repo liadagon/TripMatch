@@ -16,7 +16,6 @@
 .questionnaire-shell {
   width: 100%;
   max-width: 900px;
-  min-height: auto;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -97,15 +96,20 @@
   text-align: center;
 }
 
-.questionnaire-emoji {
+.questionnaire-icon {
   width: 74px;
   height: 74px;
   margin: 0 auto 26px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(0, 216, 196, 0.14);
-  font-size: 36px;
+  color: #00b8c7;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 216, 196, 0.18),
+    rgba(20, 92, 255, 0.08)
+  );
+  box-shadow: inset 0 0 0 1px rgba(0, 216, 196, 0.16);
 }
 
 .questionnaire-question-text {
@@ -157,7 +161,11 @@
 }
 
 .questionnaire-answer.selected {
-  background: linear-gradient(135deg, rgba(0, 216, 196, 0.14), rgba(139, 44, 255, 0.12));
+  background: linear-gradient(
+    135deg,
+    rgba(0, 216, 196, 0.14),
+    rgba(139, 44, 255, 0.12)
+  );
   color: #111827;
   border-color: #145cff;
   box-shadow: 0 14px 30px rgba(20, 92, 255, 0.16);

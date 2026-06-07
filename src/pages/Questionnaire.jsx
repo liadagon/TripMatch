@@ -1,50 +1,61 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Globe2,
+  CalendarDays,
+  Wallet,
+  Backpack,
+  Map,
+  Hotel,
+  Users,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
 import "./Questionnaire.css";
 
 const questions = [
   {
-    emoji: "🌍",
+    icon: Globe2,
     text: "לאן את רוצה לטוס?",
     answers: ["דרום אמריקה", "תאילנד וויאטנם", "הודו", "אוסטרליה", "אירופה", "עוד לא החלטתי"],
   },
   {
-    emoji: "📅",
+    icon: CalendarDays,
     text: "מתי את מתכננת לצאת?",
     answers: ["בעוד חודש או חודשיים", "בעוד חצי שנה", "בתחילת הקיץ", "סוף הקיץ", "חורף", "גמיש לגמרי"],
   },
   {
-    emoji: "💰",
+    icon: Wallet,
     text: "מה התקציב שלך לטיול?",
     answers: ["חסכוני", "בינוני", "נוח", "גמיש, תלוי בחוויה"],
   },
   {
-    emoji: "🎒",
+    icon: Backpack,
     text: "איזה סגנון טיול הכי מתאים לך?",
     answers: ["תרמילאות ואורח חיים מקומי", "טרקים והרפתקאות טבע", "סיורים תרבותיים וערים", "חוף ים ומנוחה", "שילוב של הכול"],
   },
   {
-    emoji: "🗺️",
+    icon: Map,
     text: "כמה חשוב לך לתכנן מראש?",
     answers: ["אני חייבת הכול מתוכנן", "אוהבת מסגרת בסיסית", "מינימום תכנון", "ממש ספונטנית"],
   },
   {
-    emoji: "🏨",
+    icon: Hotel,
     text: "איזה סוג לינה מועדף עלייך?",
     answers: ["הוסטל", "Airbnb או דירה משותפת", "בית מלון סביר", "אוהל וקמפינג", "תלוי ביעד ובתקציב"],
   },
   {
-    emoji: "🤝",
+    icon: Users,
     text: "את מחפשת שותף לכל הטיול או רק לחלק?",
     answers: ["לכל הטיול", "רק לחלק מהמסלול", "גמישה, נראה איך זה מסתדר"],
   },
   {
-    emoji: "💡",
+    icon: Sparkles,
     text: "מה הכי חשוב לך בשותף לטיול?",
     answers: ["תאימות לסגנון נסיעה", "אמינות ואחריות", "כימיה אישית טובה", "גמישות ורוח טובה", "כולם חשובים"],
   },
   {
-    emoji: "⚠️",
+    icon: TriangleAlert,
     text: "מה יכול להרוס לך טיול משותף?",
     answers: ["חוסר גמישות", "בזבזנות או קמצנות קיצונית", "חוסר כבוד לגבולות", "מריבות על החלטות קטנות", "לוח זמנים לא מסונכרן"],
   },
@@ -58,6 +69,7 @@ export default function Questionnaire() {
   );
 
   const question = questions[currentQuestion];
+  const Icon = question.icon;
   const isLastQuestion = currentQuestion === questions.length - 1;
   const hasSelectedAnswer = selectedAnswers[currentQuestion] !== null;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
@@ -108,7 +120,9 @@ export default function Questionnaire() {
 
         <main className="questionnaire-content">
           <section className="questionnaire-card">
-            <div className="questionnaire-emoji">{question.emoji}</div>
+            <div className="questionnaire-icon">
+              <Icon size={36} strokeWidth={2.4} />
+            </div>
 
             <h1 className="questionnaire-question-text">{question.text}</h1>
 
@@ -133,7 +147,7 @@ export default function Questionnaire() {
         <div className="questionnaire-nav-row">
           {currentQuestion > 0 && (
             <button className="questionnaire-back-btn" onClick={goBack}>
-              ‹ אחורה
+              אחורה ›
             </button>
           )}
 
@@ -147,7 +161,7 @@ export default function Questionnaire() {
             }
             onClick={goNext}
           >
-            {isLastQuestion ? "מצאי התאמות ✨" : "הבא ›"}
+            {isLastQuestion ? "מצאי התאמות ✨" : "‹ הבא"}
           </button>
         </div>
       </div>
