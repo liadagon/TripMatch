@@ -75,6 +75,7 @@ export default function Discover() {
   const startXRef = useRef(0);
   const dragXRef = useRef(0);
   const didSwipeRef = useRef(false);
+  const isPointerDownRef = useRef(false);
   const isAnimatingRef = useRef(false);
 
   const profile = profiles[0];
@@ -103,7 +104,7 @@ export default function Discover() {
     );
   }
 
-  const currentImage = profile.images[photoIndex];
+  const currentImage = profile.images[photoIndex] || profile.images[0];
   const dragPower = Math.min(Math.abs(dragX) / 130, 1);
   const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
 
@@ -118,6 +119,8 @@ export default function Discover() {
       setPhotoIndex(0);
       setDragX(0);
       dragXRef.current = 0;
+      didSwipeRef.current = false;
+      isPointerDownRef.current = false;
       setFeedback("");
       setIsDragging(false);
       isAnimatingRef.current = false;
@@ -134,24 +137,34 @@ export default function Discover() {
 
   function nextPhoto() {
     if (isAnimatingRef.current) return;
-    setPhotoIndex((prev) => (prev + 1) % profile.images.length);
+
+    const totalImages = profile.images.length;
+
+    if (totalImages <= 1) return;
+
+    setPhotoIndex((prev) => (prev + 1) % totalImages);
   }
 
   function handlePointerDown(event) {
     if (isAnimatingRef.current) return;
 
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Ignore pointer capture errors.
+    }
 
     startXRef.current = event.clientX;
     dragXRef.current = 0;
     didSwipeRef.current = false;
+    isPointerDownRef.current = true;
 
     setIsDragging(true);
     setFeedback("");
   }
 
   function handlePointerMove(event) {
-    if (!isDragging || isAnimatingRef.current) return;
+    if (!isPointerDownRef.current || isAnimatingRef.current) return;
 
     const diff = event.clientX - startXRef.current;
 
@@ -164,14 +177,15 @@ export default function Discover() {
   }
 
   function handlePointerUp(event) {
-    if (!isDragging || isAnimatingRef.current) return;
+    if (!isPointerDownRef.current || isAnimatingRef.current) return;
 
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {
-      // Ignore if pointer capture was already released.
+      // Ignore pointer release errors.
     }
 
+    isPointerDownRef.current = false;
     setIsDragging(false);
 
     const finalDragX = dragXRef.current;
@@ -188,11 +202,24 @@ export default function Discover() {
 
     dragXRef.current = 0;
     setDragX(0);
+
+    if (!didSwipeRef.current) {
+      nextPhoto();
+    }
   }
 
-  function handleImageClick() {
-    if (didSwipeRef.current || isAnimatingRef.current) return;
-    nextPhoto();
+  function handlePointerCancel(event) {
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Ignore pointer release errors.
+    }
+
+    isPointerDownRef.current = false;
+    didSwipeRef.current = false;
+    dragXRef.current = 0;
+    setDragX(0);
+    setIsDragging(false);
   }
 
   const cardStyle = {
@@ -212,15 +239,19 @@ export default function Discover() {
             <button className="discover-category" aria-label="יעדים">
               <MapPin size={23} />
             </button>
+
             <button className="discover-category" aria-label="מומלצים">
               <Star size={23} />
             </button>
+
             <button className="discover-category" aria-label="טיולים">
               <Plane size={23} />
             </button>
+
             <button className="discover-category" aria-label="התאמות גבוהות">
               100
             </button>
+
             <button className="discover-category active" aria-label="הכי מתאים">
               <Sparkles size={23} />
             </button>
@@ -237,9 +268,9 @@ export default function Discover() {
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            onPointerCancel={handlePointerCancel}
           >
-            <div className="discover-image-wrap" onClick={handleImageClick}>
+            <div className="discover-image-wrap">
               <img src={currentImage} alt={profile.name} draggable="false" />
 
               <div className="discover-progress-bars">
