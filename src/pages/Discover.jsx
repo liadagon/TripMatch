@@ -24,7 +24,11 @@ const initialProfiles = [
     dates: "ספטמבר עד דצמבר",
     destination: "דרום אמריקה",
     match: 91,
-    images: ["/noa1.png", "/noa2.png"],
+    images: [
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
+      "/noa1.png",
+      "/noa2.png",
+    ],
     tags: ["טרקים", "תרמילאות", "תקציב בינוני", "אוהבת לתכנן"],
   },
   {
@@ -35,7 +39,11 @@ const initialProfiles = [
     dates: "אוקטובר עד ינואר",
     destination: "הודו",
     match: 88,
-    images: ["/maya1.png", "/maya2.png"],
+    images: [
+      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=1200&q=90",
+      "/maya1.png",
+      "/maya2.png",
+    ],
     tags: ["הוסטלים", "יוגה", "תרבות", "טיול גמיש"],
   },
   {
@@ -46,7 +54,11 @@ const initialProfiles = [
     dates: "יולי עד ספטמבר",
     destination: "תאילנד וויאטנם",
     match: 84,
-    images: ["/ido1.png", "/ido2.png"],
+    images: [
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=90",
+      "/ido1.png",
+      "/ido2.png",
+    ],
     tags: ["חופים", "אוכל מקומי", "מסיבות", "זורם"],
   },
 ];
