@@ -24,11 +24,7 @@ const initialProfiles = [
     dates: "ספטמבר עד דצמבר",
     destination: "דרום אמריקה",
     match: 91,
-    images: [
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=90",
-    ],
+    images: ["/noa1.png", "/noa2.png"],
     tags: ["טרקים", "תרמילאות", "תקציב בינוני", "אוהבת לתכנן"],
   },
   {
@@ -39,11 +35,7 @@ const initialProfiles = [
     dates: "אוקטובר עד ינואר",
     destination: "הודו",
     match: 88,
-    images: [
-      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=1200&q=90",
-    ],
+    images: ["/maya1.png", "/maya2.png"],
     tags: ["הוסטלים", "יוגה", "תרבות", "טיול גמיש"],
   },
   {
@@ -54,11 +46,7 @@ const initialProfiles = [
     dates: "יולי עד ספטמבר",
     destination: "תאילנד וויאטנם",
     match: 84,
-    images: [
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1200&q=90",
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=1200&q=90",
-    ],
+    images: ["/ido1.png", "/ido2.png"],
     tags: ["חופים", "אוכל מקומי", "מסיבות", "זורם"],
   },
 ];
