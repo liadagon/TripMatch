@@ -148,7 +148,7 @@ export default function VerifyCode() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  maxLength="1"
+                  maxLength={1}
                   value={digit}
                   onChange={(event) => handleChange(index, event.target.value)}
                   onKeyDown={(event) => handleKeyDown(index, event)}

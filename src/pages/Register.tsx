@@ -2,10 +2,23 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css";
 
+type RegisterForm = {
+  fullName: string;
+  age: string;
+  city: string;
+  dest: string;
+  month: string;
+  duration: string;
+  bio: string;
+  israelCheck: boolean;
+};
+
+type RegisterFieldErrors = Partial<Record<keyof RegisterForm, boolean>>;
+
 export default function Register() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterForm>({
     fullName: "",
     age: "",
     city: "",
@@ -19,17 +32,27 @@ export default function Register() {
   const [budget, setBudget] = useState("");
   const [style, setStyle] = useState("");
   const [showError, setShowError] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
 
-  function updateField(name, value) {
+  function updateField<K extends keyof RegisterForm>(
+    name: K,
+    value: RegisterForm[K]
+  ) {
     setForm((prev) => ({ ...prev, [name]: value }));
     setFieldErrors((prev) => ({ ...prev, [name]: false }));
     setShowError(false);
   }
 
   function validateForm() {
-    const errors = {};
-    const requiredFields = ["fullName", "age", "city", "dest", "month", "duration"];
+    const errors: RegisterFieldErrors = {};
+    const requiredFields: Array<keyof RegisterForm> = [
+      "fullName",
+      "age",
+      "city",
+      "dest",
+      "month",
+      "duration",
+    ];
 
     requiredFields.forEach((field) => {
       if (!String(form[field]).trim()) {
@@ -136,7 +159,7 @@ export default function Register() {
                 <option>מזרח אסיה</option>
                 <option>אפריקה</option>
                 <option>אירופה</option>
-                <option>ארה"ב</option>
+                <option>ארה&quot;ב</option>
                 <option>אחר</option>
               </select>
             </div>
