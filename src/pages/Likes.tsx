@@ -54,10 +54,10 @@ export default function Likes() {
           onClick={() => navigate("/profile")}
         >
           <span>
-            <strong>עידו רגב</strong>
+            <strong>נועה רגב</strong>
             <small>צפה בפרופיל</small>
           </span>
-          <img src="/ido1.png" alt="עידו רגב" />
+          <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90" alt="נועה רגב" />
         </button>
       </header>
 

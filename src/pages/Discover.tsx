@@ -48,7 +48,7 @@ const initialProfiles = [
   },
   {
     id: 3,
-    name: "עידו",
+    name: "נועה",
     age: 24,
     city: "רחובות",
     dates: "יולי עד ספטמבר",

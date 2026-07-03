@@ -11,7 +11,7 @@ const newMatches = [
     image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Maya&backgroundColor=ffd5dc",
   },
   {
-    name: "עידו",
+    name: "נועה",
     image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Ido&backgroundColor=c0aede",
   },
   {
@@ -42,7 +42,7 @@ const chats = [
     unread: true,
   },
   {
-    name: "עידו",
+    name: "נועה",
     age: 24,
     time: "אתמול",
     destination: "תאילנד וויאטנם · יולי עד ספטמבר",
