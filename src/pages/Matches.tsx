@@ -1,22 +1,43 @@
 import { useNavigate } from "react-router-dom";
 import "./Matches.css";
 
+const demoProfileImages = {
+  noa: [
+    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
+    "/noa1.png",
+    "/noa2.png",
+  ],
+  maya: [
+    "/maya3.png",
+    "/maya1.png",
+    "/maya2.png",
+  ],
+  traveler: [
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=90",
+    "/ido1.png",
+    "/ido2.png",
+  ],
+  daniel: [
+    "https://api.dicebear.com/8.x/lorelei/svg?seed=Daniel&backgroundColor=d1f4d1",
+  ],
+};
+
 const newMatches = [
   {
     name: "נועה",
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Noa&backgroundColor=b6e3f4",
+    images: demoProfileImages.noa,
   },
   {
     name: "מאיה",
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Maya&backgroundColor=ffd5dc",
+    images: demoProfileImages.maya,
   },
   {
-    name: "נועה",
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Ido&backgroundColor=c0aede",
+    name: "עידו",
+    images: demoProfileImages.traveler,
   },
   {
     name: "דניאל",
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Daniel&backgroundColor=d1f4d1",
+    images: demoProfileImages.daniel,
   },
 ];
 
@@ -28,7 +49,7 @@ const chats = [
     destination: "דרום אמריקה · ספטמבר עד דצמבר",
     preview: "היי! ראיתי שגם את מתכננת לטוס לפרו 🌎",
     match: 91,
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Noa&backgroundColor=b6e3f4",
+    images: demoProfileImages.noa,
     unread: true,
   },
   {
@@ -38,17 +59,17 @@ const chats = [
     destination: "הודו · אוקטובר עד ינואר",
     preview: "גם אני מתכננת להתחיל מגואה! 🙏",
     match: 88,
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Maya&backgroundColor=ffd5dc",
+    images: demoProfileImages.maya,
     unread: true,
   },
   {
-    name: "נועה",
+    name: "עידו",
     age: 24,
     time: "אתמול",
     destination: "תאילנד וויאטנם · יולי עד ספטמבר",
     preview: "נשמע מעולה, אבל עוד לא קניתי כרטיס...",
     match: 84,
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Ido&backgroundColor=c0aede",
+    images: demoProfileImages.traveler,
     online: true,
   },
   {
@@ -58,7 +79,7 @@ const chats = [
     destination: "אוסטרליה · נובמבר עד פברואר",
     preview: "יש לי מכרים בסידני שיכולים לעזור 🦘",
     match: 79,
-    image: "https://api.dicebear.com/8.x/lorelei/svg?seed=Daniel&backgroundColor=d1f4d1",
+    images: demoProfileImages.daniel,
   },
 ];
 
@@ -76,14 +97,14 @@ export default function Matches() {
           <div className="matches-section-label">התאמות חדשות 🎉</div>
 
           <div className="matches-stories-row">
-            {newMatches.map((match) => (
+            {newMatches.map((match, index) => (
               <button
-                key={match.name}
+                key={`${match.name}-${index}`}
                 className="matches-story"
                 onClick={() => navigate("/chat")}
               >
                 <div className="matches-story-ring">
-                  <img src={match.image} alt={match.name} />
+                  <img src={match.images[0]} alt={match.name} />
                 </div>
                 <span>{match.name}</span>
               </button>
@@ -93,14 +114,14 @@ export default function Matches() {
           <div className="matches-section-label">שיחות פעילות</div>
 
           <div className="matches-chat-list">
-            {chats.map((chat) => (
+            {chats.map((chat, index) => (
               <button
-                key={chat.name}
-                className="matches-chat-card"
+                key={`${chat.name}-${index}`}
+                className={chat.unread ? "matches-chat-card unread" : "matches-chat-card"}
                 onClick={() => navigate("/chat")}
               >
                 <div className="matches-avatar-wrap">
-                  <img src={chat.image} alt={chat.name} />
+                  <img src={chat.images[0]} alt={chat.name} />
 
                   {chat.unread && <span className="matches-unread-dot"></span>}
                   {chat.online && <span className="matches-online-dot"></span>}
@@ -111,7 +132,7 @@ export default function Matches() {
                     <h2>
                       {chat.name}, {chat.age}
                     </h2>
-                    <span>{chat.time}</span>
+                    {chat.time && <span>{chat.time}</span>}
                   </div>
 
                   <p className="matches-dest">✈️ {chat.destination}</p>
