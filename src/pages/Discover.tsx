@@ -40,7 +40,7 @@ const initialProfiles = [
     destination: "הודו",
     match: 88,
     images: [
-      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=1200&q=90",
+      "/maya3.png",
       "/maya1.png",
       "/maya2.png",
     ],
