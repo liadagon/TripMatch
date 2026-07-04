@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type { KeyboardEvent } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { conversations, getConversationById } from "../data/conversations";
 import "./Chat.css";
 
 const initialMessages = [
@@ -10,7 +12,7 @@ const initialMessages = [
   },
   {
     from: "me",
-    text: "כן! אני מחפשת שותפה לשלושה שבועות הראשונים 🎒",
+    text: "כן! אני מחפשת שותפה לשלושה השבועות הראשונים 🎒",
     time: "14:24",
   },
   {
@@ -47,9 +49,11 @@ function getCurrentTime() {
 
 export default function Chat() {
   const navigate = useNavigate();
+  const { userId } = useParams();
+  const conversation = getConversationById(userId) ?? conversations[0];
   const [messages, setMessages] = useState(initialMessages);
   const [text, setText] = useState("");
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,20 +64,18 @@ export default function Chat() {
 
     if (!cleanText) return;
 
-    const time = getCurrentTime();
-
     setMessages((prev) => [
       ...prev,
       {
         from: "me",
         text: cleanText,
-        time,
+        time: getCurrentTime(),
       },
     ]);
 
     setText("");
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
 
       setMessages((prev) => [
@@ -87,7 +89,7 @@ export default function Chat() {
     }, 900);
   }
 
-  function handleKeyDown(event) {
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
       sendMessage();
@@ -98,20 +100,21 @@ export default function Chat() {
     <div className="chat-page" dir="rtl">
       <main className="chat-shell">
         <header className="chat-header">
-          <button className="chat-back-btn" onClick={() => navigate(-1)}>
+          <button className="chat-back-btn" onClick={() => navigate("/matches")}>
             ‹
           </button>
 
           <img
             className="chat-avatar"
-            src="https://api.dicebear.com/8.x/lorelei/svg?seed=Noa&backgroundColor=b6e3f4"
-            alt="נועה"
+            src={conversation.images[0]}
+            alt={conversation.name}
           />
 
           <div className="chat-meta">
-            <h1>נועה</h1>
+            <h1>{conversation.name}</h1>
             <p>
-              ✈️ דרום אמריקה · <strong>91% התאמה</strong>
+              ✈️ {conversation.destination} ·{" "}
+              <strong>{conversation.match}% התאמה</strong>
             </p>
           </div>
 

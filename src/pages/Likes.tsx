@@ -37,7 +37,7 @@ export default function Likes() {
 
   function handleMessagesTabClick() {
     setActiveTab("messages");
-    navigate("/chat");
+    navigate("/matches");
   }
 
   return (
@@ -185,7 +185,7 @@ export default function Likes() {
           <span>לייקים</span>
         </button>
 
-        <button type="button" onClick={() => navigate("/chat")}>
+        <button type="button" onClick={() => navigate("/matches")}>
           <MessageCircle size={21} />
           <span>הודעות</span>
         </button>

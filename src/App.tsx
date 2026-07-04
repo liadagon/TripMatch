@@ -25,8 +25,10 @@ export default function App() {
         <Route path="/discover" element={<Discover />} />
         <Route path="/preferences" element={<Preferences />} />
         <Route path="/likes" element={<Likes />} />
+        <Route path="/messages" element={<Matches />} />
         <Route path="/matches" element={<Matches />} />
-        <Route path="/chat" element={<Chat />} />
+        <Route path="/chat" element={<Navigate to="/matches" replace />} />
+        <Route path="/chat/:userId" element={<Chat />} />
         <Route path="/profile" element={<Profile />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />

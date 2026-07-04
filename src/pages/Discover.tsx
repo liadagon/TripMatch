@@ -340,7 +340,7 @@ export default function Discover() {
 
             <button
               className="discover-message-btn"
-              onClick={() => navigate("/chat")}
+              onClick={() => navigate("/chat/noa")}
             >
               <MessageCircle size={20} />
               שלחי הודעה
