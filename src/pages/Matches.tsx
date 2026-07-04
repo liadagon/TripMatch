@@ -7,6 +7,13 @@ export default function Matches() {
 
   return (
     <div className="matches-page" dir="rtl">
+      <header className="matches-topbar">
+        <div className="matches-logo" dir="ltr">
+          <span className="matches-logo-trip">Trip</span>
+          <span className="matches-logo-match">Match</span>
+        </div>
+      </header>
+
       <main className="matches-shell">
         <header className="matches-header">
           <h1>הודעות</h1>

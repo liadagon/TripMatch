@@ -18,6 +18,30 @@
   box-sizing: border-box;
 }
 
+.matches-topbar {
+  width: min(1360px, 100%);
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  direction: ltr;
+}
+
+.matches-logo {
+  font-size: 2.15rem;
+  font-weight: 950;
+  line-height: 1;
+  letter-spacing: -0.075em;
+}
+
+.matches-logo-trip {
+  color: #ffffff;
+}
+
+.matches-logo-match {
+  color: #00e6b8;
+}
+
 .matches-shell {
   width: min(1360px, 100%);
   min-height: calc(100vh - 70px);
@@ -300,7 +324,7 @@
   }
 
   .matches-shell {
-    min-height: calc(100vh - 46px);
+    min-height: calc(100vh - 86px);
     border-radius: 30px;
   }
 
@@ -333,11 +357,28 @@
 
 @media (max-width: 640px) {
   .matches-page {
+    position: relative;
     min-height: 100vh;
     padding: 0;
     background: #0f0f2e;
     display: flex;
     justify-content: center;
+  }
+
+  .matches-topbar {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    width: 100%;
+    margin: 0;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .matches-logo {
+    font-size: 1.55rem;
   }
 
   .matches-shell {
