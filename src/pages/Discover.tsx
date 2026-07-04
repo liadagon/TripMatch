@@ -3,7 +3,6 @@ import type { CSSProperties, PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
-  Star,
   Plane,
   Sparkles,
   Heart,
@@ -206,17 +205,6 @@ export default function Discover() {
               <MapPin size={23} />
             </button>
 
-            <button className="discover-category" aria-label="מומלצים">
-              <Star size={23} />
-            </button>
-
-            <button className="discover-category" aria-label="טיולים">
-              <Plane size={23} />
-            </button>
-
-            <button className="discover-category" aria-label="התאמות גבוהות">
-              100
-            </button>
 
             <button className="discover-category active" aria-label="הכי מתאים">
               <Sparkles size={23} />

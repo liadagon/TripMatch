@@ -41,7 +41,7 @@
 .discover-categories {
   display: flex;
   justify-content: center;
-  gap: 14px;
+  gap: 18px;
   direction: ltr;
 }
 
@@ -407,7 +407,7 @@
   }
 
   .discover-categories {
-    gap: 9px;
+    gap: 12px;
   }
 
   .discover-category {
