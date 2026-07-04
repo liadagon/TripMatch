@@ -1,18 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./App.css";
 
-import NavigationBar from "./components/NavigationBar";
+import NavigationBar from "./Components/NavigationBar";
 
-import Welcome from "./pages/Welcome";
-import PhoneLogin from "./pages/PhoneLogin";
-import VerifyCode from "./pages/VerifyCode";
-import Register from "./pages/Register";
-import Questionnaire from "./pages/Questionnaire";
-import Discover from "./pages/Discover";
-import Likes from "./pages/Likes";
-import Matches from "./pages/Matches";
-import Chat from "./pages/Chat";
-import Profile from "./pages/Profile";
+import Welcome from "./Components/Welcome";
+import PhoneLogin from "./Components/PhoneLogin";
+import VerifyCode from "./Components/VerifyCode";
+import Register from "./Components/Register";
+import Questionnaire from "./Components/Questionnaire";
+import Discover from "./Components/Discover";
+import Likes from "./Components/Likes";
+import Matches from "./Components/Matches";
+import Chat from "./Components/Chat";
+import Profile from "./Components/Profile";
 
 function AppLayout() {
   const location = useLocation();
