@@ -5,9 +5,9 @@ import "./NavigationBar.css";
 const navigationItems = [
   {
     label: "Home",
-    path: "/",
+    path: "/discover",
     icon: Home,
-    isActive: (pathname: string) => pathname === "/",
+    isActive: (pathname: string) => pathname.startsWith("/discover"),
   },
   {
     label: "Likes",
