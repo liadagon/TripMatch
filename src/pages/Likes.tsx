@@ -2,12 +2,9 @@
 import { useNavigate } from "react-router-dom";
 import {
   Check,
-  Compass,
   Heart,
   MessageCircle,
   Search,
-  SlidersHorizontal,
-  UserRound,
   Zap,
 } from "lucide-react";
 import "./Likes.css";
@@ -169,32 +166,6 @@ export default function Likes() {
         </section>
       </section>
 
-      <nav className="likes-bottom-nav" aria-label="ניווט ראשי">
-        <button type="button" onClick={() => navigate("/discover")}>
-          <Compass size={21} />
-          <span>גילוי</span>
-        </button>
-
-        <button type="button" onClick={() => navigate("/preferences")}>
-          <SlidersHorizontal size={21} />
-          <span>העדפות</span>
-        </button>
-
-        <button type="button" className="active" onClick={() => navigate("/likes")}>
-          <Heart size={21} fill="currentColor" />
-          <span>לייקים</span>
-        </button>
-
-        <button type="button" onClick={() => navigate("/matches")}>
-          <MessageCircle size={21} />
-          <span>הודעות</span>
-        </button>
-
-        <button type="button" onClick={() => navigate("/profile")}>
-          <UserRound size={21} />
-          <span>פרופיל</span>
-        </button>
-      </nav>
     </main>
   );
 }

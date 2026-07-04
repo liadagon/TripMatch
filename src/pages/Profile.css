@@ -13,7 +13,7 @@
   width: min(760px, 100%);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 30px 24px;
+  padding: 30px 24px var(--tripmatch-nav-space);
 }
 
 .profile-header {
@@ -284,39 +284,10 @@
   font-weight: 700;
 }
 
-.profile-bottom-nav {
-  margin: 24px auto 0;
-  width: min(650px, 100%);
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  padding: 15px 16px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 28px;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
-  backdrop-filter: blur(18px);
-}
-
-.profile-bottom-nav button {
-  background: transparent;
-  border: none;
-  display: grid;
-  place-items: center;
-  gap: 6px;
-  color: #8b92a6;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.profile-bottom-nav button.active {
-  color: #145cff;
-}
-
 @media (min-width: 769px) {
   .profile-layout {
     width: min(1320px, calc(100% - 80px));
-    padding: 34px 0 48px;
+    padding: 34px 0 var(--tripmatch-nav-space);
   }
 
   .profile-header {
@@ -408,10 +379,6 @@
     padding: 18px 30px;
   }
 
-  .profile-bottom-nav {
-    width: min(760px, 100%);
-    margin-top: 28px;
-  }
 }
 
 @media (min-width: 1400px) {
@@ -457,7 +424,7 @@
 }
 @media (max-width: 768px) {
   .profile-layout {
-    padding: 22px 14px;
+    padding: 22px 14px var(--tripmatch-nav-space);
   }
 
   .profile-logo {
@@ -498,12 +465,4 @@
     grid-template-columns: 1fr;
   }
 
-  .profile-bottom-nav {
-    border-radius: 22px;
-    padding: 10px 8px;
-  }
-
-  .profile-bottom-nav button {
-    font-size: 12px;
-  }
 }

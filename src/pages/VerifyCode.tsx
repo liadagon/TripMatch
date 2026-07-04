@@ -200,7 +200,7 @@ export default function VerifyCode() {
 
             <div>
               <span>2</span>
-              מילוי העדפות טיול
+              מילוי פרטי טיול
             </div>
 
             <div>

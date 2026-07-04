@@ -8,7 +8,7 @@
     radial-gradient(circle at 50% 8%, rgba(0, 230, 184, 0.28), transparent 34%),
     radial-gradient(circle at 96% 84%, rgba(180, 150, 255, 0.34), transparent 38%),
     linear-gradient(135deg, #0b82f0 0%, #45c8df 42%, #eef7ff 73%, #f4efff 100%);
-  padding: 28px 48px 36px;
+  padding: 28px 48px var(--tripmatch-nav-space);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,8 +23,8 @@
 
 .chat-shell {
   width: min(1040px, 100%);
-  height: min(860px, calc(100vh - 64px));
-  min-height: 680px;
+  height: min(860px, calc(100vh - var(--tripmatch-nav-space) - 34px));
+  min-height: min(680px, calc(100vh - var(--tripmatch-nav-space) - 34px));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
@@ -286,13 +286,13 @@
 
 @media (max-width: 900px) {
   .chat-page {
-    padding: 20px 18px 28px;
+    padding: 20px 18px var(--tripmatch-nav-space);
   }
 
   .chat-shell {
     width: min(760px, 100%);
-    height: calc(100vh - 48px);
-    min-height: 620px;
+    height: calc(100vh - var(--tripmatch-nav-space) - 32px);
+    min-height: min(620px, calc(100vh - var(--tripmatch-nav-space) - 32px));
     border-radius: 32px;
   }
 
@@ -328,8 +328,8 @@
   .chat-shell {
     width: 100%;
     max-width: 430px;
-    height: 100vh;
-    min-height: 100vh;
+    height: calc(100vh - var(--tripmatch-nav-space));
+    min-height: calc(100vh - var(--tripmatch-nav-space));
     display: flex;
     flex-direction: column;
     border: 0;

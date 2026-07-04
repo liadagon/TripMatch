@@ -15,6 +15,7 @@ body {
 .welcome-page {
   width: 100%;
   min-height: 100dvh;
+  padding-bottom: var(--tripmatch-nav-space);
   background:
     radial-gradient(circle at 0% 0%, #075ec7 0%, #0a7adb 18%, rgba(10, 122, 219, 0.18) 38%, transparent 58%),
     radial-gradient(circle at 88% 92%, rgba(99, 102, 241, 0.16), transparent 32%),

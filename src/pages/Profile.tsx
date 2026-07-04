@@ -7,10 +7,6 @@ import {
   Plane,
   Wallet,
   Heart,
-  Settings,
-  MessageCircle,
-  Search,
-  User,
   Pencil,
   ShieldCheck,
 } from "lucide-react";
@@ -125,7 +121,8 @@ export default function Profile() {
 
               <p className="profile-about">
                 מחפשת שותפה או שותף לטיול בדרום אמריקה. אוהבת טבע, טרקים,
-                אוכל מקומי וחוויות ספונטניות, אבל כן חשוב לי לתכנן מסגרת בסיסית מראש.
+                אוכל מקומי וחוויות ספונטניות, אבל כן חשוב לי לתכנן מסגרת
+                בסיסית מראש.
               </p>
             </section>
 
@@ -150,33 +147,6 @@ export default function Profile() {
             </section>
           </div>
         </section>
-
-        <nav className="profile-bottom-nav">
-          <button onClick={() => navigate("/discover")}>
-            <Search size={22} />
-            גילוי
-          </button>
-
-          <button onClick={() => navigate("/likes")}>
-            <Heart size={22} />
-            לייקים
-          </button>
-
-          <button onClick={() => navigate("/matches")}>
-            <MessageCircle size={22} />
-            הודעות
-          </button>
-
-          <button onClick={() => navigate("/preferences")}>
-            <Settings size={22} />
-            העדפות
-          </button>
-
-          <button onClick={() => navigate("/profile")} className="active">
-            <User size={22} />
-            פרופיל
-          </button>
-        </nav>
       </main>
     </div>
   );

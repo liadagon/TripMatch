@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -8,9 +9,6 @@ import {
   Heart,
   X,
   MessageCircle,
-  Search,
-  User,
-  Settings,
   CalendarDays,
 } from "lucide-react";
 import "./Discover.css";
@@ -18,6 +16,7 @@ import "./Discover.css";
 const initialProfiles = [
   {
     id: 1,
+    userId: "noa",
     name: "נועה",
     age: 23,
     city: "תל אביב",
@@ -33,22 +32,20 @@ const initialProfiles = [
   },
   {
     id: 2,
+    userId: "maya",
     name: "מאיה",
     age: 22,
     city: "חיפה",
     dates: "אוקטובר עד ינואר",
     destination: "הודו",
     match: 88,
-    images: [
-      "/maya3.png",
-      "/maya1.png",
-      "/maya2.png",
-    ],
+    images: ["/maya3.png", "/maya1.png", "/maya2.png"],
     tags: ["הוסטלים", "יוגה", "תרבות", "טיול גמיש"],
   },
   {
     id: 3,
-    name: "נועה",
+    userId: "ido",
+    name: "עידו",
     age: 24,
     city: "רחובות",
     dates: "יולי עד ספטמבר",
@@ -65,7 +62,6 @@ const initialProfiles = [
 
 export default function Discover() {
   const navigate = useNavigate();
-
   const [profiles, setProfiles] = useState(initialProfiles);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
@@ -93,7 +89,7 @@ export default function Discover() {
           <section className="discover-empty">
             <Sparkles size={44} />
             <h2>אין עוד התאמות כרגע</h2>
-            <p>נסי לעדכן העדפות או לחזור מאוחר יותר.</p>
+            <p>נסי לחזור מאוחר יותר כדי לראות התאמות חדשות.</p>
 
             <button onClick={() => setProfiles(initialProfiles)}>
               התחילי מחדש
@@ -108,13 +104,13 @@ export default function Discover() {
   const dragPower = Math.min(Math.abs(dragX) / 130, 1);
   const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
 
-  function moveToNextProfile(type) {
+  function moveToNextProfile(type: "like" | "skip") {
     if (isAnimatingRef.current) return;
 
     isAnimatingRef.current = true;
     setFeedback(type);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setProfiles((prevProfiles) => prevProfiles.slice(1));
       setPhotoIndex(0);
       setDragX(0);
@@ -127,47 +123,27 @@ export default function Discover() {
     }, 280);
   }
 
-  function likeProfile() {
-    moveToNextProfile("like");
-  }
-
-  function skipProfile() {
-    moveToNextProfile("skip");
-  }
-
   function nextPhoto() {
-    if (isAnimatingRef.current) return;
-
-    const totalImages = profile.images.length;
-
-    if (totalImages <= 1) return;
-
-    setPhotoIndex((prev) => (prev + 1) % totalImages);
+    if (isAnimatingRef.current || profile.images.length <= 1) return;
+    setPhotoIndex((prev) => (prev + 1) % profile.images.length);
   }
 
-  function handlePointerDown(event) {
+  function handlePointerDown(event: PointerEvent<HTMLElement>) {
     if (isAnimatingRef.current) return;
 
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Ignore pointer capture errors.
-    }
-
+    event.currentTarget.setPointerCapture(event.pointerId);
     startXRef.current = event.clientX;
     dragXRef.current = 0;
     didSwipeRef.current = false;
     isPointerDownRef.current = true;
-
     setIsDragging(true);
     setFeedback("");
   }
 
-  function handlePointerMove(event) {
+  function handlePointerMove(event: PointerEvent<HTMLElement>) {
     if (!isPointerDownRef.current || isAnimatingRef.current) return;
 
     const diff = event.clientX - startXRef.current;
-
     dragXRef.current = diff;
     setDragX(diff);
 
@@ -176,27 +152,22 @@ export default function Discover() {
     }
   }
 
-  function handlePointerUp(event) {
+  function handlePointerUp(event: PointerEvent<HTMLElement>) {
     if (!isPointerDownRef.current || isAnimatingRef.current) return;
 
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // Ignore pointer release errors.
-    }
-
+    event.currentTarget.releasePointerCapture(event.pointerId);
     isPointerDownRef.current = false;
     setIsDragging(false);
 
     const finalDragX = dragXRef.current;
 
     if (finalDragX > 120) {
-      likeProfile();
+      moveToNextProfile("like");
       return;
     }
 
     if (finalDragX < -120) {
-      skipProfile();
+      moveToNextProfile("skip");
       return;
     }
 
@@ -208,13 +179,8 @@ export default function Discover() {
     }
   }
 
-  function handlePointerCancel(event) {
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // Ignore pointer release errors.
-    }
-
+  function handlePointerCancel(event: PointerEvent<HTMLElement>) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
     isPointerDownRef.current = false;
     didSwipeRef.current = false;
     dragXRef.current = 0;
@@ -225,7 +191,7 @@ export default function Discover() {
   const cardStyle = {
     transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
     "--drag-power": dragPower,
-  };
+  } as CSSProperties;
 
   return (
     <div className="discover-page" dir="rtl">
@@ -328,52 +294,31 @@ export default function Discover() {
           </section>
 
           <div className="discover-actions">
-            <button className="discover-skip-btn" onClick={skipProfile}>
+            <button
+              className="discover-skip-btn"
+              onClick={() => moveToNextProfile("skip")}
+            >
               <X size={21} />
               דלגי
             </button>
 
-            <button className="discover-like-btn" onClick={likeProfile}>
+            <button
+              className="discover-like-btn"
+              onClick={() => moveToNextProfile("like")}
+            >
               <Heart size={20} fill="currentColor" />
               אהבתי
             </button>
 
             <button
               className="discover-message-btn"
-              onClick={() => navigate("/chat/noa")}
+              onClick={() => navigate(`/chat/${profile.userId}`)}
             >
               <MessageCircle size={20} />
               שלחי הודעה
             </button>
           </div>
         </section>
-
-        <nav className="discover-bottom-nav">
-          <button onClick={() => navigate("/discover")} className="active">
-            <Search size={22} />
-            גילוי
-          </button>
-
-          <button onClick={() => navigate("/likes")}>
-            <Heart size={22} />
-            לייקים
-          </button>
-
-          <button onClick={() => navigate("/matches")}>
-            <MessageCircle size={22} />
-            הודעות
-          </button>
-
-          <button onClick={() => navigate("/preferences")}>
-            <Settings size={22} />
-            העדפות
-          </button>
-
-          <button onClick={() => navigate("/profile")}>
-            <User size={22} />
-            פרופיל
-          </button>
-        </nav>
       </main>
     </div>
   );
