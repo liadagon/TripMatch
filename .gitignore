@@ -4,3 +4,4 @@ dist/
 client/dist/
 .env
 client/.env
+_backup_root_react_duplicate/
