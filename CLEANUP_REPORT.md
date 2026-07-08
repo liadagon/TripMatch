@@ -77,7 +77,27 @@ tripmatch/
     dist/
     node_modules/
   server/
-    .gitkeep
+    config/
+      db.js
+    controllers/
+      userController.js
+      fileController.js
+    middleware/
+      errorHandler.js
+      notFound.js
+    models/
+      User.js
+    routes/
+      userRoutes.js
+      fileRoutes.js
+    public/
+      .gitkeep
+    app.js
+    server.js
+    package.json
+    .env.example
+    .gitignore
+    request.rest
   _backup_root_react_duplicate/
     .env
     .env.example
@@ -118,25 +138,36 @@ npm --prefix client run build
 
 The frontend build passed successfully.
 
-## How To Run The Backend
+## Backend Created
 
-The `server/` folder currently exists, but it only contains `.gitkeep`.
+The initial TripMatch backend was created inside `server/` using the course-style structure:
 
-No `server/package.json`, `server/app.js`, or `server/server.js` file was found, so there is not currently a backend app to run from this checkout.
+- Express app setup in `server/app.js`
+- MongoDB connection with Mongoose in `server/config/db.js`
+- User model in `server/models/User.js`
+- User CRUD controller and routes
+- Multer file upload controller and route
+- Error and 404 middleware
+- Static serving for uploaded files from `/public`
+- `server/request.rest` for API testing
 
-When the backend files are added under `server/`, the usual flow will be:
+The backend uses JavaScript CommonJS syntax and does not include auth, passwords, JWT, or frontend changes.
+
+No real `server/.env` file was created.
+
+To run the backend:
 
 ```bash
 cd server
 npm install
+copy .env.example .env
 npm run dev
 ```
 
-or:
+The API will use:
 
-```bash
-cd server
-npm start
-```
+- `http://127.0.0.1:5000/api/health`
+- `http://127.0.0.1:5000/api/users`
+- `http://127.0.0.1:5000/api/file`
 
-depending on the scripts defined in `server/package.json`.
+MongoDB Compass will show the `tripmatch` database after the first user document is inserted.

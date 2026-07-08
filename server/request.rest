@@ -1,0 +1,55 @@
+@baseUrl = http://127.0.0.1:5000
+@userId = paste_created_user_id_here
+
+### Health check
+GET {{baseUrl}}/api/health
+
+### Create user
+POST {{baseUrl}}/api/users
+Content-Type: application/json
+
+{
+  "name": "Noa Cohen",
+  "email": "noa@example.com",
+  "bio": "Looking for a relaxed food and beach trip.",
+  "age": 24,
+  "location": "Tel Aviv",
+  "interests": ["food", "beaches", "music"],
+  "preferredDestinations": ["Greece", "Italy"],
+  "travelStyle": "Backpacking"
+}
+
+### Get all users
+GET {{baseUrl}}/api/users
+
+### Get users by location
+GET {{baseUrl}}/api/users?location=Tel%20Aviv
+
+### Get users by travel style
+GET {{baseUrl}}/api/users?travelStyle=Backpacking
+
+### Get user by id
+GET {{baseUrl}}/api/users/{{userId}}
+
+### Update user
+PUT {{baseUrl}}/api/users/{{userId}}
+Content-Type: application/json
+
+{
+  "bio": "Updated TripMatch profile bio.",
+  "travelStyle": "City breaks"
+}
+
+### Delete user
+DELETE {{baseUrl}}/api/users/{{userId}}
+
+### Upload file
+POST {{baseUrl}}/api/file
+Content-Type: multipart/form-data; boundary=TripMatchBoundary
+
+--TripMatchBoundary
+Content-Disposition: form-data; name="file"; filename="sample-photo.jpg"
+Content-Type: image/jpeg
+
+< ./sample-photo.jpg
+--TripMatchBoundary--
