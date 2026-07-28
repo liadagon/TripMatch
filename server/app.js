@@ -4,8 +4,10 @@ dotenv.config();
 const express = require("express");
 const cors = require("cors");
 
+const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const protect = require("./middleware/auth");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -28,8 +30,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/file", fileRoutes);
+app.use("/api/file", protect, fileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,18 +1,16 @@
 const User = require("../models/User");
 
-const createUser = async (req, res, next) => {
-  try {
-    const user = await User.create(req.body);
-
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+const PROFILE_FIELDS = [
+  "name",
+  "bio",
+  "age",
+  "location",
+  "interests",
+  "preferredDestinations",
+  "travelStyle",
+  "photo",
+  "photoURL",
+];
 
 const getUsers = async (req, res, next) => {
   try {
@@ -58,12 +56,9 @@ const getUserById = async (req, res, next) => {
   }
 };
 
-const updateUser = async (req, res, next) => {
+const updateCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({
@@ -71,6 +66,14 @@ const updateUser = async (req, res, next) => {
         message: "User not found",
       });
     }
+
+    PROFILE_FIELDS.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        user[field] = req.body[field];
+      }
+    });
+
+    await user.save();
 
     return res.status(200).json({
       success: true,
@@ -82,9 +85,9 @@ const updateUser = async (req, res, next) => {
   }
 };
 
-const deleteUser = async (req, res, next) => {
+const deleteCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(req.user._id);
 
     if (!user) {
       return res.status(404).json({
@@ -103,10 +106,16 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+const rejectLegacyMutation = (req, res) =>
+  res.status(401).json({
+    success: false,
+    message: "You are not authorized to perform this action",
+  });
+
 module.exports = {
-  createUser,
   getUsers,
   getUserById,
-  updateUser,
-  deleteUser,
+  updateCurrentUser,
+  deleteCurrentUser,
+  rejectLegacyMutation,
 };

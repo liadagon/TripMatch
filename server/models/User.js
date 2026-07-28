@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
@@ -13,6 +14,19 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    password: {
+      type: String,
+      required: function requirePasswordForLocalUser() {
+        return this.authProvider === "local";
+      },
+      minlength: 8,
+      select: false,
     },
     photo: {
       type: String,
@@ -47,7 +61,34 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (_doc, ret) => {
+        delete ret.password;
+        return ret;
+      },
+    },
   }
 );
+
+userSchema.pre("save", async function hashPassword(next) {
+  if (!this.isModified("password") || !this.password) {
+    return next();
+  }
+
+  try {
+    this.password = await bcrypt.hash(this.password, 12);
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  if (!this.password) {
+    return false;
+  }
+
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model("User", userSchema);

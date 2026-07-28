@@ -1,16 +1,19 @@
 @baseUrl = http://127.0.0.1:5000
 @userId = paste_created_user_id_here
+@otherUserId = paste_another_user_id_here
+@token = paste_jwt_token_here
 
 ### Health check
 GET {{baseUrl}}/api/health
 
-### Create user
-POST {{baseUrl}}/api/users
+### Register
+POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
   "name": "Noa Cohen",
   "email": "noa@example.com",
+  "password": "SecurePass123!",
   "bio": "Looking for a relaxed food and beach trip.",
   "age": 24,
   "location": "Tel Aviv",
@@ -19,32 +22,88 @@ Content-Type: application/json
   "travelStyle": "Backpacking"
 }
 
-### Get all users
-GET {{baseUrl}}/api/users
-
-### Get users by location
-GET {{baseUrl}}/api/users?location=Tel%20Aviv
-
-### Get users by travel style
-GET {{baseUrl}}/api/users?travelStyle=Backpacking
-
-### Get user by id
-GET {{baseUrl}}/api/users/{{userId}}
-
-### Update user
-PUT {{baseUrl}}/api/users/{{userId}}
+### Login
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
+
+{
+  "email": "noa@example.com",
+  "password": "SecurePass123!"
+}
+
+### Current authenticated user
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Current user without a token - expected 401
+GET {{baseUrl}}/api/auth/me
+
+### Update the authenticated user's profile
+PUT {{baseUrl}}/api/users/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "bio": "Updated TripMatch profile bio.",
   "travelStyle": "City breaks"
 }
 
-### Delete user
-DELETE {{baseUrl}}/api/users/{{userId}}
+### Attempt to update another user through the disabled legacy route - expected 401
+PUT {{baseUrl}}/api/users/{{otherUserId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "bio": "This update must be rejected."
+}
+
+### Invalid profile field - expected 400 from JOI
+PUT {{baseUrl}}/api/users/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "password": "ThisFieldIsNotAllowed123!"
+}
+
+### Get all users
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
+### Get users by location
+GET {{baseUrl}}/api/users?location=Tel%20Aviv
+Authorization: Bearer {{token}}
+
+### Get users by travel style
+GET {{baseUrl}}/api/users?travelStyle=Backpacking
+Authorization: Bearer {{token}}
+
+### Get user by id
+GET {{baseUrl}}/api/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Duplicate registration - expected 400
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Noa Cohen",
+  "email": "noa@example.com",
+  "password": "SecurePass123!"
+}
+
+### Login for a legacy user without a password - expected 401, not 500
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "legacy-without-password@example.com",
+  "password": "ExamplePassword123!"
+}
 
 ### Upload file
 POST {{baseUrl}}/api/file
+Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=TripMatchBoundary
 
 --TripMatchBoundary
@@ -53,3 +112,7 @@ Content-Type: image/jpeg
 
 < ./sample-photo.jpg
 --TripMatchBoundary--
+
+### Delete the authenticated user (run last)
+DELETE {{baseUrl}}/api/users/me
+Authorization: Bearer {{token}}
