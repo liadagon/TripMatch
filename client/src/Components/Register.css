@@ -1,54 +1,113 @@
 .register-page {
   width: 100%;
-  min-height: 100vh;
-  background: #f0f2f5;
-  display: flex;
-  justify-content: center;
+  min-height: 100dvh;
+  padding: 28px 24px 72px;
+  color: #101828;
+  font-family: Assistant, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 0% 0%, #075ec7 0%, #0a7adb 16%, rgba(10, 122, 219, 0.18) 36%, transparent 56%),
+    radial-gradient(circle at 90% 12%, rgba(45, 212, 191, 0.2), transparent 27%),
+    radial-gradient(circle at 88% 88%, rgba(139, 92, 246, 0.2), transparent 32%),
+    linear-gradient(135deg, #eaf6ff 0%, #eef4ff 48%, #f7f2ff 100%);
+  direction: rtl;
   overflow-x: hidden;
 }
 
 .register-shell {
-  width: 100%;
-  max-width: 430px;
-  min-height: 100vh;
-  background: #f0f2f5;
-  position: relative;
-  overflow-x: hidden;
+  width: min(880px, 100%);
+  margin: 0 auto;
 }
 
 .register-header {
-  background: #1a1a2e;
+  position: relative;
+  padding: 34px 42px 38px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 34px;
+  overflow: hidden;
   color: #ffffff;
-  padding: 52px 24px 20px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.2), transparent 28%),
+    linear-gradient(135deg, #075ec7 0%, #2368ed 48%, #8735ff 100%);
+  box-shadow: 0 28px 70px rgba(37, 99, 235, 0.22);
+}
+
+.register-header::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  left: -72px;
+  bottom: -130px;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.22);
+}
+
+.register-brand,
+.register-header-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.register-brand {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -1.2px;
+  text-align: left;
+  text-shadow: 0 12px 26px rgba(16, 24, 40, 0.2);
+}
+
+.register-brand span {
+  color: #20fff1;
+}
+
+.register-header-copy {
+  max-width: 620px;
+  margin-top: 28px;
+}
+
+.register-eyebrow {
+  display: inline-flex;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .register-header h1 {
-  font-size: 22px;
-  font-weight: 800;
-  margin: 0;
+  margin: 14px 0 0;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
 
 .register-header p {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
-  margin-top: 4px;
-  line-height: 1.5;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 700;
 }
 
 .register-content {
-  padding-bottom: 100px;
+  display: grid;
+  gap: 18px;
+  padding-top: 22px;
 }
 
 .register-error-banner {
-  background: #fff0f0;
-  border: 1px solid #ffcccc;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin: 12px 16px 0;
-  font-size: 13px;
-  color: #cc0000;
   display: none;
-  font-weight: 700;
+  padding: 14px 18px;
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 18px;
+  color: #b42318;
+  background: rgba(255, 241, 242, 0.94);
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .register-error-banner.show {
@@ -56,164 +115,258 @@
 }
 
 .register-section {
-  background: #ffffff;
-  margin: 12px 16px;
-  border-radius: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 28px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24px 58px rgba(16, 24, 40, 0.1);
+  backdrop-filter: blur(18px);
 }
 
 .register-section-title {
-  padding: 16px 18px 12px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #888888;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border-bottom: 1px solid #f0f0f0;
+  grid-column: 1 / -1;
+  padding: 18px 24px 15px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  color: #145cff;
+  background: linear-gradient(90deg, rgba(20, 92, 255, 0.07), rgba(45, 212, 191, 0.05));
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
 }
 
-.register-field {
-  padding: 0 18px;
-  border-bottom: 1px solid #f5f5f5;
+.register-field,
+.register-chip-field {
+  min-width: 0;
+  padding: 17px 24px 18px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.register-field:last-child {
-  border-bottom: none;
+.register-field:nth-child(even) {
+  border-left: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.register-chip-field,
+.register-bio-field {
+  grid-column: 1 / -1;
 }
 
 .register-field label,
 .register-chip-field label {
   display: block;
-  font-size: 12px;
-  color: #888888;
-  font-weight: 700;
-  padding-top: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .register-field input,
 .register-field select,
 .register-field textarea {
   width: 100%;
-  background: transparent;
-  border: none;
+  border: 1px solid rgba(15, 23, 42, 0.09);
+  border-radius: 15px;
   outline: none;
+  color: #101828;
+  background: rgba(248, 250, 252, 0.88);
+  font: inherit;
   font-size: 16px;
-  color: #1a1a2e;
-  padding-bottom: 14px;
-  appearance: none;
+  font-weight: 700;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.register-field input,
+.register-field select {
+  height: 50px;
+  padding: 0 15px;
 }
 
 .register-field textarea {
-  resize: none;
-  min-height: 80px;
-  line-height: 1.5;
+  min-height: 112px;
+  padding: 14px 15px;
+  line-height: 1.6;
+  resize: vertical;
 }
 
 .register-field input::placeholder,
 .register-field textarea::placeholder {
-  color: #b0b0bd;
+  color: #98a2b3;
+}
+
+.register-field input:focus,
+.register-field select:focus,
+.register-field textarea:focus {
+  border-color: rgba(20, 92, 255, 0.58);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(20, 92, 255, 0.1);
 }
 
 .register-field.error label {
-  color: #ff4444;
+  color: #d92d20;
 }
 
 .register-field.error input,
 .register-field.error select {
-  color: #ff4444;
-}
-
-.register-chip-field {
-  padding: 0 18px;
-  border-bottom: 1px solid #f5f5f5;
+  border-color: rgba(217, 45, 32, 0.48);
+  background: #fff7f7;
 }
 
 .register-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 14px;
+  gap: 10px;
 }
 
 .register-chip {
-  padding: 7px 14px;
-  border-radius: 50px;
-  border: 1.5px solid #e0e0e0;
-  font-size: 13px;
-  font-weight: 700;
+  padding: 9px 16px;
+  border: 1.5px solid rgba(20, 92, 255, 0.15);
+  border-radius: 999px;
+  color: #475467;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 900;
   cursor: pointer;
-  color: #555555;
-  transition: all 0.15s;
-  background: #ffffff;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    background 0.16s ease;
+}
+
+.register-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(20, 92, 255, 0.42);
+  color: #145cff;
 }
 
 .register-chip.selected {
-  background: #1a1aff;
+  border-color: transparent;
   color: #ffffff;
-  border-color: #1a1aff;
+  background: linear-gradient(135deg, #145cff, #8735ff);
+  box-shadow: 0 10px 24px rgba(20, 92, 255, 0.2);
 }
 
 .register-checkbox-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px 18px;
-  margin: 0 16px;
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 44px rgba(16, 24, 40, 0.08);
   cursor: pointer;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(18px);
 }
 
 .register-checkbox-row.error {
-  border: 1px solid #ffaaaa;
-  background: #fff7f7;
+  border-color: rgba(217, 45, 32, 0.38);
+  background: rgba(255, 247, 247, 0.94);
 }
 
-.register-checkbox-row input[type="checkbox"] {
+.register-checkbox-row input {
   width: 22px;
   height: 22px;
-  accent-color: #1a1aff;
-  flex-shrink: 0;
-  margin-top: 2px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: #145cff;
 }
 
 .register-checkbox-row span {
-  font-size: 14px;
-  color: #1a1a2e;
+  color: #344054;
+  font-size: 15px;
   line-height: 1.5;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .register-primary-btn {
-  display: block;
-  width: calc(100% - 32px);
-  margin: 16px;
-  padding: 18px;
-  background: #1a1aff;
-  color: #ffffff;
+  width: 100%;
+  min-height: 60px;
   border: none;
-  border-radius: 50px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #005cff, #8735ff);
+  box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
-  text-align: center;
-  transition: transform 0.15s, background 0.15s;
+  transition:
+    transform 0.16s ease,
+    filter 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.register-primary-btn:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 22px 44px rgba(37, 99, 235, 0.34);
 }
 
 .register-primary-btn:active {
-  transform: scale(0.97);
-  background: #1212cc;
+  transform: scale(0.985);
 }
 
-@media (min-width: 431px) {
+@media (max-width: 700px) {
   .register-page {
-    background: #0f0f2e;
+    padding: 14px 12px 42px;
   }
 
-  .register-shell {
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  .register-header {
+    padding: 26px 22px 30px;
+    border-radius: 28px;
+  }
+
+  .register-brand {
+    font-size: 26px;
+  }
+
+  .register-header-copy {
+    margin-top: 22px;
+  }
+
+  .register-header h1 {
+    font-size: 34px;
+  }
+
+  .register-header p {
+    font-size: 15px;
+  }
+
+  .register-content {
+    gap: 14px;
+    padding-top: 16px;
+  }
+
+  .register-section {
+    grid-template-columns: 1fr;
+    border-radius: 24px;
+  }
+
+  .register-section-title,
+  .register-field,
+  .register-chip-field {
+    grid-column: 1;
+  }
+
+  .register-field,
+  .register-chip-field {
+    padding: 15px 18px 17px;
+    border-left: none;
+  }
+
+  .register-section-title {
+    padding: 16px 18px 13px;
+  }
+
+  .register-checkbox-row {
+    border-radius: 20px;
+  }
+
+  .register-primary-btn {
+    min-height: 56px;
+    font-size: 17px;
   }
 }

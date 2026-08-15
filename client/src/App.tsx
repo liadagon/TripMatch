@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./App.css";
 
 import NavigationBar from "./Components/NavigationBar";
@@ -13,16 +14,24 @@ import Likes from "./Components/Likes";
 import Matches from "./Components/Matches";
 import Chat from "./Components/Chat";
 import Profile from "./Components/Profile";
+import ProtectedRoute from "./Components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
-function AppLayout() {
+const protectedPage = (page: ReactNode) => (
+  <ProtectedRoute>{page}</ProtectedRoute>
+);
+
+export default function App() {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
 
-  // hide navbar on auth / landing screens
-  const hideNavbar =
-    location.pathname === "/" ||
-    location.pathname === "/phone-login" ||
-    location.pathname === "/verify-code" ||
-    location.pathname === "/register";
+  const isApplicationScreen =
+    location.pathname === "/discover" ||
+    location.pathname === "/likes" ||
+    location.pathname === "/messages" ||
+    location.pathname === "/matches" ||
+    location.pathname === "/profile" ||
+    location.pathname.startsWith("/chat/");
 
   return (
     <>
@@ -35,28 +44,19 @@ function AppLayout() {
         <Route path="/questionnaire" element={<Questionnaire />} />
 
         {/* App routes */}
-        <Route path="/discover" element={<Discover />} />
-        <Route path="/likes" element={<Likes />} />
-        <Route path="/messages" element={<Matches />} />
-        <Route path="/matches" element={<Matches />} />
+        <Route path="/discover" element={protectedPage(<Discover />)} />
+        <Route path="/likes" element={protectedPage(<Likes />)} />
+        <Route path="/messages" element={protectedPage(<Matches />)} />
+        <Route path="/matches" element={protectedPage(<Matches />)} />
         <Route path="/chat" element={<Navigate to="/matches" replace />} />
-        <Route path="/chat/:userId" element={<Chat />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
+        <Route path="/profile" element={protectedPage(<Profile />)} />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* Navbar only for logged-in app screens */}
-      {!hideNavbar && <NavigationBar />}
+      {isAuthenticated && isApplicationScreen && <NavigationBar />}
     </>
-  );
-}
-
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
   );
 }

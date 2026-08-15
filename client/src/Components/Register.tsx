@@ -83,8 +83,15 @@ export default function Register() {
     <div className="register-page" dir="rtl">
       <div className="register-shell">
         <header className="register-header">
-          <h1>✈️ בואו נתחיל</h1>
-          <p>ספרי לנו קצת על עצמך כדי שנוכל למצוא לך שותף מושלם לטיול</p>
+          <div className="register-brand" dir="ltr">
+            Trip<span>Match</span>
+          </div>
+
+          <div className="register-header-copy">
+            <span className="register-eyebrow">השלמת פרופיל</span>
+            <h1>✈️ בואו נתחיל</h1>
+            <p>ספרי לנו קצת על עצמך כדי שנוכל למצוא לך שותף מושלם לטיול</p>
+          </div>
         </header>
 
         <main className="register-content">
@@ -245,7 +252,7 @@ export default function Register() {
               </div>
             </div>
 
-            <div className="register-field">
+            <div className="register-field register-bio-field">
               <label>ספרי קצת על עצמך</label>
               <textarea
                 placeholder="מי את? מה את אוהבת? מה המוטיבציה לטיול?"

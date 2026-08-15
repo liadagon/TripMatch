@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   signInWithGoogle,
-  saveTripmatchUser,
   getGoogleAuthErrorMessage,
 } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 import "./welcome.css";
 
 const heroImages = [
@@ -16,6 +17,7 @@ const heroImages = [
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const { authenticateWithGoogle } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [googleError, setGoogleError] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -35,12 +37,33 @@ export default function Welcome() {
     setIsGoogleLoading(true);
 
     try {
-      const user = await signInWithGoogle();
-      saveTripmatchUser(user);
-      navigate("/home");
+      const { idToken } = await signInWithGoogle();
+      await authenticateWithGoogle(idToken);
+      navigate("/questionnaire");
     } catch (error) {
       console.error("Google login failed:", error);
-      setGoogleError(getGoogleAuthErrorMessage(error));
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 400) {
+          setGoogleError(
+            "כתובת האימייל הזו כבר רשומה באמצעות שיטת התחברות אחרת.",
+          );
+        } else if (error.response?.status === 401) {
+          setGoogleError(
+            "לא הצלחנו לאמת את חשבון Google. נסי להתחבר מחדש.",
+          );
+        } else if (!error.response) {
+          setGoogleError(
+            "לא ניתן להתחבר לשרת TripMatch. בדקי את החיבור ונסי שוב.",
+          );
+        } else {
+          setGoogleError(
+            "שירות ההתחברות אינו זמין כרגע. נסי שוב מאוחר יותר.",
+          );
+        }
+      } else {
+        setGoogleError(getGoogleAuthErrorMessage(error));
+      }
     } finally {
       setIsGoogleLoading(false);
     }
@@ -86,7 +109,7 @@ export default function Welcome() {
               className="main-action-btn"
               onClick={() => navigate("/phone-login")}
             >
-              התחברות עם טלפון
+              המשך עם טלפון
             </button>
 
             <button
@@ -100,21 +123,14 @@ export default function Welcome() {
                 <path fill="#FBBC05" d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58v-3.1H1.27a12 12 0 0 0 0 10.78l4-3.1z"/>
                 <path fill="#EA4335" d="M12 4.75c1.76 0 3.34.6 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.61l4 3.1C6.22 6.87 8.87 4.75 12 4.75z"/>
               </svg>
-              <span>{isGoogleLoading ? "מתחבר..." : "התחברות עם Google"}</span>
+              <span>{isGoogleLoading ? "מתחבר..." : "המשך עם Google"}</span>
             </button>
 
             {googleError && <p className="google-error">{googleError}</p>}
 
-            <div className="signup-row">
-              <span>אין לך חשבון?</span>
-
-              <button
-                className="signup-link"
-                onClick={() => navigate("/register")}
-              >
-                הרשמה
-              </button>
-            </div>
+            <p className="signup-row">
+              בהמשך עם טלפון או Google ניתן להירשם או להתחבר
+            </p>
 
             <p className="note">מיועד למטיילים ישראלים</p>
           </div>

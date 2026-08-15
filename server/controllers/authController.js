@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const getFirebaseAdminAuth = require("../config/firebaseAdmin");
 const User = require("../models/User");
 
 const createToken = (userId) =>
@@ -62,6 +63,139 @@ const login = async (req, res, next) => {
   }
 };
 
+const googleLogin = async (req, res, next) => {
+  let firebaseAuth;
+
+  try {
+    firebaseAuth = getFirebaseAdminAuth();
+  } catch (_error) {
+    return res.status(500).json({
+      success: false,
+      message: "Google authentication is not configured",
+    });
+  }
+
+  let verifiedToken;
+
+  try {
+    verifiedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
+  } catch (error) {
+    const invalidTokenCodes = new Set([
+      "auth/argument-error",
+      "auth/id-token-expired",
+      "auth/id-token-revoked",
+      "auth/invalid-id-token",
+    ]);
+
+    if (invalidTokenCodes.has(error.code)) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired Firebase authentication token",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Google authentication is temporarily unavailable",
+    });
+  }
+
+  try {
+    const firebaseUid =
+      typeof verifiedToken.uid === "string" ? verifiedToken.uid.trim() : "";
+    const email =
+      typeof verifiedToken.email === "string"
+        ? verifiedToken.email.trim().toLowerCase()
+        : "";
+    const hasEmailVerifiedClaim = Object.prototype.hasOwnProperty.call(
+      verifiedToken,
+      "email_verified"
+    );
+
+    if (
+      !firebaseUid ||
+      !email ||
+      (hasEmailVerifiedClaim && verifiedToken.email_verified !== true)
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "The verified Google account is missing a verified email",
+      });
+    }
+
+    let user = await User.findOne({ firebaseUid });
+    let isNewUser = false;
+
+    if (user && user.authProvider !== "google") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This email is already registered with another login method",
+      });
+    }
+
+    if (!user) {
+      const existingUser = await User.findOne({ email });
+
+      if (existingUser && existingUser.authProvider !== "google") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This email is already registered with another login method",
+        });
+      }
+
+      if (existingUser) {
+        if (
+          existingUser.firebaseUid &&
+          existingUser.firebaseUid !== firebaseUid
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "This email is already registered with another Google account",
+          });
+        }
+
+        existingUser.firebaseUid = firebaseUid;
+        user = await existingUser.save();
+      } else {
+        const verifiedName =
+          typeof verifiedToken.name === "string"
+            ? verifiedToken.name.trim()
+            : "";
+        const verifiedPhoto =
+          typeof verifiedToken.picture === "string"
+            ? verifiedToken.picture.trim()
+            : "";
+
+        user = await User.create({
+          name: verifiedName || email.split("@")[0],
+          email,
+          photoURL: verifiedPhoto,
+          authProvider: "google",
+          firebaseUid,
+        });
+        isNewUser = true;
+      }
+    }
+
+    const token = createToken(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: isNewUser
+        ? "Google registration completed successfully"
+        : "Google login completed successfully",
+      token,
+      data: user,
+      isNewUser,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const getCurrentUser = (req, res) =>
   res.status(200).json({
     success: true,
@@ -71,5 +205,6 @@ const getCurrentUser = (req, res) =>
 module.exports = {
   register,
   login,
+  googleLogin,
   getCurrentUser,
 };

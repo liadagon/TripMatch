@@ -99,17 +99,6 @@ export default function PhoneLogin() {
             </button>
           </form>
 
-          <div className="divider">
-            <span>או</span>
-          </div>
-
-          <button
-            className="email-login-link"
-            type="button"
-            onClick={() => navigate("/discover")}
-          >
-            כניסה עם אימייל
-          </button>
         </div>
 
         <div className="phone-visual-card">

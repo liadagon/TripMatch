@@ -4,15 +4,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   type Auth,
-  type User,
 } from "firebase/auth";
-
-export type TripmatchUser = {
-  uid: string;
-  name: string | null;
-  email: string | null;
-  photoURL: string | null;
-};
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -65,35 +57,12 @@ export function getFirebaseAuth() {
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
-export function toTripmatchUser(user: User): TripmatchUser {
-  return {
-    uid: user.uid,
-    name: user.displayName,
-    email: user.email,
-    photoURL: user.photoURL,
-  };
-}
-
 export async function signInWithGoogle() {
   const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
-  return toTripmatchUser(result.user);
-}
+  const user = result.user;
+  const idToken = await user.getIdToken();
 
-export function saveTripmatchUser(user: TripmatchUser) {
-  localStorage.setItem("tripmatch_user", JSON.stringify(user));
-}
-
-export function getStoredTripmatchUser(): TripmatchUser | null {
-  const storedUser = localStorage.getItem("tripmatch_user");
-
-  if (!storedUser) return null;
-
-  try {
-    return JSON.parse(storedUser) as TripmatchUser;
-  } catch {
-    localStorage.removeItem("tripmatch_user");
-    return null;
-  }
+  return { idToken };
 }
 export function getGoogleAuthErrorMessage(error: unknown) {
   const code =

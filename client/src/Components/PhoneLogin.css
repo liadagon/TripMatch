@@ -209,42 +209,8 @@ body {
 }
 
 .phone-submit:active,
-.back-button:active,
-.email-login-link:active {
+.back-button:active {
   transform: scale(0.98);
-}
-
-.divider {
-  width: 100%;
-  margin: 32px 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  color: #98a2b3;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: rgba(152, 162, 179, 0.34);
-}
-
-.email-login-link {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #005cff;
-  font-size: 17px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.email-login-link:hover {
-  text-decoration: underline;
 }
 
 .phone-visual-card {
