@@ -1,9 +1,13 @@
 import { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "./Register.css";
 
 type RegisterForm = {
   fullName: string;
+  email: string;
+  password: string;
   age: string;
   city: string;
   dest: string;
@@ -17,9 +21,12 @@ type RegisterFieldErrors = Partial<Record<keyof RegisterForm, boolean>>;
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const [form, setForm] = useState<RegisterForm>({
     fullName: "",
+    email: "",
+    password: "",
     age: "",
     city: "",
     dest: "",
@@ -32,6 +39,8 @@ export default function Register() {
   const [budget, setBudget] = useState("");
   const [style, setStyle] = useState("");
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
 
   function updateField<K extends keyof RegisterForm>(
@@ -41,12 +50,15 @@ export default function Register() {
     setForm((prev) => ({ ...prev, [name]: value }));
     setFieldErrors((prev) => ({ ...prev, [name]: false }));
     setShowError(false);
+    setErrorMessage("");
   }
 
-  function validateForm() {
+  async function validateForm() {
     const errors: RegisterFieldErrors = {};
     const requiredFields: Array<keyof RegisterForm> = [
       "fullName",
+      "email",
+      "password",
       "age",
       "city",
       "dest",
@@ -64,6 +76,14 @@ export default function Register() {
       errors.age = true;
     }
 
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      errors.email = true;
+    }
+
+    if (form.password.length < 8) {
+      errors.password = true;
+    }
+
     if (!form.israelCheck) {
       errors.israelCheck = true;
     }
@@ -72,11 +92,45 @@ export default function Register() {
 
     if (Object.keys(errors).length > 0) {
       setShowError(true);
+      setErrorMessage("יש למלא את כל השדות הנדרשים בצורה תקינה");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    navigate("/questionnaire");
+    setIsSubmitting(true);
+
+    try {
+      await register({
+        name: form.fullName.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        bio: form.bio.trim(),
+        age: Number(form.age),
+        location: form.city,
+        preferredDestinations: [form.dest],
+        travelStyle: style,
+      });
+      navigate("/questionnaire");
+    } catch (error) {
+      setShowError(true);
+
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        const serverMessage = String(error.response.data?.message || "");
+        setErrorMessage(
+          serverMessage.includes("already exists")
+            ? "כבר קיים חשבון עם כתובת האימייל הזו"
+            : "חלק מפרטי ההרשמה אינם תקינים בדקי אותם ונסי שוב",
+        );
+      } else if (axios.isAxiosError(error) && !error.response) {
+        setErrorMessage("לא ניתן להתחבר לשרת בדקי את החיבור ונסי שוב");
+      } else {
+        setErrorMessage("אירעה שגיאת שרת נסי שוב מאוחר יותר");
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -96,7 +150,7 @@ export default function Register() {
 
         <main className="register-content">
           <div className={showError ? "register-error-banner show" : "register-error-banner"}>
-            יש למלא את כל השדות הנדרשים
+            {errorMessage}
           </div>
 
           <section className="register-section">
@@ -109,6 +163,30 @@ export default function Register() {
                 placeholder="הכנסי שם מלא"
                 value={form.fullName}
                 onChange={(e) => updateField("fullName", e.target.value)}
+              />
+            </div>
+
+            <div className={fieldErrors.email ? "register-field error" : "register-field"}>
+              <label>כתובת אימייל *</label>
+              <input
+                type="email"
+                autoComplete="email"
+                dir="ltr"
+                placeholder="name@example.com"
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+              />
+            </div>
+
+            <div className={fieldErrors.password ? "register-field error" : "register-field"}>
+              <label>סיסמה *</label>
+              <input
+                type="password"
+                autoComplete="new-password"
+                dir="ltr"
+                placeholder="לפחות 8 תווים"
+                value={form.password}
+                onChange={(e) => updateField("password", e.target.value)}
               />
             </div>
 
@@ -277,7 +355,11 @@ export default function Register() {
             <span>🇮🇱 אני מאשרת שאני גרה בישראל</span>
           </label>
 
-          <button className="register-primary-btn" onClick={validateForm}>
+          <button
+            className="register-primary-btn"
+            onClick={validateForm}
+            disabled={isSubmitting}
+          >
             המשך לשאלון התאמה ›
           </button>
         </main>

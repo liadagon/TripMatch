@@ -11,6 +11,8 @@ import {
   emailLogin,
   getCurrentUser,
   googleLogin,
+  registerUser,
+  type RegisterPayload,
 } from "../services/authService";
 import { TRIPMATCH_TOKEN_KEY } from "../services/api";
 
@@ -19,6 +21,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isInitializing: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
+  register: (payload: RegisterPayload) => Promise<AuthUser>;
   authenticateWithGoogle: (idToken: string) => Promise<AuthUser>;
   logout: () => void;
 };
@@ -74,6 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.data.data;
   }
 
+  async function register(payload: RegisterPayload) {
+    const response = await registerUser(payload);
+
+    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
+    setUser(response.data.data);
+    return response.data.data;
+  }
+
   async function authenticateWithGoogle(idToken: string) {
     let response;
 
@@ -116,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: Boolean(user),
         isInitializing,
         login,
+        register,
         authenticateWithGoogle,
         logout,
       }}

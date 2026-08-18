@@ -31,6 +31,17 @@ export type EmailLoginResponse = {
   data: AuthUser;
 };
 
+export type RegisterPayload = {
+  name: string;
+  email: string;
+  password: string;
+  bio?: string;
+  age?: number;
+  location?: string;
+  preferredDestinations?: string[];
+  travelStyle?: string;
+};
+
 type CurrentUserResponse = {
   success: true;
   data: AuthUser;
@@ -41,6 +52,9 @@ export const googleLogin = (idToken: string) =>
 
 export const emailLogin = (email: string, password: string) =>
   api.post<EmailLoginResponse>("/api/auth/login", { email, password });
+
+export const registerUser = (payload: RegisterPayload) =>
+  api.post<EmailLoginResponse>("/api/auth/register", payload);
 
 export const getCurrentUser = () =>
   api.get<CurrentUserResponse>("/api/auth/me");
