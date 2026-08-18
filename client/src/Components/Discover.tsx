@@ -100,6 +100,8 @@ export default function Discover() {
   }
 
   const currentImage = profile.images[photoIndex] || profile.images[0];
+  const dragPower = Math.min(Math.abs(dragX) / 130, 1);
+  const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
 
   function moveToNextProfile(type: "like" | "skip") {
     if (isAnimatingRef.current) return;
@@ -187,6 +189,7 @@ export default function Discover() {
 
   const cardStyle = {
     transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
+    "--drag-power": dragPower,
   } as CSSProperties;
 
   return (
@@ -212,7 +215,7 @@ export default function Discover() {
         <section className="discover-main">
           <section
             key={profile.id}
-            className={`discover-card ${feedback} ${
+            className={`discover-card ${feedback} ${dragMode} ${
               isDragging ? "dragging" : ""
             }`}
             style={cardStyle}
@@ -231,6 +234,14 @@ export default function Discover() {
                     className={index <= photoIndex ? "active" : ""}
                   ></span>
                 ))}
+              </div>
+
+              <div className="discover-swipe-overlay like-overlay">
+                <Heart size={48} fill="currentColor" />
+              </div>
+
+              <div className="discover-swipe-overlay skip-overlay">
+                <ThumbsDown size={48} />
               </div>
 
               <div className="discover-match-badge">
