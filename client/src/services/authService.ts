@@ -25,6 +25,22 @@ export type AuthUser = {
   };
 };
 
+export type PublicUser = Pick<
+  AuthUser,
+  | "_id"
+  | "name"
+  | "age"
+  | "location"
+  | "bio"
+  | "interests"
+  | "preferredDestinations"
+  | "travelStyle"
+  | "budget"
+  | "tripDates"
+  | "photo"
+  | "photoURL"
+>;
+
 export type GoogleLoginResponse = {
   success: true;
   message: string;

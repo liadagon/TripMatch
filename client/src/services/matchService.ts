@@ -1,9 +1,9 @@
 import api from "./api";
-import type { AuthUser } from "./authService";
+import type { PublicUser } from "./authService";
 
 export type MatchRecord = {
   _id: string;
-  users: AuthUser[];
+  users: PublicUser[];
   createdAt: string;
   updatedAt: string;
 };

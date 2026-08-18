@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 
 const PROFILE_FIELDS = [
   "name",
@@ -27,7 +28,7 @@ const getUsers = async (req, res, next) => {
       filter.travelStyle = req.query.travelStyle;
     }
 
-    const users = await User.find(filter);
+    const users = await User.find(filter).select(PUBLIC_PROFILE_FIELDS);
 
     res.status(200).json({
       success: true,
@@ -41,7 +42,9 @@ const getUsers = async (req, res, next) => {
 
 const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id).select(
+      PUBLIC_PROFILE_FIELDS
+    );
 
     if (!user) {
       return res.status(404).json({

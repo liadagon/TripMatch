@@ -1,5 +1,5 @@
 import api from "./api";
-import type { AuthUser } from "./authService";
+import type { PublicUser } from "./authService";
 
 export type MessageRecord = {
   _id: string;
@@ -12,7 +12,7 @@ export type MessageRecord = {
 export type ConversationSummary = {
   _id: string;
   match: string;
-  participants: AuthUser[];
+  participants: PublicUser[];
   lastMessage: MessageRecord | null;
   createdAt: string;
   updatedAt: string;
@@ -21,7 +21,7 @@ export type ConversationSummary = {
 export type ConversationDetails = {
   _id: string;
   match: string;
-  participants: AuthUser[];
+  participants: PublicUser[];
   messages: MessageRecord[];
   createdAt: string;
   updatedAt: string;

@@ -1,16 +1,7 @@
 const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
-
-const PUBLIC_CONVERSATION_USER_FIELDS = [
-  "name",
-  "age",
-  "location",
-  "preferredDestinations",
-  "tripDates",
-  "photo",
-  "photoURL",
-].join(" ");
+const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 
 const ensureConversation = (match) =>
   Conversation.findOneAndUpdate(
@@ -28,7 +19,7 @@ const listConversations = async (req, res, next) => {
       participants: req.user._id,
     })
       .sort({ updatedAt: -1 })
-      .populate("participants", PUBLIC_CONVERSATION_USER_FIELDS);
+      .populate("participants", PUBLIC_PROFILE_FIELDS);
 
     const data = conversations.map((conversation) => ({
       _id: conversation._id,
@@ -92,7 +83,7 @@ const getMessages = async (req, res, next) => {
     const conversation = await Conversation.findOne({
       _id: conversationId,
       participants: req.user._id,
-    }).populate("participants", PUBLIC_CONVERSATION_USER_FIELDS);
+    }).populate("participants", PUBLIC_PROFILE_FIELDS);
 
     if (!conversation) {
       return res.status(404).json({

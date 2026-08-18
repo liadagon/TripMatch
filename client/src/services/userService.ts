@@ -1,10 +1,10 @@
 import api from "./api";
-import type { AuthUser } from "./authService";
+import type { PublicUser } from "./authService";
 
 type UsersResponse = {
   success: true;
   count: number;
-  data: AuthUser[];
+  data: PublicUser[];
 };
 
 export const getUsers = async () => {

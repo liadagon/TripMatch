@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { AuthUser } from "../services/authService";
+import type { PublicUser } from "../services/authService";
 import {
   getMessages,
   sendMessage as persistMessage,
@@ -21,7 +21,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const { userId: conversationId } = useParams();
   const { user } = useAuth();
-  const [otherUser, setOtherUser] = useState<AuthUser | null>(null);
+  const [otherUser, setOtherUser] = useState<PublicUser | null>(null);
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { AuthUser } from "../services/authService";
+import type { PublicUser } from "../services/authService";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
@@ -77,7 +77,7 @@ type DiscoverProfile = {
   tags: string[];
 };
 
-function mapUserToProfile(user: AuthUser): DiscoverProfile {
+function mapUserToProfile(user: PublicUser): DiscoverProfile {
   const tags = [
     ...(user.interests || []),
     user.travelStyle,
