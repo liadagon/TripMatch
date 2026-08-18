@@ -66,9 +66,11 @@ function profileFromUser(user: AuthUser | null): ProfileData {
     dates: user?.tripDates || defaultProfile.dates,
     budget: user?.budget || defaultProfile.budget,
     travelStyle: user?.travelStyle || defaultProfile.travelStyle,
-    interests: user?.interests?.length
-      ? user.interests.filter(Boolean)
-      : defaultProfile.interests,
+    interests: user?.questionnaire?.companionPriority
+      ? [user.questionnaire.companionPriority]
+      : user?.interests?.length
+        ? user.interests.filter(Boolean)
+        : defaultProfile.interests,
     aboutMe: user?.bio || defaultProfile.aboutMe,
     imageUrl: user?.photoURL || user?.photo || defaultProfile.imageUrl,
   };

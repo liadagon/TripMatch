@@ -202,7 +202,7 @@ export default function Questionnaire() {
             disabled={isSaving}
           >
             {isLastQuestion ? (
-              <span>{isSaving ? "שומרת..." : "מצאי התאמות ✨"}</span>
+              <span>{isSaving ? "שומרת את התשובות..." : "מצאי התאמות ✨"}</span>
             ) : (
               <>
                 <span>הבא</span>

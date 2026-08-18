@@ -54,6 +54,66 @@ Authorization: Bearer {{token}}
   "travelStyle": "City breaks"
 }
 
+### Save all questionnaire answers for the authenticated user - expected 200
+PUT {{baseUrl}}/api/users/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "preferredDestinations": ["דרום אמריקה"],
+  "tripDates": "בעוד חודש או חודשיים",
+  "budget": "חסכוני",
+  "travelStyle": "תרמילאות ואורח חיים מקומי",
+  "questionnaire": {
+    "planningStyle": "אוהבת מסגרת בסיסית",
+    "accommodationPreference": "הוסטל",
+    "companionScope": "לכל הטיול",
+    "companionPriority": "אמינות ואחריות",
+    "dealBreaker": "חוסר גמישות"
+  }
+}
+
+### Reject an option that is not offered by the questionnaire - expected 400
+PUT {{baseUrl}}/api/users/me
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "preferredDestinations": ["דרום אמריקה"],
+  "tripDates": "בעוד חודש או חודשיים",
+  "budget": "חסכוני",
+  "travelStyle": "תרמילאות ואורח חיים מקומי",
+  "questionnaire": {
+    "planningStyle": "Invalid questionnaire option",
+    "accommodationPreference": "הוסטל",
+    "companionScope": "לכל הטיול",
+    "companionPriority": "אמינות ואחריות",
+    "dealBreaker": "חוסר גמישות"
+  }
+}
+
+### Questionnaire update without a token - expected 401
+PUT {{baseUrl}}/api/users/me
+Content-Type: application/json
+
+{
+  "preferredDestinations": ["דרום אמריקה"],
+  "tripDates": "בעוד חודש או חודשיים",
+  "budget": "חסכוני",
+  "travelStyle": "תרמילאות ואורח חיים מקומי",
+  "questionnaire": {
+    "planningStyle": "אוהבת מסגרת בסיסית",
+    "accommodationPreference": "הוסטל",
+    "companionScope": "לכל הטיול",
+    "companionPriority": "אמינות ואחריות",
+    "dealBreaker": "חוסר גמישות"
+  }
+}
+
+### Read the persisted questionnaire answers after a refresh - expected 200
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
 ### Attempt to update another user through the disabled legacy route - expected 403
 PUT {{baseUrl}}/api/users/{{otherUserId}}
 Content-Type: application/json
