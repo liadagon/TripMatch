@@ -6,6 +6,7 @@ import type { PublicUser } from "../services/authService";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
+import { getDemoDiscoverProfiles } from "../data/demoProfiles";
 import {
   MapPin,
   Plane,
@@ -16,53 +17,6 @@ import {
   CalendarDays,
 } from "lucide-react";
 import "./Discover.css";
-
-const initialProfiles = [
-  {
-    id: 1,
-    userId: "noa",
-    name: "נועה",
-    age: 23,
-    city: "תל אביב",
-    dates: "ספטמבר עד דצמבר",
-    destination: "דרום אמריקה",
-    match: 91,
-    images: [
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
-      "/noa1.png",
-      "/noa2.png",
-    ],
-    tags: ["טרקים", "תרמילאות", "תקציב בינוני", "אוהבת לתכנן"],
-  },
-  {
-    id: 2,
-    userId: "maya",
-    name: "מאיה",
-    age: 22,
-    city: "חיפה",
-    dates: "אוקטובר עד ינואר",
-    destination: "הודו",
-    match: 88,
-    images: ["/maya3.png", "/maya1.png", "/maya2.png"],
-    tags: ["הוסטלים", "יוגה", "תרבות", "טיול גמיש"],
-  },
-  {
-    id: 3,
-    userId: "ido",
-    name: "עידו",
-    age: 24,
-    city: "רחובות",
-    dates: "יולי עד ספטמבר",
-    destination: "תאילנד וויאטנם",
-    match: 84,
-    images: [
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=90",
-      "/ido1.png",
-      "/ido2.png",
-    ],
-    tags: ["חופים", "אוכל מקומי", "מסיבות", "זורם"],
-  },
-];
 
 type DiscoverProfile = {
   id: string;
@@ -75,6 +29,7 @@ type DiscoverProfile = {
   match: number;
   images: string[];
   tags: string[];
+  isDemo: boolean;
 };
 
 function mapUserToProfile(user: PublicUser): DiscoverProfile {
@@ -93,8 +48,13 @@ function mapUserToProfile(user: PublicUser): DiscoverProfile {
     dates: user.tripDates || "גמיש",
     destination: user.preferredDestinations?.[0] || "עדיין לא נבחר יעד",
     match: 80,
-    images: [user.photoURL || user.photo || initialProfiles[0].images[0]],
+    images: [
+      user.photoURL ||
+        user.photo ||
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
+    ],
     tags: tags.length ? tags.slice(0, 5) : ["מטיילת ב-TripMatch"],
+    isDemo: false,
   };
 }
 
@@ -122,16 +82,18 @@ export default function Discover() {
     try {
       const [users, swipes] = await Promise.all([getUsers(), getSwipes()]);
       const swipedUserIds = new Set(swipes.map((swipe) => swipe.toUser));
-      setProfiles(
-        users
+      const realProfiles = users
           .filter(
             (candidate) =>
               candidate._id !== user?._id && !swipedUserIds.has(candidate._id),
           )
-          .map(mapUserToProfile),
-      );
-    } catch {
-      setSwipeError("לא הצלחנו לטעון התאמות נסי שוב");
+          .map(mapUserToProfile);
+
+      setProfiles(realProfiles.length ? realProfiles : getDemoDiscoverProfiles());
+    } catch (error) {
+      console.warn("[Discover] Backend profiles unavailable; using demo fallback.", error);
+      setProfiles(getDemoDiscoverProfiles());
+      setSwipeError("לא הצלחנו לטעון התאמות מהשרת. מוצגות התאמות לדוגמה");
     } finally {
       setIsLoading(false);
     }
@@ -179,10 +141,14 @@ export default function Discover() {
     setSwipeError("");
 
     try {
-      await Promise.all([
-        createSwipe(profile.userId, type),
-        new Promise((resolve) => window.setTimeout(resolve, 280)),
-      ]);
+      if (profile.isDemo) {
+        await new Promise((resolve) => window.setTimeout(resolve, 280));
+      } else {
+        await Promise.all([
+          createSwipe(profile.userId, type),
+          new Promise((resolve) => window.setTimeout(resolve, 280)),
+        ]);
+      }
       setProfiles((prevProfiles) => prevProfiles.slice(1));
       setPhotoIndex(0);
       setDragX(0);
@@ -269,6 +235,11 @@ export default function Discover() {
 
   async function handleMessage() {
     setSwipeError("");
+
+    if (profile.isDemo) {
+      navigate(`/chat/${profile.userId}`);
+      return;
+    }
 
     try {
       const conversation = await getConversationWithUser(profile.userId);

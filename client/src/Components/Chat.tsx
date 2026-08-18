@@ -6,9 +6,20 @@ import type { PublicUser } from "../services/authService";
 import {
   getMessages,
   sendMessage as persistMessage,
-  type MessageRecord,
 } from "../services/conversationService";
+import {
+  demoChatMessages,
+  demoChatReplies,
+  getConversationById,
+} from "../data/conversations";
 import "./Chat.css";
+
+type ChatMessage = {
+  id: string;
+  from: "me" | "them";
+  text: string;
+  time: string;
+};
 
 function formatMessageTime(value: string) {
   return new Date(value).toLocaleTimeString("he-IL", {
@@ -21,8 +32,10 @@ export default function Chat() {
   const navigate = useNavigate();
   const { userId: conversationId } = useParams();
   const { user } = useAuth();
+  const demoConversation = getConversationById(conversationId);
+  const isDemo = Boolean(demoConversation);
   const [otherUser, setOtherUser] = useState<PublicUser | null>(null);
-  const [messages, setMessages] = useState<MessageRecord[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -34,6 +47,14 @@ export default function Chat() {
     async function loadConversation() {
       if (!conversationId) return;
 
+      setErrorMessage("");
+
+      if (getConversationById(conversationId)) {
+        setOtherUser(null);
+        setMessages(demoChatMessages.map((message) => ({ ...message })));
+        return;
+      }
+
       try {
         const conversation = await getMessages(conversationId);
 
@@ -43,8 +64,16 @@ export default function Chat() {
             (participant) => participant._id !== user?._id,
           ) || null,
         );
-        setMessages(conversation.messages);
-      } catch {
+        setMessages(
+          conversation.messages.map((message) => ({
+            id: message._id,
+            from: message.sender === user?._id ? "me" : "them",
+            text: message.text,
+            time: formatMessageTime(message.createdAt),
+          })),
+        );
+      } catch (error) {
+        console.warn("[Chat] Failed to load real conversation.", error);
         if (isActive) setErrorMessage("לא הצלחנו לטעון את השיחה");
       }
     }
@@ -67,9 +96,52 @@ export default function Chat() {
     setIsSending(true);
     setErrorMessage("");
 
+    if (isDemo) {
+      const now = new Date().toLocaleTimeString("he-IL", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const localMessage: ChatMessage = {
+        id: `demo-local-${Date.now()}`,
+        from: "me",
+        text: cleanText,
+        time: now,
+      };
+
+      setMessages((current) => [...current, localMessage]);
+      setText("");
+      setIsSending(false);
+
+      window.setTimeout(() => {
+        const reply =
+          demoChatReplies[Math.floor(Math.random() * demoChatReplies.length)];
+        setMessages((current) => [
+          ...current,
+          {
+            id: `demo-reply-${Date.now()}`,
+            from: "them",
+            text: reply,
+            time: new Date().toLocaleTimeString("he-IL", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
+        ]);
+      }, 900);
+      return;
+    }
+
     try {
       const message = await persistMessage(conversationId, cleanText);
-      setMessages((current) => [...current, message]);
+      setMessages((current) => [
+        ...current,
+        {
+          id: message._id,
+          from: "me",
+          text: message.text,
+          time: formatMessageTime(message.createdAt),
+        },
+      ]);
       setText("");
     } catch {
       setErrorMessage("לא הצלחנו לשלוח את ההודעה נסי שוב");
@@ -89,6 +161,14 @@ export default function Chat() {
     otherUser?.preferredDestinations?.[0],
     otherUser?.tripDates,
   ].filter(Boolean).join(" · ");
+  const displayName = demoConversation?.name || otherUser?.name || "TripMatch";
+  const displayImage =
+    demoConversation?.images[0] ||
+    otherUser?.photoURL ||
+    otherUser?.photo ||
+    "/pic2.png";
+  const displayDestination =
+    demoConversation?.destination || destination || "שיחה חדשה";
 
   return (
     <div className="chat-page" dir="rtl">
@@ -100,13 +180,13 @@ export default function Chat() {
 
           <img
             className="chat-avatar"
-            src={otherUser?.photoURL || otherUser?.photo || "/pic2.png"}
-            alt={otherUser?.name || "TripMatch"}
+            src={displayImage}
+            alt={displayName}
           />
 
           <div className="chat-meta">
-            <h1>{otherUser?.name || "TripMatch"}</h1>
-            <p>✈️ {destination || "שיחה חדשה"}</p>
+            <h1>{displayName}</h1>
+            <p>✈️ {displayDestination}</p>
           </div>
 
           <button className="chat-more-btn">⋮</button>
@@ -119,11 +199,11 @@ export default function Chat() {
 
           {messages.map((message) => (
             <div
-              key={message._id}
-              className={`chat-message ${message.sender === user?._id ? "me" : "them"}`}
+              key={message.id}
+              className={`chat-message ${message.from}`}
             >
               <div className="chat-bubble">{message.text}</div>
-              <div className="chat-time">{formatMessageTime(message.createdAt)}</div>
+              <div className="chat-time">{message.time}</div>
             </div>
           ))}
 

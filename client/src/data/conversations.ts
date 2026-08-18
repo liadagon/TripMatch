@@ -17,6 +17,13 @@ export type NewMatch = {
   images: string[];
 };
 
+export type DemoChatMessage = {
+  id: string;
+  from: "me" | "them";
+  text: string;
+  time: string;
+};
+
 export const demoProfileImages = {
   noa: [
     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
@@ -101,6 +108,47 @@ export const conversations: Conversation[] = [
     match: 79,
     images: demoProfileImages.daniel,
   },
+];
+
+export const demoChatMessages: DemoChatMessage[] = [
+  {
+    id: "demo-1",
+    from: "them",
+    text: "היי! ראיתי שגם את מתכננת לטוס לפרו בספטמבר 🌎",
+    time: "14:22",
+  },
+  {
+    id: "demo-2",
+    from: "me",
+    text: "כן! אני מחפשת שותפה לשלושה השבועות הראשונים 🎒",
+    time: "14:24",
+  },
+  {
+    id: "demo-3",
+    from: "them",
+    text: "נשמע מעולה, גם אני רוצה להתחיל בלימה ואז להמשיך לקוסקו",
+    time: "14:25",
+  },
+  {
+    id: "demo-4",
+    from: "me",
+    text: "זה בדיוק המסלול שלי! ראית את מאצ'ו פיצ'ו בתוכנית שלך?",
+    time: "14:26",
+  },
+  {
+    id: "demo-5",
+    from: "them",
+    text: "כן בטח! אבל שמעתי שצריך להזמין הרבה מראש, כבר התחלת?",
+    time: "14:27",
+  },
+];
+
+export const demoChatReplies = [
+  "ממש מגניב! 🙌",
+  "כן, בדיוק חשבתי על זה!",
+  "נשמע לי טוב, בואי נתאם פרטים 📅",
+  "אחלה! יש לי עוד כמה שאלות...",
+  "מגניב, אשמח לשמוע עוד 😊",
 ];
 
 export function getConversationById(userId: string | undefined) {
