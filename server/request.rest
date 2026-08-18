@@ -40,6 +40,10 @@ Authorization: Bearer {{token}}
 ### Current user without a token - expected 401
 GET {{baseUrl}}/api/auth/me
 
+### Current user with an invalid token - expected 401
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid-token
+
 ### Update the authenticated user's profile
 PUT {{baseUrl}}/api/users/me
 Content-Type: application/json
@@ -50,7 +54,7 @@ Authorization: Bearer {{token}}
   "travelStyle": "City breaks"
 }
 
-### Attempt to update another user through the disabled legacy route - expected 401
+### Attempt to update another user through the disabled legacy route - expected 403
 PUT {{baseUrl}}/api/users/{{otherUserId}}
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -58,6 +62,10 @@ Authorization: Bearer {{token}}
 {
   "bio": "This update must be rejected."
 }
+
+### Attempt to delete another user through the disabled legacy route - expected 403
+DELETE {{baseUrl}}/api/users/{{otherUserId}}
+Authorization: Bearer {{token}}
 
 ### Invalid profile field - expected 400 from JOI
 PUT {{baseUrl}}/api/users/me
@@ -164,6 +172,6 @@ Content-Type: application/json
   "text": "Hi! Want to compare travel plans?"
 }
 
-### Delete the authenticated user (run last)
+### Delete the authenticated user - expected 200 (run last)
 DELETE {{baseUrl}}/api/users/me
 Authorization: Bearer {{token}}

@@ -113,9 +113,9 @@ const deleteCurrentUser = async (req, res, next) => {
 };
 
 const rejectLegacyMutation = (req, res) =>
-  res.status(401).json({
+  res.status(403).json({
     success: false,
-    message: "You are not authorized to perform this action",
+    message: "You are not allowed to modify or delete another user",
   });
 
 module.exports = {
