@@ -1,15 +1,24 @@
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./PhoneLogin.css";
+
+const MAX_PHONE_LENGTH = 10;
 
 export default function PhoneLogin() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
 
-  const cleanPhone = phone.replace(/\D/g, "");
-  const isPhoneValid = cleanPhone.length >= 9;
+  const isPhoneValid = /^05\d{8}$/.test(phone);
 
-  function handleSubmit(event) {
+  function handlePhoneChange(event: ChangeEvent<HTMLInputElement>) {
+    const digitsOnly = event.target.value
+      .replace(/\D/g, "")
+      .slice(0, MAX_PHONE_LENGTH);
+
+    setPhone(digitsOnly);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!isPhoneValid) {
@@ -18,7 +27,7 @@ export default function PhoneLogin() {
 
     navigate("/verify-code", {
       state: {
-        phone: `+972${cleanPhone.replace(/^0/, "")}`,
+        phone: `+972${phone.replace(/^0/, "")}`,
       },
     });
   }
@@ -86,7 +95,7 @@ export default function PhoneLogin() {
                 autoComplete="tel"
                 placeholder="05X-XXX-XXXX"
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={handlePhoneChange}
               />
             </div>
 
