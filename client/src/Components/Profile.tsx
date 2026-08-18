@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -32,6 +33,12 @@ type ProfileData = {
 };
 
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PROFILE_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 const defaultProfile: ProfileData = {
   name: "נועה",
@@ -68,13 +75,40 @@ function profileFromUser(user: AuthUser | null): ProfileData {
 }
 
 function validateProfileImage(file: File) {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("יש לבחור קובץ תמונה בלבד");
+  if (!ALLOWED_PROFILE_IMAGE_TYPES.has(file.type)) {
+    throw new Error("יש לבחור תמונת JPG, PNG, WEBP או GIF בלבד");
   }
 
   if (file.size > MAX_PROFILE_IMAGE_SIZE) {
     throw new Error("גודל התמונה המרבי הוא 5MB");
   }
+}
+
+function getProfilePhotoError(error: unknown) {
+  if (
+    error instanceof Error &&
+    (error.message === "יש לבחור תמונת JPG, PNG, WEBP או GIF בלבד" ||
+      error.message === "גודל התמונה המרבי הוא 5MB" ||
+      error.message === "לא הצלחנו לקרוא את התמונה")
+  ) {
+    return error.message;
+  }
+
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401) {
+      return "החיבור לחשבון פג. יש להתחבר מחדש ולנסות שוב";
+    }
+
+    if (!error.response) {
+      return "לא הצלחנו להתחבר לשרת. בדקי את החיבור ונסי שוב";
+    }
+
+    if (error.response.status === 400) {
+      return "השרת דחה את קובץ התמונה. יש לבחור תמונה תקינה עד 5MB";
+    }
+  }
+
+  return "לא הצלחנו להעלות ולשמור את התמונה. נסי שוב";
 }
 
 function readImagePreview(file: File) {
@@ -173,9 +207,7 @@ export default function Profile() {
         setProfile(previousProfile);
       }
 
-      setPhotoError(
-        error instanceof Error ? error.message : "לא הצלחנו לעדכן את התמונה",
-      );
+      setPhotoError(getProfilePhotoError(error));
     } finally {
       setIsSaving(false);
     }
@@ -209,8 +241,8 @@ export default function Profile() {
       setPendingProfileImage(null);
       setIsEditing(false);
       setShowSuccess(true);
-    } catch {
-      setPhotoError("לא הצלחנו לשמור את תמונת הפרופיל נסי שוב");
+    } catch (error) {
+      setPhotoError(getProfilePhotoError(error));
     } finally {
       setIsSaving(false);
     }
@@ -261,9 +293,10 @@ export default function Profile() {
               className="profile-edit-photo"
               disabled={isSaving}
               onClick={() => directPhotoInputRef.current?.click()}
+              aria-busy={isSaving}
             >
               <Camera size={18} />
-              שינוי תמונה
+              {isSaving ? "מעלה תמונה..." : "שינוי תמונה"}
             </button>
           </div>
 
@@ -481,6 +514,7 @@ export default function Profile() {
                   <button
                     type="button"
                     className="profile-choose-photo-btn"
+                    disabled={isSaving}
                     onClick={() => modalPhotoInputRef.current?.click()}
                   >
                     <Camera size={17} />

@@ -96,6 +96,7 @@
 
 .profile-edit-photo {
   position: absolute;
+  z-index: 3;
   left: 24px;
   bottom: 20px;
   height: 42px;
@@ -454,6 +455,11 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
+}
+
+.profile-choose-photo-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .profile-photo-error {
