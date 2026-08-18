@@ -14,6 +14,8 @@ export type AuthUser = {
   interests?: string[];
   preferredDestinations?: string[];
   travelStyle?: string;
+  budget?: string;
+  tripDates?: string;
 };
 
 export type GoogleLoginResponse = {

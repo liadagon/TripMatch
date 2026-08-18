@@ -64,6 +64,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    budget: {
+      type: String,
+      default: "",
+    },
+    tripDates: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

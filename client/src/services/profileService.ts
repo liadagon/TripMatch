@@ -1,8 +1,31 @@
 import api from "./api";
+import type { AuthUser } from "./authService";
 
 type FileUploadResponse = {
   success: true;
   url: string;
+};
+
+export type ProfileUpdatePayload = Partial<
+  Pick<
+    AuthUser,
+    | "name"
+    | "age"
+    | "location"
+    | "bio"
+    | "interests"
+    | "preferredDestinations"
+    | "travelStyle"
+    | "budget"
+    | "tripDates"
+    | "photo"
+    | "photoURL"
+  >
+>;
+
+type ProfileUpdateResponse = {
+  success: true;
+  data: AuthUser;
 };
 
 export const uploadProfileImage = async (file: File) => {
@@ -13,6 +36,10 @@ export const uploadProfileImage = async (file: File) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-  await api.put("/api/users/me", { photoURL: uploadResponse.data.url });
   return uploadResponse.data.url;
+};
+
+export const updateCurrentProfile = async (payload: ProfileUpdatePayload) => {
+  const response = await api.put<ProfileUpdateResponse>("/api/users/me", payload);
+  return response.data.data;
 };

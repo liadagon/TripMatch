@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import type { AuthUser } from "../services/authService";
 import { uploadProfileImage } from "../services/profileService";
 import "./Profile.css";
 
@@ -30,7 +31,6 @@ type ProfileData = {
   imageUrl: string;
 };
 
-const PROFILE_STORAGE_KEY = "tripmatch_profile";
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const defaultProfile: ProfileData = {
@@ -48,33 +48,23 @@ const defaultProfile: ProfileData = {
     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=90",
 };
 
-function normalizeProfile(
-  value: Partial<ProfileData>,
-  fallbackImageUrl = defaultProfile.imageUrl,
-): ProfileData {
+function profileFromUser(user: AuthUser | null): ProfileData {
   return {
     ...defaultProfile,
-    ...value,
-    imageUrl: value.imageUrl || fallbackImageUrl,
-    age: String(value.age || defaultProfile.age),
-    interests: Array.isArray(value.interests)
-      ? value.interests.filter(Boolean)
+    name: user?.name || defaultProfile.name,
+    age: String(user?.age ?? defaultProfile.age),
+    city: user?.location || defaultProfile.city,
+    destination:
+      user?.preferredDestinations?.[0] || defaultProfile.destination,
+    dates: user?.tripDates || defaultProfile.dates,
+    budget: user?.budget || defaultProfile.budget,
+    travelStyle: user?.travelStyle || defaultProfile.travelStyle,
+    interests: user?.interests?.length
+      ? user.interests.filter(Boolean)
       : defaultProfile.interests,
+    aboutMe: user?.bio || defaultProfile.aboutMe,
+    imageUrl: user?.photoURL || user?.photo || defaultProfile.imageUrl,
   };
-}
-
-function readStoredProfile(fallbackImageUrl?: string): ProfileData {
-  const savedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
-
-  if (savedProfile) {
-    try {
-      return normalizeProfile(JSON.parse(savedProfile), fallbackImageUrl);
-    } catch {
-      localStorage.removeItem(PROFILE_STORAGE_KEY);
-    }
-  }
-
-  return normalizeProfile({}, fallbackImageUrl);
 }
 
 function validateProfileImage(file: File) {
@@ -98,18 +88,20 @@ function readImagePreview(file: File) {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile: persistProfile } = useAuth();
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
   const modalPhotoInputRef = useRef<HTMLInputElement>(null);
-  const [profile, setProfile] = useState<ProfileData>(() =>
-    readStoredProfile(user?.photoURL || user?.photo),
-  );
+  const [profile, setProfile] = useState<ProfileData>(() => profileFromUser(user));
   const [draftProfile, setDraftProfile] = useState<ProfileData>(profile);
   const [pendingProfileImage, setPendingProfileImage] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setProfile(profileFromUser(user));
+  }, [user]);
 
   useEffect(() => {
     if (!showSuccess) return;
@@ -173,9 +165,8 @@ export default function Profile() {
       setProfile((current) => ({ ...current, imageUrl: previewUrl }));
       setIsSaving(true);
       const imageUrl = await uploadProfileImage(file);
-      const nextProfile = normalizeProfile({ ...profile, imageUrl });
-      setProfile(nextProfile);
-      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+      const updatedUser = await persistProfile({ photoURL: imageUrl });
+      setProfile(profileFromUser(updatedUser));
       setShowSuccess(true);
     } catch (error) {
       if (destination === "profile") {
@@ -200,9 +191,21 @@ export default function Profile() {
       const imageUrl = pendingProfileImage
         ? await uploadProfileImage(pendingProfileImage)
         : draftProfile.imageUrl;
-      const nextProfile = normalizeProfile({ ...draftProfile, imageUrl });
-      setProfile(nextProfile);
-      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+      const updatedUser = await persistProfile({
+        name: draftProfile.name.trim(),
+        age: Number(draftProfile.age),
+        location: draftProfile.city.trim(),
+        preferredDestinations: draftProfile.destination.trim()
+          ? [draftProfile.destination.trim()]
+          : [],
+        tripDates: draftProfile.dates.trim(),
+        budget: draftProfile.budget.trim(),
+        travelStyle: draftProfile.travelStyle.trim(),
+        interests: draftProfile.interests,
+        bio: draftProfile.aboutMe.trim(),
+        ...(pendingProfileImage ? { photoURL: imageUrl } : {}),
+      });
+      setProfile(profileFromUser(updatedUser));
       setPendingProfileImage(null);
       setIsEditing(false);
       setShowSuccess(true);

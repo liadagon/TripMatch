@@ -15,6 +15,10 @@ import {
   type RegisterPayload,
 } from "../services/authService";
 import { TRIPMATCH_TOKEN_KEY } from "../services/api";
+import {
+  updateCurrentProfile,
+  type ProfileUpdatePayload,
+} from "../services/profileService";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -23,6 +27,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<AuthUser>;
   authenticateWithGoogle: (idToken: string) => Promise<AuthUser>;
+  updateProfile: (payload: ProfileUpdatePayload) => Promise<AuthUser>;
   logout: () => void;
 };
 
@@ -115,6 +120,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.data.data;
   }
 
+  async function updateProfile(payload: ProfileUpdatePayload) {
+    const updatedUser = await updateCurrentProfile(payload);
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
   function logout() {
     localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
     setUser(null);
@@ -129,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         authenticateWithGoogle,
+        updateProfile,
         logout,
       }}
     >

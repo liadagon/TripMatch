@@ -8,6 +8,8 @@ const PROFILE_FIELDS = [
   "interests",
   "preferredDestinations",
   "travelStyle",
+  "budget",
+  "tripDates",
   "photo",
   "photoURL",
 ];

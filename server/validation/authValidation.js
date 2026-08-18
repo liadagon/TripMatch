@@ -17,6 +17,8 @@ const registerSchema = Joi.object({
     .items(Joi.string().trim().max(100))
     .optional(),
   travelStyle: Joi.string().trim().max(100).allow("").optional(),
+  budget: Joi.string().trim().max(100).allow("").optional(),
+  tripDates: Joi.string().trim().max(100).allow("").optional(),
 });
 
 const loginSchema = Joi.object({

@@ -10,6 +10,8 @@ const updateProfileSchema = Joi.object({
     .items(Joi.string().trim().max(100))
     .optional(),
   travelStyle: Joi.string().trim().max(100).allow("").optional(),
+  budget: Joi.string().trim().max(100).allow("").optional(),
+  tripDates: Joi.string().trim().max(100).allow("").optional(),
   photo: Joi.string().trim().allow("").optional(),
   photoURL: Joi.string().trim().allow("").optional(),
 })
