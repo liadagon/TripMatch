@@ -1,0 +1,68 @@
+.email-login-card {
+  min-height: 620px;
+}
+
+.email-auth-form {
+  display: grid;
+  gap: 18px;
+}
+
+.email-auth-field {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+}
+
+.email-auth-field span {
+  color: #475467;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.email-auth-field input {
+  width: 100%;
+  height: 60px;
+  padding: 0 20px;
+  border: 1.5px solid rgba(16, 24, 40, 0.1);
+  border-radius: 18px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.96);
+  color: #101828;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.06);
+}
+
+.email-auth-field input:focus {
+  border-color: rgba(0, 92, 255, 0.55);
+  box-shadow:
+    0 14px 34px rgba(16, 24, 40, 0.06),
+    0 0 0 4px rgba(0, 92, 255, 0.1);
+}
+
+.email-auth-error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  color: #b42318;
+  background: #fff1f2;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: right;
+}
+
+.email-auth-form .phone-submit {
+  margin-top: 6px;
+}
+
+@media (max-width: 620px) {
+  .email-login-card {
+    min-height: auto;
+  }
+
+  .email-auth-field input {
+    height: 56px;
+  }
+}

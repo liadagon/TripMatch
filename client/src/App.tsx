@@ -9,6 +9,7 @@ import PhoneLogin from "./Components/PhoneLogin";
 import VerifyCode from "./Components/VerifyCode";
 import Register from "./Components/Register";
 import Questionnaire from "./Components/Questionnaire";
+import PostLoginWelcome from "./Components/PostLoginWelcome";
 import Discover from "./Components/Discover";
 import Likes from "./Components/Likes";
 import Matches from "./Components/Matches";
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/phone-login" element={<PhoneLogin />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/post-login-welcome" element={<PostLoginWelcome />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
 
         {/* App routes */}

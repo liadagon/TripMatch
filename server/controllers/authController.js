@@ -68,9 +68,14 @@ const googleLogin = async (req, res, next) => {
 
   try {
     firebaseAuth = getFirebaseAdminAuth();
-  } catch (_error) {
+  } catch (error) {
+    console.error("[Google auth] Firebase Admin initialization failed", {
+      code: error.code,
+      message: error.message,
+    });
     return res.status(500).json({
       success: false,
+      code: "FIREBASE_ADMIN_INIT_FAILED",
       message: "Google authentication is not configured",
     });
   }
@@ -80,6 +85,10 @@ const googleLogin = async (req, res, next) => {
   try {
     verifiedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
   } catch (error) {
+    console.error("[Google auth] Firebase ID token verification failed", {
+      code: error.code,
+      message: error.message,
+    });
     const invalidTokenCodes = new Set([
       "auth/argument-error",
       "auth/id-token-expired",
@@ -90,12 +99,14 @@ const googleLogin = async (req, res, next) => {
     if (invalidTokenCodes.has(error.code)) {
       return res.status(401).json({
         success: false,
+        code: "INVALID_FIREBASE_ID_TOKEN",
         message: "Invalid or expired Firebase authentication token",
       });
     }
 
     return res.status(500).json({
       success: false,
+      code: "FIREBASE_TOKEN_VERIFICATION_FAILED",
       message: "Google authentication is temporarily unavailable",
     });
   }
@@ -180,7 +191,18 @@ const googleLogin = async (req, res, next) => {
       }
     }
 
-    const token = createToken(user._id);
+    let token;
+
+    try {
+      token = createToken(user._id);
+    } catch (error) {
+      console.error("[Google auth] TripMatch JWT creation failed", {
+        code: error.code,
+        message: error.message,
+      });
+      error.authStage = "jwt_creation";
+      throw error;
+    }
 
     return res.status(200).json({
       success: true,
@@ -192,6 +214,13 @@ const googleLogin = async (req, res, next) => {
       isNewUser,
     });
   } catch (error) {
+    if (error.authStage !== "jwt_creation") {
+      console.error("[Google auth] MongoDB user lookup/create failed", {
+        code: error.code,
+        name: error.name,
+        message: error.message,
+      });
+    }
     return next(error);
   }
 };

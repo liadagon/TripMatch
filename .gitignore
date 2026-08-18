@@ -5,3 +5,6 @@ client/dist/
 .env
 client/.env
 _backup_root_react_duplicate/
+*firebase-adminsdk*.json
+firebase-service-account.json
+secrets/

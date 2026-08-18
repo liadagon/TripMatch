@@ -12,4 +12,10 @@ const startServer = async () => {
   });
 };
 
-startServer();
+startServer().catch((error) => {
+  console.error("Server startup failed", {
+    code: error.code,
+    message: error.message,
+  });
+  process.exitCode = 1;
+});

@@ -39,7 +39,7 @@ export default function Welcome() {
     try {
       const { idToken } = await signInWithGoogle();
       await authenticateWithGoogle(idToken);
-      navigate("/questionnaire");
+      navigate("/post-login-welcome");
     } catch (error) {
       console.error("Google login failed:", error);
 

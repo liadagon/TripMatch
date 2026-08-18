@@ -1,0 +1,283 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.post-login-welcome-page {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  color: #101828;
+  font-family: Assistant, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 0% 0%, #075ec7 0%, #0a7adb 18%, rgba(10, 122, 219, 0.18) 38%, transparent 58%),
+    radial-gradient(circle at 88% 92%, rgba(99, 102, 241, 0.18), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(45, 212, 191, 0.18), transparent 28%),
+    linear-gradient(135deg, #eaf6ff 0%, #eef4ff 48%, #f7f4ff 100%);
+}
+
+.post-login-welcome-header {
+  width: min(1240px, calc(100% - 64px));
+  height: 86px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  direction: ltr;
+}
+
+.post-login-welcome-logo {
+  display: inline-flex;
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1.45px;
+  text-shadow: 0 12px 28px rgba(16, 24, 40, 0.22);
+}
+
+.post-login-welcome-logo-trip,
+.post-login-welcome-brand-trip {
+  color: #ffffff;
+}
+
+.post-login-welcome-logo-match,
+.post-login-welcome-brand-match {
+  color: #20e0d3;
+}
+
+.post-login-welcome-back-button {
+  height: 48px;
+  padding: 0 28px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #101828;
+  font-family: Assistant, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 16px 34px rgba(16, 24, 40, 0.1);
+  direction: rtl;
+}
+
+.post-login-welcome-screen {
+  width: min(1240px, calc(100% - 64px));
+  min-height: calc(100dvh - 86px);
+  margin: 0 auto;
+  padding: 38px 0 58px;
+  display: grid;
+  grid-template-columns: minmax(430px, 560px) minmax(430px, 560px);
+  align-items: center;
+  justify-content: center;
+  gap: 58px;
+  direction: ltr;
+}
+
+.post-login-welcome-card {
+  width: 100%;
+  min-height: 560px;
+  padding: 56px 52px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 30px 80px rgba(16, 24, 40, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  text-align: center;
+}
+
+.post-login-welcome-icon {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.16);
+  color: #13b8b4;
+}
+
+.post-login-welcome-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-login-welcome-title h1 {
+  margin: 0;
+  color: #101828;
+  font-size: clamp(34px, 3vw, 44px);
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+
+.post-login-welcome-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #147cd7 0%, #2798dd 100%);
+  font-size: clamp(34px, 3vw, 44px);
+  font-weight: 900;
+  letter-spacing: -1.6px;
+  line-height: 1;
+  box-shadow: 0 12px 26px rgba(7, 94, 199, 0.18);
+}
+
+.post-login-welcome-subtitle {
+  margin: 26px 0 0;
+  color: #667085;
+  font-size: 18px;
+  line-height: 1.65;
+  font-weight: 800;
+}
+
+.post-login-welcome-continue-button {
+  width: 100%;
+  height: 60px;
+  margin-top: 42px;
+  border: none;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #005cff, #8735ff);
+  box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
+  font-family: Assistant, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+}
+
+.post-login-welcome-continue-button:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 22px 44px rgba(37, 99, 235, 0.32);
+}
+
+.post-login-welcome-continue-button:active,
+.post-login-welcome-back-button:active {
+  transform: scale(0.98);
+}
+
+.post-login-welcome-visual-card {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 34px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 30px 80px rgba(16, 24, 40, 0.14);
+}
+
+.post-login-welcome-visual-image {
+  width: calc(100% + 70px);
+  height: calc(100% + 70px);
+  margin: -35px;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+}
+
+@media (max-width: 1040px) {
+  .post-login-welcome-screen {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 24px 0 48px;
+  }
+
+  .post-login-welcome-card,
+  .post-login-welcome-visual-card {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .post-login-welcome-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .post-login-welcome-header,
+  .post-login-welcome-screen {
+    width: min(100% - 24px, 1240px);
+  }
+
+  .post-login-welcome-header {
+    height: 72px;
+  }
+
+  .post-login-welcome-logo {
+    font-size: 26px;
+  }
+
+  .post-login-welcome-back-button {
+    height: 40px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+
+  .post-login-welcome-screen {
+    padding: 18px 0 36px;
+    gap: 24px;
+  }
+
+  .post-login-welcome-card {
+    padding: 38px 22px;
+    border-radius: 28px;
+  }
+
+  .post-login-welcome-icon {
+    width: 66px;
+    height: 66px;
+    margin-bottom: 22px;
+  }
+
+  .post-login-welcome-title h1,
+  .post-login-welcome-brand-badge {
+    font-size: 32px;
+  }
+
+  .post-login-welcome-brand-badge {
+    padding: 7px 15px 9px;
+    border-radius: 12px;
+  }
+
+  .post-login-welcome-subtitle {
+    margin-top: 22px;
+    font-size: 16px;
+  }
+
+  .post-login-welcome-continue-button {
+    height: 54px;
+    margin-top: 32px;
+    font-size: 16px;
+  }
+
+  .post-login-welcome-visual-card {
+    border-radius: 28px;
+  }
+
+  .post-login-welcome-visual-image {
+    width: calc(100% + 54px);
+    height: calc(100% + 54px);
+    margin: -27px;
+  }
+}

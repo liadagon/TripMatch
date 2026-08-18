@@ -65,7 +65,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function authenticateWithGoogle(idToken: string) {
-    const response = await googleLogin(idToken);
+    let response;
+
+    try {
+      response = await googleLogin(idToken);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("[Google auth] TripMatch token exchange failed", {
+          url: error.config?.url,
+          baseURL: error.config?.baseURL || "same-origin (Vite /api proxy)",
+          status: error.response?.status,
+          code: error.response?.data?.code,
+          message: error.response?.data?.message || error.message,
+        });
+      } else {
+        console.error("[Google auth] TripMatch token exchange failed", error);
+      }
+
+      throw error;
+    }
 
     if (response.status !== 200) {
       throw new Error("Unexpected Google authentication response");

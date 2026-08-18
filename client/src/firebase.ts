@@ -58,17 +58,42 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
 export async function signInWithGoogle() {
-  const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
-  const user = result.user;
-  const idToken = await user.getIdToken();
+  let user;
 
-  return { idToken };
+  try {
+    const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
+    user = result.user;
+  } catch (error) {
+    console.error("[Google auth] Popup sign-in failed", {
+      code: getErrorCode(error),
+      message: getErrorMessage(error),
+    });
+    throw error;
+  }
+
+  try {
+    const idToken = await user.getIdToken();
+    return { idToken };
+  } catch (error) {
+    console.error("[Google auth] Firebase ID token creation failed", {
+      code: getErrorCode(error),
+      message: getErrorMessage(error),
+    });
+    throw error;
+  }
+}
+
+function getErrorCode(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String((error as { code?: unknown }).code)
+    : undefined;
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 export function getGoogleAuthErrorMessage(error: unknown) {
-  const code =
-    typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code?: unknown }).code)
-      : "";
+  const code = getErrorCode(error) ?? "";
 
   const message = error instanceof Error ? error.message : "";
   const suffix = code ? `\n\nקוד שגיאה: ${code}` : "";
