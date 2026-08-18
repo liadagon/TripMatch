@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
-const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
+
+const CONVERSATION_PROFILE_FIELDS =
+  "name age preferredDestinations tripDates photo photoURL";
 
 const ensureConversation = (match) =>
   Conversation.findOneAndUpdate(
@@ -9,6 +11,24 @@ const ensureConversation = (match) =>
     { $setOnInsert: { match: match._id, participants: match.users } },
     { new: true, upsert: true, runValidators: true }
   );
+
+const findAuthorizedConversation = async (conversationId, userId) => {
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    return { conversation: null, statusCode: 404 };
+  }
+
+  const isParticipant = conversation.participants.some((participantId) =>
+    participantId.equals(userId)
+  );
+
+  if (!isParticipant) {
+    return { conversation: null, statusCode: 403 };
+  }
+
+  return { conversation, statusCode: 200 };
+};
 
 const listConversations = async (req, res, next) => {
   try {
@@ -19,7 +39,7 @@ const listConversations = async (req, res, next) => {
       participants: req.user._id,
     })
       .sort({ updatedAt: -1 })
-      .populate("participants", PUBLIC_PROFILE_FIELDS);
+      .populate("participants", CONVERSATION_PROFILE_FIELDS);
 
     const data = conversations.map((conversation) => ({
       _id: conversation._id,
@@ -80,21 +100,29 @@ const getMessages = async (req, res, next) => {
       });
     }
 
-    const conversation = await Conversation.findOne({
-      _id: conversationId,
-      participants: req.user._id,
-    }).populate("participants", PUBLIC_PROFILE_FIELDS);
+    const result = await findAuthorizedConversation(
+      conversationId,
+      req.user._id
+    );
 
-    if (!conversation) {
-      return res.status(404).json({
+    if (!result.conversation) {
+      return res.status(result.statusCode).json({
         success: false,
-        message: "Conversation not found",
+        message:
+          result.statusCode === 403
+            ? "You are not allowed to access this conversation"
+            : "Conversation not found",
       });
     }
 
+    await result.conversation.populate(
+      "participants",
+      CONVERSATION_PROFILE_FIELDS
+    );
+
     return res.status(200).json({
       success: true,
-      data: conversation,
+      data: result.conversation,
     });
   } catch (error) {
     return next(error);
@@ -112,27 +140,30 @@ const sendMessage = async (req, res, next) => {
       });
     }
 
-    const conversation = await Conversation.findOne({
-      _id: conversationId,
-      participants: req.user._id,
-    });
+    const result = await findAuthorizedConversation(
+      conversationId,
+      req.user._id
+    );
 
-    if (!conversation) {
-      return res.status(404).json({
+    if (!result.conversation) {
+      return res.status(result.statusCode).json({
         success: false,
-        message: "Conversation not found",
+        message:
+          result.statusCode === 403
+            ? "You are not allowed to send messages to this conversation"
+            : "Conversation not found",
       });
     }
 
-    conversation.messages.push({
+    result.conversation.messages.push({
       sender: req.user._id,
       text: req.body.text,
     });
-    await conversation.save();
+    await result.conversation.save();
 
     return res.status(201).json({
       success: true,
-      data: conversation.messages.at(-1),
+      data: result.conversation.messages.at(-1),
     });
   } catch (error) {
     return next(error);

@@ -73,7 +73,10 @@ export default function Chat() {
           })),
         );
       } catch (error) {
-        console.warn("[Chat] Failed to load real conversation.", error);
+        console.warn(
+          "[Chat] Failed to load real conversation.",
+          error instanceof Error ? error.message : "Unknown error",
+        );
         if (isActive) setErrorMessage("לא הצלחנו לטעון את השיחה");
       }
     }
@@ -143,7 +146,11 @@ export default function Chat() {
         },
       ]);
       setText("");
-    } catch {
+    } catch (error) {
+      console.error("[Chat] Failed to persist message.", {
+        conversationId,
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
       setErrorMessage("לא הצלחנו לשלוח את ההודעה נסי שוב");
     } finally {
       setIsSending(false);

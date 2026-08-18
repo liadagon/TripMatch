@@ -322,26 +322,106 @@ Content-Type: application/json
 ### Get Matches without a token - expected 401
 GET {{baseUrl}}/api/matches
 
-### List conversations belonging to the authenticated user
-GET {{baseUrl}}/api/conversations
-Authorization: Bearer {{token}}
-
-### Open or create the conversation for an existing match
+### Create/get A-B conversation from their valid Match - expected 200
 GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
 Authorization: Bearer {{token}}
 
-### Load a conversation and its messages
-GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+### Open the same Match again - expected the same conversation ID
+GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
 Authorization: Bearer {{token}}
 
-### Send a message as the authenticated user
+### B opens the same Match - expected the same conversation ID
+GET {{baseUrl}}/api/conversations/with/{{userId}}
+Authorization: Bearer {{otherToken}}
+
+### Attempt conversation without a Match - expected 404
+GET {{baseUrl}}/api/conversations/with/{{thirdUserId}}
+Authorization: Bearer {{token}}
+
+### List A's conversations - expected only conversations containing A
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
+
+### List B's conversations - expected only conversations containing B
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{otherToken}}
+
+### List third user's conversations - expected no A-B conversation
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{thirdToken}}
+
+### List conversations without a token - expected 401
+GET {{baseUrl}}/api/conversations
+
+### Send a valid message as A - expected 201 and sender derived from token
 POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "text": "Hi! Want to compare travel plans?"
+  "text": "Hello from A"
 }
+
+### Load persisted messages as A - expected 200
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+### Load the same persisted messages as B - expected 200
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+
+### Send B's persisted reply - expected 201
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{
+  "text": "Reply from B"
+}
+
+### Whitespace-only message - expected 400
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "   "
+}
+
+### Fake sender field - expected 400
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "This must be rejected",
+  "sender": "{{thirdUserId}}"
+}
+
+### Send without a token - expected 401
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Content-Type: application/json
+
+{
+  "text": "Unauthenticated message"
+}
+
+### Non-participant attempts to read A-B messages - expected 403
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{thirdToken}}
+
+### Non-participant attempts to send into A-B conversation - expected 403
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{thirdToken}}
+Content-Type: application/json
+
+{
+  "text": "Forbidden message"
+}
+
+### Invalid conversation ObjectId - expected 400
+GET {{baseUrl}}/api/conversations/not-an-object-id/messages
+Authorization: Bearer {{token}}
 
 ### Delete the authenticated user - expected 200 (run last)
 DELETE {{baseUrl}}/api/users/me
