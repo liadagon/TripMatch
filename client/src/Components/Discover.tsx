@@ -1,6 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import type { AuthUser } from "../services/authService";
+import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
+import { getUsers } from "../services/userService";
 import {
   MapPin,
   Plane,
@@ -59,9 +63,46 @@ const initialProfiles = [
   },
 ];
 
+type DiscoverProfile = {
+  id: string;
+  userId: string;
+  name: string;
+  age: number;
+  city: string;
+  dates: string;
+  destination: string;
+  match: number;
+  images: string[];
+  tags: string[];
+};
+
+function mapUserToProfile(user: AuthUser): DiscoverProfile {
+  const tags = [
+    ...(user.interests || []),
+    user.travelStyle,
+    user.budget,
+  ].filter((tag): tag is string => Boolean(tag));
+
+  return {
+    id: user._id,
+    userId: user._id,
+    name: user.name,
+    age: user.age || 18,
+    city: user.location || "ישראל",
+    dates: user.tripDates || "גמיש",
+    destination: user.preferredDestinations?.[0] || "עדיין לא נבחר יעד",
+    match: 80,
+    images: [user.photoURL || user.photo || initialProfiles[0].images[0]],
+    tags: tags.length ? tags.slice(0, 5) : ["מטיילת ב-TripMatch"],
+  };
+}
+
 export default function Discover() {
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState(initialProfiles);
+  const { user } = useAuth();
+  const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [swipeError, setSwipeError] = useState("");
   const [photoIndex, setPhotoIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [feedback, setFeedback] = useState("");
@@ -72,6 +113,32 @@ export default function Discover() {
   const didSwipeRef = useRef(false);
   const isPointerDownRef = useRef(false);
   const isAnimatingRef = useRef(false);
+
+  async function loadProfiles() {
+    setIsLoading(true);
+    setSwipeError("");
+
+    try {
+      const [users, swipes] = await Promise.all([getUsers(), getSwipes()]);
+      const swipedUserIds = new Set(swipes.map((swipe) => swipe.toUser));
+      setProfiles(
+        users
+          .filter(
+            (candidate) =>
+              candidate._id !== user?._id && !swipedUserIds.has(candidate._id),
+          )
+          .map(mapUserToProfile),
+      );
+    } catch {
+      setSwipeError("לא הצלחנו לטעון התאמות נסי שוב");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadProfiles();
+  }, [user?._id]);
 
   const profile = profiles[0];
 
@@ -87,11 +154,11 @@ export default function Discover() {
 
           <section className="discover-empty">
             <Sparkles size={44} />
-            <h2>אין עוד התאמות כרגע</h2>
-            <p>נסי לחזור מאוחר יותר כדי לראות התאמות חדשות.</p>
+            <h2>{isLoading ? "טוענים התאמות..." : "אין עוד התאמות כרגע"}</h2>
+            <p>{swipeError || "נסי לחזור מאוחר יותר כדי לראות התאמות חדשות"}</p>
 
-            <button onClick={() => setProfiles(initialProfiles)}>
-              התחילי מחדש
+            <button onClick={() => void loadProfiles()} disabled={isLoading}>
+              נסי שוב
             </button>
           </section>
         </main>
@@ -103,13 +170,18 @@ export default function Discover() {
   const dragPower = Math.min(Math.abs(dragX) / 130, 1);
   const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
 
-  function moveToNextProfile(type: "like" | "skip") {
+  async function moveToNextProfile(type: SwipeAction) {
     if (isAnimatingRef.current) return;
 
     isAnimatingRef.current = true;
     setFeedback(type);
+    setSwipeError("");
 
-    window.setTimeout(() => {
+    try {
+      await Promise.all([
+        createSwipe(profile.userId, type),
+        new Promise((resolve) => window.setTimeout(resolve, 280)),
+      ]);
       setProfiles((prevProfiles) => prevProfiles.slice(1));
       setPhotoIndex(0);
       setDragX(0);
@@ -119,7 +191,14 @@ export default function Discover() {
       setFeedback("");
       setIsDragging(false);
       isAnimatingRef.current = false;
-    }, 280);
+    } catch {
+      setFeedback("");
+      setDragX(0);
+      dragXRef.current = 0;
+      setIsDragging(false);
+      isAnimatingRef.current = false;
+      setSwipeError("לא הצלחנו לשמור את הבחירה נסי שוב");
+    }
   }
 
   function nextPhoto() {

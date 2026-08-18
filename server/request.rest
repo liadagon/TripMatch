@@ -113,6 +113,20 @@ Content-Type: image/jpeg
 < ./sample-photo.jpg
 --TripMatchBoundary--
 
+### Record a like for another user
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{otherUserId}}",
+  "action": "like"
+}
+
+### List the authenticated user's swipes
+GET {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+
 ### Delete the authenticated user (run last)
 DELETE {{baseUrl}}/api/users/me
 Authorization: Bearer {{token}}

@@ -9,6 +9,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const fileRoutes = require("./routes/fileRoutes");
+const swipeRoutes = require("./routes/swipeRoutes");
 const protect = require("./middleware/auth");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
@@ -35,6 +36,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/file", protect, fileRoutes);
+app.use("/api/swipes", swipeRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
