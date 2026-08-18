@@ -12,6 +12,10 @@ import {
 } from "../data/conversations";
 import "./Matches.css";
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
 type DisplayMatch = {
   id: string;
   userId: string;
@@ -95,7 +99,7 @@ export default function Matches() {
       } else {
         console.warn(
           "[Matches] Backend matches unavailable; using demo fallback.",
-          matchesResult.reason,
+          getErrorMessage(matchesResult.reason),
         );
         setMatches(fallbackMatches);
       }
@@ -142,7 +146,7 @@ export default function Matches() {
       } else {
         console.warn(
           "[Matches] Backend conversations unavailable; using demo fallback.",
-          conversationsResult.reason,
+          getErrorMessage(conversationsResult.reason),
         );
         setConversations(fallbackConversations);
       }

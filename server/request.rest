@@ -2,6 +2,7 @@
 @userId = paste_created_user_id_here
 @otherUserId = paste_another_user_id_here
 @thirdUserId = paste_third_user_id_here
+@thirdToken = paste_third_user_jwt_here
 @nonexistentUserId = 64b000000000000000000000
 @token = paste_jwt_token_here
 @otherToken = paste_another_user_jwt_here
@@ -278,7 +279,9 @@ Content-Type: application/json
 GET {{baseUrl}}/api/swipes
 Authorization: Bearer {{token}}
 
-### Create the reciprocal like as the other user (creates one match)
+### A likes B above - expected isMatch false until B likes A
+
+### B likes A - expected 200, isMatch true, and one Match
 POST {{baseUrl}}/api/swipes
 Authorization: Bearer {{otherToken}}
 Content-Type: application/json
@@ -288,9 +291,36 @@ Content-Type: application/json
   "action": "like"
 }
 
-### List matches belonging to the authenticated user
+### Get Matches as A - expected B and only Matches containing A
 GET {{baseUrl}}/api/matches
 Authorization: Bearer {{token}}
+
+### Get Matches as B - expected A and only Matches containing B
+GET {{baseUrl}}/api/matches
+Authorization: Bearer {{otherToken}}
+
+### Repeat B's reciprocal Like - expected the existing Match, no duplicate
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{
+  "toUser": "{{userId}}",
+  "action": "like"
+}
+
+### Third user skips A while A has liked third user - expected isMatch false
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{thirdToken}}
+Content-Type: application/json
+
+{
+  "toUser": "{{userId}}",
+  "action": "skip"
+}
+
+### Get Matches without a token - expected 401
+GET {{baseUrl}}/api/matches
 
 ### List conversations belonging to the authenticated user
 GET {{baseUrl}}/api/conversations

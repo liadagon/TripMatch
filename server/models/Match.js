@@ -5,8 +5,11 @@ const matchSchema = new mongoose.Schema(
     users: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
       validate: {
-        validator: (users) => users.length === 2,
-        message: "A match must contain exactly two users",
+        validator: (users) =>
+          Array.isArray(users) &&
+          users.length === 2 &&
+          String(users[0]) !== String(users[1]),
+        message: "A match must contain exactly two distinct users",
       },
       required: true,
     },

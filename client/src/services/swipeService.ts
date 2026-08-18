@@ -15,6 +15,13 @@ type SwipeMutationResponse = {
   success: true;
   message: string;
   data: SwipeRecord;
+  isMatch: boolean;
+  match: {
+    _id: string;
+    users: string[];
+    createdAt: string;
+    updatedAt: string;
+  } | null;
 };
 
 export const createSwipe = async (
@@ -26,7 +33,7 @@ export const createSwipe = async (
     action,
   });
 
-  return response.data.data;
+  return response.data;
 };
 
 export const getSwipes = async () => {

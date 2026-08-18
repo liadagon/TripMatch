@@ -55,11 +55,21 @@ const createSwipe = async (req, res, next) => {
       }
     }
 
+    const matchResponse = match
+      ? {
+          _id: match._id,
+          users: match.users,
+          createdAt: match.createdAt,
+          updatedAt: match.updatedAt,
+        }
+      : null;
+
     return res.status(200).json({
       success: true,
       message: "Swipe saved successfully",
       data: swipe,
-      match,
+      isMatch: Boolean(matchResponse),
+      match: matchResponse,
     });
   } catch (error) {
     return next(error);
