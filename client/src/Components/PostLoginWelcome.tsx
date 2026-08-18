@@ -68,7 +68,7 @@ export default function PostLoginWelcome() {
           <button
             type="button"
             className="post-login-welcome-continue-button"
-            onClick={() => navigate("/questionnaire")}
+            onClick={() => navigate("/photo-upload")}
           >
             המשך
           </button>

@@ -71,7 +71,7 @@ export default function VerifyCode() {
       return;
     }
 
-    navigate("/questionnaire", {
+    navigate("/post-login-welcome", {
       state: {
         phone,
         code: codeValue,

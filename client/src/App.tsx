@@ -10,6 +10,7 @@ import VerifyCode from "./Components/VerifyCode";
 import Register from "./Components/Register";
 import Questionnaire from "./Components/Questionnaire";
 import PostLoginWelcome from "./Components/PostLoginWelcome";
+import PhotoUpload from "./Components/PhotoUpload";
 import Discover from "./Components/Discover";
 import Likes from "./Components/Likes";
 import Matches from "./Components/Matches";
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/register" element={<Register />} />
         <Route path="/post-login-welcome" element={<PostLoginWelcome />} />
+        <Route path="/photo-upload" element={<PhotoUpload />} />
         <Route path="/questionnaire" element={<Questionnaire />} />
 
         {/* App routes */}
