@@ -158,7 +158,12 @@ export default function Discover() {
       setFeedback("");
       setIsDragging(false);
       isAnimatingRef.current = false;
-    } catch {
+    } catch (error) {
+      console.error("[Discover] Failed to persist real-user swipe.", {
+        targetUserId: profile.userId,
+        action: type,
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
       setFeedback("");
       setDragX(0);
       dragXRef.current = 0;

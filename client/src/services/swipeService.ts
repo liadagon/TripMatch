@@ -11,8 +11,23 @@ export type SwipeRecord = {
   updatedAt: string;
 };
 
-export const createSwipe = (toUser: string, action: SwipeAction) =>
-  api.post("/api/swipes", { toUser, action });
+type SwipeMutationResponse = {
+  success: true;
+  message: string;
+  data: SwipeRecord;
+};
+
+export const createSwipe = async (
+  targetUserId: string,
+  action: SwipeAction,
+) => {
+  const response = await api.post<SwipeMutationResponse>("/api/swipes", {
+    toUser: targetUserId,
+    action,
+  });
+
+  return response.data.data;
+};
 
 export const getSwipes = async () => {
   const response = await api.get<{

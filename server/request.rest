@@ -1,6 +1,8 @@
 @baseUrl = http://127.0.0.1:5000
 @userId = paste_created_user_id_here
 @otherUserId = paste_another_user_id_here
+@thirdUserId = paste_third_user_id_here
+@nonexistentUserId = 64b000000000000000000000
 @token = paste_jwt_token_here
 @otherToken = paste_another_user_jwt_here
 @conversationId = paste_conversation_id_here
@@ -183,7 +185,7 @@ Content-Type: image/jpeg
 < ./sample-photo.jpg
 --TripMatchBoundary--
 
-### Record a like for another user
+### Record a like for another user - expected 200
 POST {{baseUrl}}/api/swipes
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -193,7 +195,86 @@ Content-Type: application/json
   "action": "like"
 }
 
-### List the authenticated user's swipes
+### Repeat the same like - expected 200 and the same swipe record is updated
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{otherUserId}}",
+  "action": "like"
+}
+
+### Record a skip for another real user - expected 200
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{thirdUserId}}",
+  "action": "skip"
+}
+
+### Change the existing swipe state - expected 200 without a duplicate record
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{thirdUserId}}",
+  "action": "like"
+}
+
+### Swipe without a token - expected 401
+POST {{baseUrl}}/api/swipes
+Content-Type: application/json
+
+{
+  "toUser": "{{otherUserId}}",
+  "action": "like"
+}
+
+### Invalid target ObjectId - expected 400
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "not-an-object-id",
+  "action": "like"
+}
+
+### Well-formed but nonexistent target user - expected 404
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{nonexistentUserId}}",
+  "action": "like"
+}
+
+### Swipe on the authenticated user's own profile - expected 400
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{userId}}",
+  "action": "like"
+}
+
+### Unsupported swipe action - expected 400
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "toUser": "{{otherUserId}}",
+  "action": "superlike"
+}
+
+### List swipes - expected one current record per fromUser/toUser pair
 GET {{baseUrl}}/api/swipes
 Authorization: Bearer {{token}}
 

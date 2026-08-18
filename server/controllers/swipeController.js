@@ -57,6 +57,7 @@ const createSwipe = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
+      message: "Swipe saved successfully",
       data: swipe,
       match,
     });
