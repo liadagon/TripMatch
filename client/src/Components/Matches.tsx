@@ -1,9 +1,61 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { conversations, newMatches } from "../data/conversations";
+import { conversations } from "../data/conversations";
+import { useAuth } from "../context/AuthContext";
+import { getMatches } from "../services/matchService";
 import "./Matches.css";
+
+type DisplayMatch = {
+  id: string;
+  userId: string;
+  name: string;
+  image: string;
+};
 
 export default function Matches() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [matches, setMatches] = useState<DisplayMatch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadMatches() {
+      try {
+        const records = await getMatches();
+
+        if (!isActive) return;
+
+        setMatches(
+          records.flatMap((record) => {
+            const otherUser = record.users.find(
+              (matchUser) => matchUser._id !== user?._id,
+            );
+
+            return otherUser
+              ? [{
+                  id: record._id,
+                  userId: otherUser._id,
+                  name: otherUser.name,
+                  image: otherUser.photoURL || otherUser.photo || "/pic2.png",
+                }]
+              : [];
+          }),
+        );
+      } catch {
+        if (isActive) setLoadError("לא הצלחנו לטעון את ההתאמות");
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    }
+
+    void loadMatches();
+    return () => {
+      isActive = false;
+    };
+  }, [user?._id]);
 
   return (
     <div className="matches-page" dir="rtl">
@@ -23,14 +75,18 @@ export default function Matches() {
           <div className="matches-section-label">התאמות חדשות</div>
 
           <div className="matches-stories-row">
-            {newMatches.map((match) => (
+            {!isLoading && !loadError && matches.length === 0 && (
+              <p className="matches-empty-state">עדיין אין התאמות חדשות</p>
+            )}
+            {loadError && <p className="matches-empty-state">{loadError}</p>}
+            {matches.map((match) => (
               <button
                 key={match.id}
                 className="matches-story"
-                onClick={() => navigate(`/chat/${match.id}`)}
+                onClick={() => navigate(`/chat/${match.userId}`)}
               >
                 <div className="matches-story-ring">
-                  <img src={match.images[0]} alt={match.name} />
+                  <img src={match.image} alt={match.name} />
                 </div>
                 <span>{match.name}</span>
               </button>

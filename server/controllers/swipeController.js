@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Swipe = require("../models/Swipe");
+const Match = require("../models/Match");
 
 const createSwipe = async (req, res, next) => {
   try {
@@ -28,9 +29,30 @@ const createSwipe = async (req, res, next) => {
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
     );
 
+    let match = null;
+
+    if (action === "like") {
+      const reciprocalLike = await Swipe.exists({
+        fromUser: toUser,
+        toUser: fromUser,
+        action: "like",
+      });
+
+      if (reciprocalLike) {
+        const userIds = [String(fromUser), String(toUser)].sort();
+        const pairKey = userIds.join(":");
+        match = await Match.findOneAndUpdate(
+          { pairKey },
+          { $setOnInsert: { users: userIds, pairKey } },
+          { new: true, upsert: true, runValidators: true }
+        );
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: swipe,
+      match,
     });
   } catch (error) {
     return next(error);

@@ -2,6 +2,7 @@
 @userId = paste_created_user_id_here
 @otherUserId = paste_another_user_id_here
 @token = paste_jwt_token_here
+@otherToken = paste_another_user_jwt_here
 
 ### Health check
 GET {{baseUrl}}/api/health
@@ -125,6 +126,20 @@ Content-Type: application/json
 
 ### List the authenticated user's swipes
 GET {{baseUrl}}/api/swipes
+Authorization: Bearer {{token}}
+
+### Create the reciprocal like as the other user (creates one match)
+POST {{baseUrl}}/api/swipes
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{
+  "toUser": "{{userId}}",
+  "action": "like"
+}
+
+### List matches belonging to the authenticated user
+GET {{baseUrl}}/api/matches
 Authorization: Bearer {{token}}
 
 ### Delete the authenticated user (run last)
