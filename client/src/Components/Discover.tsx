@@ -6,6 +6,7 @@ import {
   Plane,
   Sparkles,
   Heart,
+  ThumbsDown,
   X,
   MessageCircle,
   CalendarDays,
@@ -285,17 +286,17 @@ export default function Discover() {
             <button
               className="discover-skip-btn"
               onClick={() => moveToNextProfile("skip")}
+              aria-label="דלגי"
             >
-              <X size={21} />
-              דלגי
+              <ThumbsDown size={21} />
             </button>
 
             <button
               className="discover-like-btn"
               onClick={() => moveToNextProfile("like")}
+              aria-label="אהבתי"
             >
               <Heart size={20} fill="currentColor" />
-              אהבתי
             </button>
 
             <button
