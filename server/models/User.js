@@ -72,6 +72,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    questionnaire: {
+      planningStyle: { type: String, default: "" },
+      accommodationPreference: { type: String, default: "" },
+      companionScope: { type: String, default: "" },
+      companionPriority: { type: String, default: "" },
+      dealBreaker: { type: String, default: "" },
+    },
   },
   {
     timestamps: true,

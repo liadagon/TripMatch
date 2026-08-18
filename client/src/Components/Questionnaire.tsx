@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   Globe2,
   CalendarDays,
@@ -63,10 +64,13 @@ const questions = [
 
 export default function Questionnaire() {
   const navigate = useNavigate();
+  const { updateProfile } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState(
-    new Array(questions.length).fill(null)
+  const [selectedAnswers, setSelectedAnswers] = useState<Array<number | null>>(
+    new Array(questions.length).fill(null),
   );
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const question = questions[currentQuestion];
   const Icon = question.icon;
@@ -74,17 +78,45 @@ export default function Questionnaire() {
   const hasSelectedAnswer = selectedAnswers[currentQuestion] !== null;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
-  function selectAnswer(index) {
+  function selectAnswer(index: number) {
     const nextAnswers = [...selectedAnswers];
     nextAnswers[currentQuestion] = index;
     setSelectedAnswers(nextAnswers);
+    setSaveError("");
   }
 
-  function goNext() {
-    if (!hasSelectedAnswer) return;
+  async function goNext() {
+    if (!hasSelectedAnswer || isSaving) return;
 
     if (isLastQuestion) {
-      navigate("/discover");
+      const answers = selectedAnswers.map((answerIndex, questionIndex) =>
+        answerIndex === null ? "" : questions[questionIndex].answers[answerIndex],
+      );
+
+      setIsSaving(true);
+      setSaveError("");
+
+      try {
+        await updateProfile({
+          preferredDestinations: answers[0] ? [answers[0]] : [],
+          tripDates: answers[1],
+          budget: answers[2],
+          travelStyle: answers[3],
+          questionnaire: {
+            planningStyle: answers[4],
+            accommodationPreference: answers[5],
+            companionScope: answers[6],
+            companionPriority: answers[7],
+            dealBreaker: answers[8],
+          },
+        });
+        navigate("/discover");
+      } catch {
+        setSaveError("לא הצלחנו לשמור את התשובות נסי שוב");
+      } finally {
+        setIsSaving(false);
+      }
+
       return;
     }
 
@@ -144,6 +176,12 @@ export default function Questionnaire() {
           </section>
         </main>
 
+        {saveError && (
+          <p className="questionnaire-save-error" role="alert">
+            {saveError}
+          </p>
+        )}
+
         <div className="questionnaire-nav-row">
           {currentQuestion > 0 && (
             <button className="questionnaire-back-btn" onClick={goBack}>
@@ -161,9 +199,10 @@ export default function Questionnaire() {
                 : "questionnaire-next-btn"
             }
             onClick={goNext}
+            disabled={isSaving}
           >
             {isLastQuestion ? (
-              <span>מצאי התאמות ✨</span>
+              <span>{isSaving ? "שומרת..." : "מצאי התאמות ✨"}</span>
             ) : (
               <>
                 <span>הבא</span>

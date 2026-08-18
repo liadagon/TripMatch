@@ -16,6 +16,13 @@ export type AuthUser = {
   travelStyle?: string;
   budget?: string;
   tripDates?: string;
+  questionnaire?: {
+    planningStyle: string;
+    accommodationPreference: string;
+    companionScope: string;
+    companionPriority: string;
+    dealBreaker: string;
+  };
 };
 
 export type GoogleLoginResponse = {

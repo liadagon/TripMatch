@@ -18,6 +18,7 @@ export type ProfileUpdatePayload = Partial<
     | "travelStyle"
     | "budget"
     | "tripDates"
+    | "questionnaire"
     | "photo"
     | "photoURL"
   >

@@ -10,6 +10,7 @@ const PROFILE_FIELDS = [
   "travelStyle",
   "budget",
   "tripDates",
+  "questionnaire",
   "photo",
   "photoURL",
 ];

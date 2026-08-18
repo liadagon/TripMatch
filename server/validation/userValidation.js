@@ -12,6 +12,15 @@ const updateProfileSchema = Joi.object({
   travelStyle: Joi.string().trim().max(100).allow("").optional(),
   budget: Joi.string().trim().max(100).allow("").optional(),
   tripDates: Joi.string().trim().max(100).allow("").optional(),
+  questionnaire: Joi.object({
+    planningStyle: Joi.string().trim().max(150).allow("").required(),
+    accommodationPreference: Joi.string().trim().max(150).allow("").required(),
+    companionScope: Joi.string().trim().max(150).allow("").required(),
+    companionPriority: Joi.string().trim().max(150).allow("").required(),
+    dealBreaker: Joi.string().trim().max(150).allow("").required(),
+  })
+    .unknown(false)
+    .optional(),
   photo: Joi.string().trim().allow("").optional(),
   photoURL: Joi.string().trim().allow("").optional(),
 })
