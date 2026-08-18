@@ -8,6 +8,7 @@ import {
 import axios from "axios";
 import {
   type AuthUser,
+  emailLogin,
   getCurrentUser,
   googleLogin,
 } from "../services/authService";
@@ -17,6 +18,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isInitializing: boolean;
+  login: (email: string, password: string) => Promise<AuthUser>;
   authenticateWithGoogle: (idToken: string) => Promise<AuthUser>;
   logout: () => void;
 };
@@ -64,6 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  async function login(email: string, password: string) {
+    const response = await emailLogin(email, password);
+
+    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
+    setUser(response.data.data);
+    return response.data.data;
+  }
+
   async function authenticateWithGoogle(idToken: string) {
     let response;
 
@@ -105,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: Boolean(user),
         isInitializing,
+        login,
         authenticateWithGoogle,
         logout,
       }}

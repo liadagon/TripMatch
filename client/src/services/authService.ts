@@ -24,6 +24,13 @@ export type GoogleLoginResponse = {
   isNewUser: boolean;
 };
 
+export type EmailLoginResponse = {
+  success: true;
+  message: string;
+  token: string;
+  data: AuthUser;
+};
+
 type CurrentUserResponse = {
   success: true;
   data: AuthUser;
@@ -31,6 +38,9 @@ type CurrentUserResponse = {
 
 export const googleLogin = (idToken: string) =>
   api.post<GoogleLoginResponse>("/api/auth/google", { idToken });
+
+export const emailLogin = (email: string, password: string) =>
+  api.post<EmailLoginResponse>("/api/auth/login", { email, password });
 
 export const getCurrentUser = () =>
   api.get<CurrentUserResponse>("/api/auth/me");
