@@ -128,10 +128,6 @@ export default function Welcome() {
 
             {googleError && <p className="google-error">{googleError}</p>}
 
-            <p className="signup-row">
-              בהמשך עם טלפון או Google ניתן להירשם או להתחבר
-            </p>
-
             <p className="note">מיועד למטיילים ישראלים</p>
           </div>
         </div>

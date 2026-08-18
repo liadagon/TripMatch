@@ -15,6 +15,11 @@ const errorHandler = (err, req, res, next) => {
     message = Object.values(err.errors)
       .map((validationError) => validationError.message)
       .join(", ");
+  } else if (err.name === "MulterError") {
+    err.statusCode = 400;
+    message = err.code === "LIMIT_FILE_SIZE"
+      ? "Image size must not exceed 5MB"
+      : message;
   }
 
   const statusCode = err.statusCode || 500;

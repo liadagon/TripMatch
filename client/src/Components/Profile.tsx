@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -10,8 +10,11 @@ import {
   Heart,
   Pencil,
   ShieldCheck,
+  LogOut,
   X,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { uploadProfileImage } from "../services/profileService";
 import "./Profile.css";
 
 type ProfileData = {
@@ -28,6 +31,7 @@ type ProfileData = {
 };
 
 const PROFILE_STORAGE_KEY = "tripmatch_profile";
+const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const defaultProfile: ProfileData = {
   name: "נועה",
@@ -44,10 +48,14 @@ const defaultProfile: ProfileData = {
     "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=90",
 };
 
-function normalizeProfile(value: Partial<ProfileData>): ProfileData {
+function normalizeProfile(
+  value: Partial<ProfileData>,
+  fallbackImageUrl = defaultProfile.imageUrl,
+): ProfileData {
   return {
     ...defaultProfile,
     ...value,
+    imageUrl: value.imageUrl || fallbackImageUrl,
     age: String(value.age || defaultProfile.age),
     interests: Array.isArray(value.interests)
       ? value.interests.filter(Boolean)
@@ -55,26 +63,53 @@ function normalizeProfile(value: Partial<ProfileData>): ProfileData {
   };
 }
 
-function readStoredProfile(): ProfileData {
+function readStoredProfile(fallbackImageUrl?: string): ProfileData {
   const savedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
 
   if (savedProfile) {
     try {
-      return normalizeProfile(JSON.parse(savedProfile));
+      return normalizeProfile(JSON.parse(savedProfile), fallbackImageUrl);
     } catch {
       localStorage.removeItem(PROFILE_STORAGE_KEY);
     }
   }
 
-  return defaultProfile;
+  return normalizeProfile({}, fallbackImageUrl);
+}
+
+function validateProfileImage(file: File) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("יש לבחור קובץ תמונה בלבד");
+  }
+
+  if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+    throw new Error("גודל התמונה המרבי הוא 5MB");
+  }
+}
+
+function readImagePreview(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("לא הצלחנו לקרוא את התמונה"));
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<ProfileData>(() => readStoredProfile());
+  const { user, logout } = useAuth();
+  const directPhotoInputRef = useRef<HTMLInputElement>(null);
+  const modalPhotoInputRef = useRef<HTMLInputElement>(null);
+  const [profile, setProfile] = useState<ProfileData>(() =>
+    readStoredProfile(user?.photoURL || user?.photo),
+  );
   const [draftProfile, setDraftProfile] = useState<ProfileData>(profile);
+  const [pendingProfileImage, setPendingProfileImage] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!showSuccess) return;
@@ -88,13 +123,17 @@ export default function Profile() {
 
   function openEditModal() {
     setDraftProfile(profile);
+    setPendingProfileImage(null);
     setIsEditing(true);
     setShowSuccess(false);
+    setPhotoError("");
   }
 
   function closeEditModal() {
     setDraftProfile(profile);
+    setPendingProfileImage(null);
     setIsEditing(false);
+    setPhotoError("");
   }
 
   function updateDraft(field: keyof ProfileData, value: string) {
@@ -109,14 +148,74 @@ export default function Profile() {
     }));
   }
 
-  function saveProfile(event: FormEvent<HTMLFormElement>) {
+  async function handlePhotoSelection(
+    event: ChangeEvent<HTMLInputElement>,
+    destination: "profile" | "draft",
+  ) {
+    const file = event.target.files?.[0];
+    const previousProfile = profile;
+    event.target.value = "";
+
+    if (!file) return;
+
+    setPhotoError("");
+
+    try {
+      validateProfileImage(file);
+      const previewUrl = await readImagePreview(file);
+
+      if (destination === "draft") {
+        setDraftProfile((current) => ({ ...current, imageUrl: previewUrl }));
+        setPendingProfileImage(file);
+        return;
+      }
+
+      setProfile((current) => ({ ...current, imageUrl: previewUrl }));
+      setIsSaving(true);
+      const imageUrl = await uploadProfileImage(file);
+      const nextProfile = normalizeProfile({ ...profile, imageUrl });
+      setProfile(nextProfile);
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+      setShowSuccess(true);
+    } catch (error) {
+      if (destination === "profile") {
+        setProfile(previousProfile);
+      }
+
+      setPhotoError(
+        error instanceof Error ? error.message : "לא הצלחנו לעדכן את התמונה",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextProfile = normalizeProfile(draftProfile);
-    setProfile(nextProfile);
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
-    setIsEditing(false);
-    setShowSuccess(true);
+    setIsSaving(true);
+    setPhotoError("");
+
+    try {
+      const imageUrl = pendingProfileImage
+        ? await uploadProfileImage(pendingProfileImage)
+        : draftProfile.imageUrl;
+      const nextProfile = normalizeProfile({ ...draftProfile, imageUrl });
+      setProfile(nextProfile);
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(nextProfile));
+      setPendingProfileImage(null);
+      setIsEditing(false);
+      setShowSuccess(true);
+    } catch {
+      setPhotoError("לא הצלחנו לשמור את תמונת הפרופיל נסי שוב");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/");
   }
 
   return (
@@ -139,9 +238,27 @@ export default function Profile() {
           </div>
         )}
 
+        {photoError && !isEditing && (
+          <div className="profile-error-message" role="alert">
+            {photoError}
+          </div>
+        )}
+
         <section className="profile-card">
           <div className="profile-cover">
-            <button className="profile-edit-photo" onClick={openEditModal}>
+            <input
+              ref={directPhotoInputRef}
+              className="profile-photo-input"
+              type="file"
+              accept="image/*"
+              onChange={(event) => handlePhotoSelection(event, "profile")}
+            />
+            <button
+              type="button"
+              className="profile-edit-photo"
+              disabled={isSaving}
+              onClick={() => directPhotoInputRef.current?.click()}
+            >
               <Camera size={18} />
               שינוי תמונה
             </button>
@@ -248,9 +365,14 @@ export default function Profile() {
               <ShieldCheck size={24} />
               <div>
                 <strong>הפרופיל שלך מוגן</strong>
-                <p>המידע מוצג רק למשתמשים רלוונטיים בתוך TripMatch.</p>
+                <p>המידע מוצג רק למשתמשים רלוונטיים בתוך TripMatch</p>
               </div>
             </section>
+
+            <button type="button" className="profile-logout-btn" onClick={handleLogout}>
+              <LogOut size={18} />
+              יציאה מהחשבון
+            </button>
           </div>
         </section>
       </main>
@@ -339,14 +461,31 @@ export default function Profile() {
                 />
               </label>
 
-              <label>
-                <span>קישור לתמונת פרופיל</span>
-                <input
-                  dir="ltr"
-                  value={draftProfile.imageUrl}
-                  onChange={(event) => updateDraft("imageUrl", event.target.value)}
-                />
-              </label>
+              <div className="profile-photo-picker profile-form-wide">
+                <span>תמונת פרופיל</span>
+                <div className="profile-photo-picker-content">
+                  <img
+                    src={draftProfile.imageUrl}
+                    alt="תצוגה מקדימה של תמונת הפרופיל"
+                  />
+                  <input
+                    ref={modalPhotoInputRef}
+                    className="profile-photo-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => handlePhotoSelection(event, "draft")}
+                  />
+                  <button
+                    type="button"
+                    className="profile-choose-photo-btn"
+                    onClick={() => modalPhotoInputRef.current?.click()}
+                  >
+                    <Camera size={17} />
+                    בחירת תמונה
+                  </button>
+                </div>
+                {photoError && <small className="profile-photo-error">{photoError}</small>}
+              </div>
 
               <label className="profile-form-wide">
                 <span>תחומי עניין / תגיות</span>
@@ -366,12 +505,17 @@ export default function Profile() {
               </label>
 
               <div className="profile-modal-actions">
-                <button type="button" className="profile-cancel-btn" onClick={closeEditModal}>
+                <button
+                  type="button"
+                  className="profile-cancel-btn"
+                  onClick={closeEditModal}
+                  disabled={isSaving}
+                >
                   ביטול
                 </button>
 
-                <button type="submit" className="profile-save-btn">
-                  שמירה
+                <button type="submit" className="profile-save-btn" disabled={isSaving}>
+                  {isSaving ? "שומרת..." : "שמירה"}
                 </button>
               </div>
             </form>

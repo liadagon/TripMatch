@@ -60,9 +60,9 @@ export default function PostLoginWelcome() {
           </div>
 
           <p className="post-login-welcome-subtitle">
-            המקום שבו מטיילים נפגשים,
+            המקום שבו מטיילים נפגשים
             <br />
-            מתחברים ויוצרים חוויות בלתי נשכחות.
+            מתחברים ויוצרים חוויות בלתי נשכחות
           </p>
 
           <button

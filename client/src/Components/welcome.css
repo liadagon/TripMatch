@@ -183,17 +183,6 @@ body {
   transform: scale(0.98);
 }
 
-.signup-row {
-  margin-top: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: #667085;
-  font-size: 15px;
-  font-weight: 800;
-}
-
 .signup-link {
   padding: 0;
   border: none;
@@ -312,9 +301,6 @@ body {
     border-radius: 28px;
   }
 
-  .signup-row {
-    flex-wrap: wrap;
-  }
 }
 
 .google-login-btn {
