@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../services/authService";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
+import { getConversationWithUser } from "../services/conversationService";
 import {
   MapPin,
   Plane,
@@ -266,6 +267,17 @@ export default function Discover() {
     setIsDragging(false);
   }
 
+  async function handleMessage() {
+    setSwipeError("");
+
+    try {
+      const conversation = await getConversationWithUser(profile.userId);
+      navigate(`/chat/${conversation._id}`);
+    } catch {
+      setSwipeError("אפשר לשלוח הודעה רק אחרי שנוצרה התאמה הדדית");
+    }
+  }
+
   const cardStyle = {
     transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
     "--drag-power": dragPower,
@@ -358,6 +370,12 @@ export default function Discover() {
             </div>
           </section>
 
+          {swipeError && (
+            <p className="discover-api-error" role="alert">
+              {swipeError}
+            </p>
+          )}
+
           <div className="discover-actions">
             <button
               className="discover-skip-btn"
@@ -377,7 +395,7 @@ export default function Discover() {
 
             <button
               className="discover-message-btn"
-              onClick={() => navigate(`/chat/${profile.userId}`)}
+              onClick={handleMessage}
             >
               <MessageCircle size={20} />
               שלחי הודעה

@@ -455,6 +455,14 @@
 
 }
 
+.discover-api-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 900;
+  text-align: center;
+}
+
 @media (max-width: 420px) {
   .discover-image-wrap {
     min-height: 430px;

@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Swipe = require("../models/Swipe");
 const Match = require("../models/Match");
+const Conversation = require("../models/Conversation");
 
 const createSwipe = async (req, res, next) => {
   try {
@@ -44,6 +45,11 @@ const createSwipe = async (req, res, next) => {
         match = await Match.findOneAndUpdate(
           { pairKey },
           { $setOnInsert: { users: userIds, pairKey } },
+          { new: true, upsert: true, runValidators: true }
+        );
+        await Conversation.findOneAndUpdate(
+          { match: match._id },
+          { $setOnInsert: { match: match._id, participants: match.users } },
           { new: true, upsert: true, runValidators: true }
         );
       }

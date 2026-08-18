@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { conversations } from "../data/conversations";
 import { useAuth } from "../context/AuthContext";
 import { getMatches } from "../services/matchService";
+import {
+  getConversations,
+  getConversationWithUser,
+} from "../services/conversationService";
 import "./Matches.css";
 
 type DisplayMatch = {
@@ -12,10 +15,21 @@ type DisplayMatch = {
   image: string;
 };
 
+type DisplayConversation = {
+  id: string;
+  name: string;
+  age: number;
+  destination: string;
+  preview: string;
+  image: string;
+  time: string;
+};
+
 export default function Matches() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [matches, setMatches] = useState<DisplayMatch[]>([]);
+  const [conversations, setConversations] = useState<DisplayConversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -24,7 +38,10 @@ export default function Matches() {
 
     async function loadMatches() {
       try {
-        const records = await getMatches();
+        const [records, conversationRecords] = await Promise.all([
+          getMatches(),
+          getConversations(),
+        ]);
 
         if (!isActive) return;
 
@@ -44,6 +61,31 @@ export default function Matches() {
               : [];
           }),
         );
+        setConversations(
+          conversationRecords.flatMap((conversation) => {
+            const otherUser = conversation.participants.find(
+              (participant) => participant._id !== user?._id,
+            );
+
+            return otherUser
+              ? [{
+                  id: conversation._id,
+                  name: otherUser.name,
+                  age: otherUser.age || 18,
+                  destination: [
+                    otherUser.preferredDestinations?.[0],
+                    otherUser.tripDates,
+                  ].filter(Boolean).join(" · ") || "TripMatch",
+                  preview: conversation.lastMessage?.text || "התחילו שיחה חדשה",
+                  image: otherUser.photoURL || otherUser.photo || "/pic2.png",
+                  time: new Date(conversation.updatedAt).toLocaleTimeString("he-IL", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }),
+                }]
+              : [];
+          }),
+        );
       } catch {
         if (isActive) setLoadError("לא הצלחנו לטעון את ההתאמות");
       } finally {
@@ -56,6 +98,15 @@ export default function Matches() {
       isActive = false;
     };
   }, [user?._id]);
+
+  async function openMatchConversation(userId: string) {
+    try {
+      const conversation = await getConversationWithUser(userId);
+      navigate(`/chat/${conversation._id}`);
+    } catch {
+      setLoadError("לא הצלחנו לפתוח את השיחה");
+    }
+  }
 
   return (
     <div className="matches-page" dir="rtl">
@@ -83,7 +134,7 @@ export default function Matches() {
               <button
                 key={match.id}
                 className="matches-story"
-                onClick={() => navigate(`/chat/${match.userId}`)}
+                onClick={() => void openMatchConversation(match.userId)}
               >
                 <div className="matches-story-ring">
                   <img src={match.image} alt={match.name} />
@@ -96,19 +147,19 @@ export default function Matches() {
           <div className="matches-section-label">שיחות פעילות</div>
 
           <div className="matches-chat-list">
+            {!isLoading && !loadError && conversations.length === 0 && (
+              <p className="matches-empty-state">עדיין אין שיחות פעילות</p>
+            )}
             {conversations.map((chat) => (
               <button
                 key={chat.id}
                 className={
-                  chat.unread ? "matches-chat-card unread" : "matches-chat-card"
+                  "matches-chat-card"
                 }
                 onClick={() => navigate(`/chat/${chat.id}`)}
               >
                 <div className="matches-avatar-wrap">
-                  <img src={chat.images[0]} alt={chat.name} />
-
-                  {chat.unread && <span className="matches-unread-dot"></span>}
-                  {chat.online && <span className="matches-online-dot"></span>}
+                  <img src={chat.image} alt={chat.name} />
                 </div>
 
                 <div className="matches-info">
@@ -116,23 +167,18 @@ export default function Matches() {
                     <h2>
                       {chat.name}, {chat.age}
                     </h2>
-                    {chat.time && <span>{chat.time}</span>}
+                    <span>{chat.time}</span>
                   </div>
 
                   <p className="matches-dest">✈️ {chat.destination}</p>
 
                   <p
-                    className={
-                      chat.unread
-                        ? "matches-preview unread"
-                        : "matches-preview"
-                    }
+                    className="matches-preview"
                   >
                     {chat.preview}
                   </p>
                 </div>
 
-                <div className="matches-percent">{chat.match}%</div>
               </button>
             ))}
           </div>

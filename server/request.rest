@@ -3,6 +3,7 @@
 @otherUserId = paste_another_user_id_here
 @token = paste_jwt_token_here
 @otherToken = paste_another_user_jwt_here
+@conversationId = paste_conversation_id_here
 
 ### Health check
 GET {{baseUrl}}/api/health
@@ -141,6 +142,27 @@ Content-Type: application/json
 ### List matches belonging to the authenticated user
 GET {{baseUrl}}/api/matches
 Authorization: Bearer {{token}}
+
+### List conversations belonging to the authenticated user
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
+
+### Open or create the conversation for an existing match
+GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
+Authorization: Bearer {{token}}
+
+### Load a conversation and its messages
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+### Send a message as the authenticated user
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "Hi! Want to compare travel plans?"
+}
 
 ### Delete the authenticated user (run last)
 DELETE {{baseUrl}}/api/users/me

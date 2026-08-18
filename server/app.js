@@ -11,6 +11,7 @@ const userRoutes = require("./routes/userRoutes");
 const fileRoutes = require("./routes/fileRoutes");
 const swipeRoutes = require("./routes/swipeRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const conversationRoutes = require("./routes/conversationRoutes");
 const protect = require("./middleware/auth");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
@@ -39,6 +40,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/file", protect, fileRoutes);
 app.use("/api/swipes", swipeRoutes);
 app.use("/api/matches", matchRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,100 +1,94 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { conversations, getConversationById } from "../data/conversations";
+import { useAuth } from "../context/AuthContext";
+import type { AuthUser } from "../services/authService";
+import {
+  getMessages,
+  sendMessage as persistMessage,
+  type MessageRecord,
+} from "../services/conversationService";
 import "./Chat.css";
 
-const initialMessages = [
-  {
-    from: "them",
-    text: "היי! ראיתי שגם את מתכננת לטוס לפרו בספטמבר 🌎",
-    time: "14:22",
-  },
-  {
-    from: "me",
-    text: "כן! אני מחפשת שותפה לשלושה השבועות הראשונים 🎒",
-    time: "14:24",
-  },
-  {
-    from: "them",
-    text: "נשמע מעולה, גם אני רוצה להתחיל בלימה ואז להמשיך לקוסקו",
-    time: "14:25",
-  },
-  {
-    from: "me",
-    text: "זה בדיוק המסלול שלי! ראית את מאצ'ו פיצ'ו בתוכנית שלך?",
-    time: "14:26",
-  },
-  {
-    from: "them",
-    text: "כן בטח! אבל שמעתי שצריך להזמין הרבה מראש, כבר התחלת?",
-    time: "14:27",
-  },
-];
-
-const replies = [
-  "ממש מגניב! 🙌",
-  "כן, בדיוק חשבתי על זה!",
-  "נשמע לי טוב, בואי נתאם פרטים 📅",
-  "אחלה! יש לי עוד כמה שאלות...",
-  "מגניב, אשמח לשמוע עוד 😊",
-];
-
-function getCurrentTime() {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+function formatMessageTime(value: string) {
+  return new Date(value).toLocaleTimeString("he-IL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function Chat() {
   const navigate = useNavigate();
-  const { userId } = useParams();
-  const conversation = getConversationById(userId) ?? conversations[0];
-  const [messages, setMessages] = useState(initialMessages);
+  const { userId: conversationId } = useParams();
+  const { user } = useAuth();
+  const [otherUser, setOtherUser] = useState<AuthUser | null>(null);
+  const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [text, setText] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadConversation() {
+      if (!conversationId) return;
+
+      try {
+        const conversation = await getMessages(conversationId);
+
+        if (!isActive) return;
+        setOtherUser(
+          conversation.participants.find(
+            (participant) => participant._id !== user?._id,
+          ) || null,
+        );
+        setMessages(conversation.messages);
+      } catch {
+        if (isActive) setErrorMessage("לא הצלחנו לטעון את השיחה");
+      }
+    }
+
+    void loadConversation();
+    return () => {
+      isActive = false;
+    };
+  }, [conversationId, user?._id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  function sendMessage() {
+  async function sendMessage() {
     const cleanText = text.trim();
 
-    if (!cleanText) return;
+    if (!cleanText || !conversationId || isSending) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        from: "me",
-        text: cleanText,
-        time: getCurrentTime(),
-      },
-    ]);
+    setIsSending(true);
+    setErrorMessage("");
 
-    setText("");
-
-    window.setTimeout(() => {
-      const randomReply = replies[Math.floor(Math.random() * replies.length)];
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          from: "them",
-          text: randomReply,
-          time: getCurrentTime(),
-        },
-      ]);
-    }, 900);
+    try {
+      const message = await persistMessage(conversationId, cleanText);
+      setMessages((current) => [...current, message]);
+      setText("");
+    } catch {
+      setErrorMessage("לא הצלחנו לשלוח את ההודעה נסי שוב");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
-      sendMessage();
+      void sendMessage();
     }
   }
+
+  const destination = [
+    otherUser?.preferredDestinations?.[0],
+    otherUser?.tripDates,
+  ].filter(Boolean).join(" · ");
 
   return (
     <div className="chat-page" dir="rtl">
@@ -106,16 +100,13 @@ export default function Chat() {
 
           <img
             className="chat-avatar"
-            src={conversation.images[0]}
-            alt={conversation.name}
+            src={otherUser?.photoURL || otherUser?.photo || "/pic2.png"}
+            alt={otherUser?.name || "TripMatch"}
           />
 
           <div className="chat-meta">
-            <h1>{conversation.name}</h1>
-            <p>
-              ✈️ {conversation.destination} ·{" "}
-              <strong>{conversation.match}% התאמה</strong>
-            </p>
+            <h1>{otherUser?.name || "TripMatch"}</h1>
+            <p>✈️ {destination || "שיחה חדשה"}</p>
           </div>
 
           <button className="chat-more-btn">⋮</button>
@@ -124,10 +115,15 @@ export default function Chat() {
         <section className="chat-messages">
           <div className="chat-date-divider">היום</div>
 
-          {messages.map((message, index) => (
-            <div key={index} className={`chat-message ${message.from}`}>
+          {errorMessage && <p role="alert">{errorMessage}</p>}
+
+          {messages.map((message) => (
+            <div
+              key={message._id}
+              className={`chat-message ${message.sender === user?._id ? "me" : "them"}`}
+            >
               <div className="chat-bubble">{message.text}</div>
-              <div className="chat-time">{message.time}</div>
+              <div className="chat-time">{formatMessageTime(message.createdAt)}</div>
             </div>
           ))}
 
@@ -142,12 +138,17 @@ export default function Chat() {
               type="text"
               placeholder="כתבי הודעה..."
               value={text}
+              maxLength={2000}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={handleKeyDown}
             />
           </div>
 
-          <button className="chat-send-btn" onClick={sendMessage}>
+          <button
+            className="chat-send-btn"
+            onClick={() => void sendMessage()}
+            disabled={isSending || !text.trim()}
+          >
             ➤
           </button>
         </footer>
