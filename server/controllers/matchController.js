@@ -2,6 +2,7 @@ const Match = require("../models/Match");
 const Conversation = require("../models/Conversation");
 const User = require("../models/User");
 const getBlockStatus = require("../utils/blockRelationship");
+const { getBlockedUserIds } = require("../utils/blockRelationship");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 
 const MATCH_PROFILE_FIELDS = "name photo photoURL";
@@ -24,7 +25,13 @@ const EXPANDED_MATCH_PROFILE_FIELDS = [
 
 const getCurrentUserMatches = async (req, res, next) => {
   try {
-    const matches = await Match.find({ users: req.user._id })
+    const blockedUserIds = await getBlockedUserIds(req.user._id);
+    const matches = await Match.find({
+      $and: [
+        { users: req.user._id },
+        ...(blockedUserIds.length ? [{ users: { $nin: blockedUserIds } }] : []),
+      ],
+    })
       .sort({ createdAt: -1 })
       .populate("users", MATCH_PROFILE_FIELDS);
 

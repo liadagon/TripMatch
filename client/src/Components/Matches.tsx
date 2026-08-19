@@ -10,7 +10,10 @@ import {
   conversations as demoConversations,
   newMatches as demoMatches,
 } from "../data/conversations";
-import { isDemoConversationHidden } from "../services/demoConversationState";
+import {
+  isDemoConversationHidden,
+  isDemoUserBlocked,
+} from "../services/demoConversationState";
 import "./Matches.css";
 
 function getErrorMessage(error: unknown) {
@@ -37,17 +40,21 @@ type DisplayConversation = {
   isDemo: boolean;
 };
 
-const fallbackMatches: DisplayMatch[] = demoMatches.map((match) => ({
-  id: `demo-match-${match.id}`,
-  userId: match.id,
-  name: match.name,
-  image: match.images[0],
-  isDemo: true,
-}));
+const getFallbackMatches = (): DisplayMatch[] =>
+  demoMatches
+    .filter((match) => !isDemoUserBlocked(match.id))
+    .map((match) => ({
+      id: `demo-match-${match.id}`,
+      userId: match.id,
+      name: match.name,
+      image: match.images[0],
+      isDemo: true,
+    }));
 
 const getFallbackConversations = (): DisplayConversation[] =>
   demoConversations
     .filter((conversation) => !isDemoConversationHidden(conversation.id))
+    .filter((conversation) => !isDemoUserBlocked(conversation.id))
     .map((conversation) => ({
     id: conversation.id,
     userId: conversation.id,
@@ -99,13 +106,13 @@ export default function Matches() {
               ]
             : [];
         });
-        setMatches(realMatches.length ? realMatches : fallbackMatches);
+        setMatches(realMatches.length ? realMatches : getFallbackMatches());
       } else {
         console.warn(
           "[Matches] Backend matches unavailable; using demo fallback.",
           getErrorMessage(matchesResult.reason),
         );
-        setMatches(fallbackMatches);
+        setMatches(getFallbackMatches());
       }
 
       if (conversationsResult.status === "fulfilled") {

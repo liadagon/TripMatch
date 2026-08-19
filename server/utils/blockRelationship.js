@@ -16,4 +16,19 @@ const getBlockStatus = async (currentUserId, otherUserId) => {
   };
 };
 
+const getBlockedUserIds = async (currentUserId) => {
+  const blocks = await Block.find({
+    $or: [{ blocker: currentUserId }, { blocked: currentUserId }],
+  })
+    .select("blocker blocked")
+    .lean();
+
+  return blocks.map((block) =>
+    String(block.blocker) === String(currentUserId)
+      ? block.blocked
+      : block.blocker
+  );
+};
+
 module.exports = getBlockStatus;
+module.exports.getBlockedUserIds = getBlockedUserIds;

@@ -3,6 +3,8 @@ const Swipe = require("../models/Swipe");
 const Match = require("../models/Match");
 const Conversation = require("../models/Conversation");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
+const getBlockStatus = require("../utils/blockRelationship");
+const { getBlockedUserIds } = require("../utils/blockRelationship");
 
 const createSwipe = async (req, res, next) => {
   try {
@@ -22,6 +24,15 @@ const createSwipe = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "Target user not found",
+      });
+    }
+
+    const blockStatus = await getBlockStatus(fromUser, toUser);
+
+    if (blockStatus.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: "This user interaction is unavailable",
       });
     }
 
@@ -95,9 +106,11 @@ const getCurrentUserSwipes = async (req, res, next) => {
 
 const getReceivedLikes = async (req, res, next) => {
   try {
+    const blockedUserIds = await getBlockedUserIds(req.user._id);
     const likes = await Swipe.find({
       toUser: req.user._id,
       action: "like",
+      ...(blockedUserIds.length ? { fromUser: { $nin: blockedUserIds } } : {}),
     })
       .sort({ updatedAt: -1 })
       .populate("fromUser", PUBLIC_PROFILE_FIELDS);

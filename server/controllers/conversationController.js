@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
 const getBlockStatus = require("../utils/blockRelationship");
+const { getBlockedUserIds } = require("../utils/blockRelationship");
 
 const CONVERSATION_PROFILE_FIELDS =
   "name age preferredDestinations tripDates photo photoURL";
@@ -64,11 +65,22 @@ const hasIncomingMessageAfterClear = (conversation, userId) => {
 
 const listConversations = async (req, res, next) => {
   try {
-    const matches = await Match.find({ users: req.user._id });
+    const blockedUserIds = await getBlockedUserIds(req.user._id);
+    const matches = await Match.find({
+      $and: [
+        { users: req.user._id },
+        ...(blockedUserIds.length ? [{ users: { $nin: blockedUserIds } }] : []),
+      ],
+    });
     await Promise.all(matches.map(ensureConversation));
 
     const conversations = await Conversation.find({
-      participants: req.user._id,
+      $and: [
+        { participants: req.user._id },
+        ...(blockedUserIds.length
+          ? [{ participants: { $nin: blockedUserIds } }]
+          : []),
+      ],
     })
       .sort({ updatedAt: -1 })
       .populate("participants", CONVERSATION_PROFILE_FIELDS);
@@ -124,6 +136,15 @@ const getConversationWithUser = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "A match is required before messaging this user",
+      });
+    }
+
+    const blockStatus = await getBlockStatus(req.user._id, userId);
+
+    if (blockStatus.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: "This matched conversation is unavailable",
       });
     }
 

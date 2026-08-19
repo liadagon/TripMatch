@@ -426,6 +426,39 @@ Content-Type: application/json
   "text": "This message must be blocked"
 }
 
+### While A's Block is active, A cannot message B either - expected 403
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "The blocker must not bypass their own Block"
+}
+
+### Blocked relationship is absent from A's Matches - expected 200 without otherUserId
+GET {{baseUrl}}/api/matches
+Authorization: Bearer {{token}}
+
+### Blocked relationship is absent from B's Matches too - expected 200 without userId
+GET {{baseUrl}}/api/matches
+Authorization: Bearer {{otherToken}}
+
+### Blocked relationship is absent from A's Conversations - expected 200 without conversationId
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
+
+### Blocked relationship is absent from B's Conversations too - expected 200 without conversationId
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{otherToken}}
+
+### Blocked relationship cannot be reopened by user ID - expected 403
+GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
+Authorization: Bearer {{token}}
+
+### A's received Likes exclude blocked B - expected 200 without otherUserId
+GET {{baseUrl}}/api/swipes/received
+Authorization: Bearer {{token}}
+
 ### While A's Block is active, neither side may view expanded profile - expected 403
 GET {{baseUrl}}/api/matches/with/{{otherUserId}}/profile
 Authorization: Bearer {{token}}
@@ -443,6 +476,14 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {}
+
+### Unblock restores the still-existing Match - expected 200 including otherUserId
+GET {{baseUrl}}/api/matches
+Authorization: Bearer {{token}}
+
+### Unblock permits reopening the existing Conversation - expected 200 with original conversationId
+GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
+Authorization: Bearer {{token}}
 
 ### Attempt conversation without a Match - expected 404
 GET {{baseUrl}}/api/conversations/with/{{thirdUserId}}

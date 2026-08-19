@@ -19,7 +19,11 @@ import {
   demoChatReplies,
   getConversationById,
 } from "../data/conversations";
-import { hideDemoConversation } from "../services/demoConversationState";
+import {
+  hideDemoConversation,
+  isDemoUserBlocked,
+  setDemoUserBlocked,
+} from "../services/demoConversationState";
 import "./Chat.css";
 
 type ChatMessage = {
@@ -79,7 +83,7 @@ export default function Chat() {
       if (getConversationById(conversationId)) {
         setOtherUser(null);
         setMessages(demoChatMessages.map((message) => ({ ...message })));
-        setIsDemoBlocked(false);
+        setIsDemoBlocked(isDemoUserBlocked(conversationId));
         setBlockStatus({ blocked: false, blockedByMe: false });
         return;
       }
@@ -225,7 +229,9 @@ export default function Chat() {
 
     try {
       if (isDemo) {
-        setIsDemoBlocked((current) => !current);
+        const nextBlocked = !isDemoBlocked;
+        setDemoUserBlocked(conversationId || "", nextBlocked);
+        setIsDemoBlocked(nextBlocked);
         setFeedbackMessage(
           isDemoBlocked ? "החסימה בוטלה" : "המשתמש נחסם בשיחת ההדגמה",
         );
@@ -466,7 +472,7 @@ export default function Chat() {
             >
               <Ban size={28} />
               <h2 id="chat-block-confirm-title">לחסום את המשתמש?</h2>
-              <p>לא תוכלו לשלוח הודעות זה לזה עד לביטול החסימה.</p>
+              <p>לא תוכלו לשלוח הודעות זה לזה כל עוד החסימה פעילה.</p>
               <div>
                 <button
                   type="button"
@@ -499,7 +505,7 @@ export default function Chat() {
             >
               <Trash2 size={28} />
               <h2 id="chat-delete-confirm-title">למחוק את השיחה?</h2>
-              <p>השיחה תימחק עבורך בלבד.</p>
+              <p>השיחה תיעלם עבורך, אך לא עבור המשתמש השני.</p>
               <div>
                 <button
                   type="button"
