@@ -671,3 +671,48 @@
   }
 
 }
+
+.likes-received-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.likes-received-card {
+  overflow: hidden;
+  border: 1px solid rgba(126, 153, 205, 0.24);
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.1);
+}
+
+.likes-received-card img {
+  width: 100%;
+  height: 250px;
+  display: block;
+  object-fit: cover;
+}
+
+.likes-received-card > div {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+}
+
+.likes-received-card h2,
+.likes-received-card p {
+  margin: 0;
+}
+
+.likes-received-card h2 {
+  color: #111827;
+  font-size: 1.45rem;
+}
+
+.likes-received-card p {
+  color: #5f6d84;
+}
+
+.likes-received-card strong {
+  color: #075feb;
+}

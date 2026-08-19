@@ -1,5 +1,10 @@
 ﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  getReceivedLikes,
+  type ReceivedLike,
+} from "../services/swipeService";
 import {
   Check,
   Heart,
@@ -23,6 +28,33 @@ export default function Likes() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<LikesTab>("received");
   const [showBoostMessage, setShowBoostMessage] = useState(false);
+  const [receivedLikes, setReceivedLikes] = useState<ReceivedLike[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadReceivedLikes() {
+      setLoadError("");
+
+      try {
+        const likes = await getReceivedLikes();
+        if (isActive) setReceivedLikes(likes);
+      } catch {
+        if (isActive) {
+          setLoadError("לא הצלחנו לטעון את הלייקים. נסו שוב מאוחר יותר.");
+        }
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    }
+
+    void loadReceivedLikes();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   function handleStartBoost() {
     setShowBoostMessage(true);
@@ -134,14 +166,49 @@ export default function Likes() {
           )}
 
           <article className="likes-main-card">
-            <div className="likes-count">0</div>
+            <div className="likes-count">{receivedLikes.length}</div>
 
             <div className="likes-main-heading">
               <h1>מי סימנו אותך</h1>
               <p>ברגע שמטיילים יאהבו אותך, הם יופיעו כאן.</p>
             </div>
 
-            <div className="likes-empty-state">
+            {isLoading ? (
+              <div className="likes-empty-state">
+                <Heart size={34} />
+                <h2>טוענים לייקים...</h2>
+              </div>
+            ) : loadError ? (
+              <div className="likes-empty-state">
+                <Heart size={34} />
+                <h2>{loadError}</h2>
+              </div>
+            ) : receivedLikes.length > 0 ? (
+              <div className="likes-received-grid">
+                {receivedLikes.map((like) => {
+                  const admirer = like.fromUser;
+                  const image =
+                    admirer.photoURL || admirer.photo || "/pic2.png";
+                  const destination =
+                    admirer.preferredDestinations?.[0] || "יעד עדיין לא נבחר";
+
+                  return (
+                    <article className="likes-received-card" key={like._id}>
+                      <img src={image} alt={admirer.name} />
+                      <div>
+                        <h2>
+                          {admirer.name}
+                          {admirer.age ? `, ${admirer.age}` : ""}
+                        </h2>
+                        <p>{admirer.location || "ישראל"}</p>
+                        <strong>{destination}</strong>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="likes-empty-state">
               <div className="likes-empty-icon">
                 <Heart size={34} fill="currentColor" />
               </div>
@@ -161,7 +228,8 @@ export default function Likes() {
                 לגלות מטיילים
                 <Search size={16} />
               </button>
-            </div>
+              </div>
+            )}
           </article>
         </section>
       </section>

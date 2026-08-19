@@ -1,4 +1,5 @@
 import api from "./api";
+import type { PublicUser } from "./authService";
 
 export type SwipeAction = "like" | "skip";
 
@@ -7,6 +8,13 @@ export type SwipeRecord = {
   fromUser: string;
   toUser: string;
   action: SwipeAction;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ReceivedLike = {
+  _id: string;
+  fromUser: PublicUser;
   createdAt: string;
   updatedAt: string;
 };
@@ -42,5 +50,14 @@ export const getSwipes = async () => {
     count: number;
     data: SwipeRecord[];
   }>("/api/swipes");
+  return response.data.data;
+};
+
+export const getReceivedLikes = async () => {
+  const response = await api.get<{
+    success: true;
+    count: number;
+    data: ReceivedLike[];
+  }>("/api/swipes/received");
   return response.data.data;
 };

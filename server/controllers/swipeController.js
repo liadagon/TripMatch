@@ -2,6 +2,7 @@ const User = require("../models/User");
 const Swipe = require("../models/Swipe");
 const Match = require("../models/Match");
 const Conversation = require("../models/Conversation");
+const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 
 const createSwipe = async (req, res, next) => {
   try {
@@ -92,7 +93,36 @@ const getCurrentUserSwipes = async (req, res, next) => {
   }
 };
 
+const getReceivedLikes = async (req, res, next) => {
+  try {
+    const likes = await Swipe.find({
+      toUser: req.user._id,
+      action: "like",
+    })
+      .sort({ updatedAt: -1 })
+      .populate("fromUser", PUBLIC_PROFILE_FIELDS);
+
+    const data = likes
+      .filter((like) => like.fromUser)
+      .map((like) => ({
+        _id: like._id,
+        fromUser: like.fromUser,
+        createdAt: like.createdAt,
+        updatedAt: like.updatedAt,
+      }));
+
+    return res.status(200).json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createSwipe,
   getCurrentUserSwipes,
+  getReceivedLikes,
 };

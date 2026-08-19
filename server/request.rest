@@ -293,6 +293,13 @@ Content-Type: application/json
 GET {{baseUrl}}/api/swipes
 Authorization: Bearer {{token}}
 
+### List Likes received by A - expected only current incoming Likes with public profiles
+GET {{baseUrl}}/api/swipes/received
+Authorization: Bearer {{token}}
+
+### List received Likes without a token - expected 401
+GET {{baseUrl}}/api/swipes/received
+
 ### A likes B above - expected isMatch false until B likes A
 
 ### B likes A - expected 200, isMatch true, and one Match
