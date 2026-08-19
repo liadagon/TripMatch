@@ -157,12 +157,28 @@ Authorization: Bearer {{token}}
   "password": "ThisFieldIsNotAllowed123!"
 }
 
-### Get all users
-GET {{baseUrl}}/api/users
+### Get users page 1 with the default page size
+GET {{baseUrl}}/api/users?page=1&limit=10
 Authorization: Bearer {{token}}
 
-### Repeat users list - each real profile's compatibility object must be identical
-GET {{baseUrl}}/api/users
+### Get users page 2
+GET {{baseUrl}}/api/users?page=2&limit=10
+Authorization: Bearer {{token}}
+
+### Invalid users page - expected 400
+GET {{baseUrl}}/api/users?page=0&limit=10
+Authorization: Bearer {{token}}
+
+### Invalid users limit - expected 400
+GET {{baseUrl}}/api/users?page=1&limit=0
+Authorization: Bearer {{token}}
+
+### Users limit above the maximum of 50 - expected 400
+GET {{baseUrl}}/api/users?page=1&limit=51
+Authorization: Bearer {{token}}
+
+### Repeat users page - each real profile's compatibility object must be identical
+GET {{baseUrl}}/api/users?page=1&limit=10
 Authorization: Bearer {{token}}
 
 ### Get users by location

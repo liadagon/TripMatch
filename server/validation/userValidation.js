@@ -1,5 +1,12 @@
 const Joi = require("joi");
 
+const userListQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(10),
+  location: Joi.string().trim().max(100).optional(),
+  travelStyle: Joi.string().trim().max(100).optional(),
+}).unknown(false);
+
 const QUESTIONNAIRE_OPTIONS = {
   destinations: [
     "דרום אמריקה",
@@ -122,5 +129,6 @@ const updateProfileSchema = Joi.object({
   .unknown(false);
 
 module.exports = {
+  userListQuerySchema,
   updateProfileSchema,
 };

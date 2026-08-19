@@ -9,7 +9,9 @@ const {
 } = require("../controllers/userController");
 const protect = require("../middleware/auth");
 const validate = require("../middleware/validate");
+const validateQuery = require("../middleware/validateQuery");
 const {
+  userListQuerySchema,
   updateProfileSchema,
 } = require("../validation/userValidation");
 
@@ -22,7 +24,7 @@ router.put("/me", validate(updateProfileSchema), updateCurrentUser);
 router.delete("/me", deleteCurrentUser);
 router.put("/:id", rejectLegacyMutation);
 router.delete("/:id", rejectLegacyMutation);
-router.get("/", getUsers);
+router.get("/", validateQuery(userListQuerySchema), getUsers);
 router.get("/:id", getUserById);
 
 module.exports = router;

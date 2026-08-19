@@ -24,6 +24,8 @@ const PROFILE_FIELDS = [
 const getUsers = async (req, res, next) => {
   try {
     const filter = {};
+    const { page, limit } = req.query;
+    const skip = (page - 1) * limit;
 
     if (req.query.location) {
       filter.location = req.query.location;
@@ -33,9 +35,14 @@ const getUsers = async (req, res, next) => {
       filter.travelStyle = req.query.travelStyle;
     }
 
-    const users = await User.find(filter).select(
-      `${PUBLIC_PROFILE_FIELDS} questionnaire`
-    );
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .select(`${PUBLIC_PROFILE_FIELDS} questionnaire`)
+        .sort({ _id: 1 })
+        .skip(skip)
+        .limit(limit),
+      User.countDocuments(filter),
+    ]);
     const data = users.map((user) => {
       const profile = user.toObject();
       delete profile.questionnaire;
@@ -50,6 +57,14 @@ const getUsers = async (req, res, next) => {
       success: true,
       count: data.length,
       data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
     next(error);
