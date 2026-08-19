@@ -1,10 +1,18 @@
 import api from "./api";
 import type { PublicUser } from "./authService";
 
+export type DiscoverUser = PublicUser & {
+  compatibility: {
+    percentage: number;
+    matchedCriteria: number;
+    comparedCriteria: number;
+  };
+};
+
 type UsersResponse = {
   success: true;
   count: number;
-  data: PublicUser[];
+  data: DiscoverUser[];
 };
 
 export const getUsers = async () => {

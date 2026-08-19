@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import type { PublicUser } from "../services/authService";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
+import type { DiscoverUser } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
 import { getDemoDiscoverProfiles } from "../data/demoProfiles";
 import {
@@ -32,14 +32,14 @@ type DiscoverProfile = {
   isDemo: boolean;
 };
 
-type UsableDiscoverUser = PublicUser & {
+type UsableDiscoverUser = DiscoverUser & {
   age: number;
   preferredDestinations: string[];
   tripDates: string;
 };
 
 export function isUsableDiscoverProfile(
-  user: PublicUser,
+  user: DiscoverUser,
 ): user is UsableDiscoverUser {
   const hasProfileImage = Boolean(user.photoURL?.trim() || user.photo?.trim());
   const hasDestination = Boolean(
@@ -73,7 +73,7 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
     city: user.location || "ישראל",
     dates: user.tripDates || "גמיש",
     destination: user.preferredDestinations?.[0] || "עדיין לא נבחר יעד",
-    match: 80,
+    match: user.compatibility.percentage,
     images: [
       user.photoURL ||
         user.photo ||

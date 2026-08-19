@@ -1,9 +1,9 @@
 const Match = require("../models/Match");
-const Conversation = require("../models/Conversation");
 const User = require("../models/User");
 const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
+const ensureConversation = require("../utils/ensureConversation");
 
 const MATCH_PROFILE_FIELDS = "name photo photoURL";
 const EXPANDED_MATCH_PROFILE_FIELDS = [
@@ -79,7 +79,7 @@ const getMatchedUserProfile = async (req, res, next) => {
 
     const [targetUser, conversation] = await Promise.all([
       User.findById(targetUserId).select(EXPANDED_MATCH_PROFILE_FIELDS),
-      Conversation.findOne({ match: match._id }).select("_id"),
+      ensureConversation(match),
     ]);
 
     if (!targetUser) {
@@ -96,7 +96,7 @@ const getMatchedUserProfile = async (req, res, next) => {
       data: {
         profile: targetUser,
         compatibility,
-        conversationId: conversation?._id || null,
+        conversationId: conversation._id,
       },
     });
   } catch (error) {

@@ -3,16 +3,10 @@ const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
 const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
+const ensureConversation = require("../utils/ensureConversation");
 
 const CONVERSATION_PROFILE_FIELDS =
   "name age preferredDestinations tripDates photo photoURL";
-
-const ensureConversation = (match) =>
-  Conversation.findOneAndUpdate(
-    { match: match._id },
-    { $setOnInsert: { match: match._id, participants: match.users } },
-    { new: true, upsert: true, runValidators: true }
-  );
 
 const findAuthorizedConversation = async (conversationId, userId) => {
   const conversation = await Conversation.findById(conversationId);

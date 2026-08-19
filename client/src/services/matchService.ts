@@ -24,7 +24,7 @@ export type MatchedProfileData = {
     matchedCriteria: number;
     comparedCriteria: number;
   };
-  conversationId: string | null;
+  conversationId: string;
 };
 
 export const getMatchedProfile = async (userId: string) => {

@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
+const calculateProfileCompatibility = require("../utils/profileCompatibility");
 
 const PROFILE_FIELDS = [
   "name",
@@ -29,12 +30,23 @@ const getUsers = async (req, res, next) => {
       filter.travelStyle = req.query.travelStyle;
     }
 
-    const users = await User.find(filter).select(PUBLIC_PROFILE_FIELDS);
+    const users = await User.find(filter).select(
+      `${PUBLIC_PROFILE_FIELDS} questionnaire`
+    );
+    const data = users.map((user) => {
+      const profile = user.toObject();
+      delete profile.questionnaire;
+
+      return {
+        ...profile,
+        compatibility: calculateProfileCompatibility(req.user, user),
+      };
+    });
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users,
+      count: data.length,
+      data,
     });
   } catch (error) {
     next(error);

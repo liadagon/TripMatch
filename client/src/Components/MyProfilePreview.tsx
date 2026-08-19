@@ -43,9 +43,9 @@ function meaningful(value: string | undefined) {
 }
 
 function getProfilePhotos(user: ProfilePreviewUser) {
-  const galleryPhotos = Array.from(
-    new Set((user.photos || []).map((photo) => photo.trim()).filter(Boolean)),
-  );
+  const galleryPhotos = (user.photos || [])
+    .map((photo) => photo.trim())
+    .filter(Boolean);
 
   if (galleryPhotos.length > 0) return galleryPhotos;
 
@@ -210,7 +210,7 @@ export function ProfilePreviewView({
               <>
                 <div className="profile-preview-progress" aria-hidden="true">
                   {photos.map((photo, index) => (
-                    <span key={photo} className={index === photoIndex ? "active" : ""} />
+                    <span key={`${photo}-${index}`} className={index === photoIndex ? "active" : ""} />
                   ))}
                 </div>
 
@@ -253,7 +253,7 @@ export function ProfilePreviewView({
               {photos.map((photo, index) => (
                 <button
                   type="button"
-                  key={photo}
+                  key={`${photo}-${index}`}
                   className={index === photoIndex ? "active" : ""}
                   onClick={() => setPhotoIndex(index)}
                   aria-label={`הצגת תמונה ${index + 1}`}

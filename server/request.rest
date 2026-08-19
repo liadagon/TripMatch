@@ -157,6 +157,10 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/users
 Authorization: Bearer {{token}}
 
+### Repeat users list - each real profile's compatibility object must be identical
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
 ### Get users by location
 GET {{baseUrl}}/api/users?location=Tel%20Aviv
 Authorization: Bearer {{token}}
@@ -324,7 +328,11 @@ Authorization: Bearer {{otherToken}}
 GET {{baseUrl}}/api/matches/with/{{otherUserId}}/profile
 Authorization: Bearer {{token}}
 
-### B gets A's expanded matched profile - expected 200
+### Repeating A-to-B returns the exact same compatibility result and Conversation ID
+GET {{baseUrl}}/api/matches/with/{{otherUserId}}/profile
+Authorization: Bearer {{token}}
+
+### B gets A's expanded profile - compatibility must equal A-to-B (symmetric)
 GET {{baseUrl}}/api/matches/with/{{userId}}/profile
 Authorization: Bearer {{otherToken}}
 
