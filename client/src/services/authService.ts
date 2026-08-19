@@ -8,6 +8,7 @@ export type AuthUser = {
   firebaseUid?: string;
   photo?: string;
   photoURL?: string;
+  photos?: string[];
   bio?: string;
   age?: number;
   location?: string;

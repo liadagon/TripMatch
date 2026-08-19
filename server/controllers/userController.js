@@ -14,6 +14,7 @@ const PROFILE_FIELDS = [
   "questionnaire",
   "photo",
   "photoURL",
+  "photos",
 ];
 
 const getUsers = async (req, res, next) => {

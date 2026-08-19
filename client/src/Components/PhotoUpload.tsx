@@ -6,11 +6,19 @@ import {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { uploadProfileImage } from "../services/profileService";
 
 import "./PhotoUpload.css";
 
 const MAX_PHOTOS = 6;
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 type PhotoItem = {
   id: string;
@@ -20,12 +28,14 @@ type PhotoItem = {
 
 const PhotoUpload = () => {
   const navigate = useNavigate();
+  const { updateProfile } = useAuth();
 
   const [photos, setPhotos] = useState<Array<PhotoItem | null>>(
     Array(MAX_PHOTOS).fill(null)
   );
 
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -38,12 +48,12 @@ const PhotoUpload = () => {
   };
 
   const validateFile = (file: File) => {
-    if (!file.type.startsWith("image/")) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       return "אפשר להעלות קבצי תמונה בלבד.";
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return "התמונה גדולה מדי. ניתן להעלות תמונה עד 10MB.";
+      return "התמונה גדולה מדי. ניתן להעלות תמונה עד 5MB.";
     }
 
     return "";
@@ -118,7 +128,9 @@ const PhotoUpload = () => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (isSaving) return;
+
     const selectedPhotos = photos.filter(
       (photo): photo is PhotoItem => photo !== null
     );
@@ -128,7 +140,24 @@ const PhotoUpload = () => {
       return;
     }
 
-    navigate("/questionnaire");
+    setError("");
+    setIsSaving(true);
+
+    try {
+      const uploadedUrls = await Promise.all(
+        selectedPhotos.map((photo) => uploadProfileImage(photo.file)),
+      );
+
+      await updateProfile({
+        photos: uploadedUrls,
+        photoURL: uploadedUrls[0],
+      });
+      navigate("/questionnaire");
+    } catch {
+      setError("לא הצלחנו להעלות ולשמור את התמונות. הבחירות נשמרו, נסו שוב.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleBack = () => {
@@ -235,7 +264,7 @@ const PhotoUpload = () => {
                     fileInputRefs.current[index] = element;
                   }}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
                   className="photo-upload-input"
                   onChange={(event) =>
                     handlePhotoChange(event, index)
@@ -285,9 +314,10 @@ const PhotoUpload = () => {
           <button
             type="button"
             className="photo-upload-continue"
-            onClick={handleContinue}
+            onClick={() => void handleContinue()}
+            disabled={isSaving}
           >
-            המשך
+            {isSaving ? "מעלים ושומרים..." : "המשך"}
           </button>
         </section>
       </main>

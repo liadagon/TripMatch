@@ -21,6 +21,7 @@ export type ProfileUpdatePayload = Partial<
     | "questionnaire"
     | "photo"
     | "photoURL"
+    | "photos"
   >
 >;
 
