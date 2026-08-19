@@ -19,6 +19,7 @@ import {
   demoChatReplies,
   getConversationById,
 } from "../data/conversations";
+import { hideDemoConversation } from "../services/demoConversationState";
 import "./Chat.css";
 
 type ChatMessage = {
@@ -274,14 +275,16 @@ export default function Chat() {
     setFeedbackMessage("");
 
     try {
-      if (!isDemo && conversationId) {
+      if (isDemo && conversationId) {
+        hideDemoConversation(conversationId);
+      } else if (conversationId) {
         await clearConversation(conversationId);
       }
 
       setMessages([]);
       setShowDeleteConfirmation(false);
       setIsMenuOpen(false);
-      setFeedbackMessage("השיחה נמחקה עבורך בלבד");
+      navigate("/matches", { replace: true });
     } catch (error) {
       console.error("[Chat] Failed to clear conversation.", {
         conversationId,

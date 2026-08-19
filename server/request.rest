@@ -500,9 +500,30 @@ Content-Type: application/json
 GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
 Authorization: Bearer {{token}}
 
+### A's cleared conversation is absent from A's inbox - expected 200 without conversationId
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
+
+### The same conversation remains in B's inbox with full history - expected 200 including conversationId
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{otherToken}}
+
 ### B still sees the complete shared history - expected 200 with all old messages
 GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
 Authorization: Bearer {{otherToken}}
+
+### A may send from a directly opened empty Chat - expected 201, but this must not restore A's inbox row
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "A outgoing after personal clear"
+}
+
+### A's own outgoing message does not restore the cleared inbox row - expected 200 without conversationId
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
 
 ### Nonparticipant C attempts to clear A-B conversation - expected 403
 DELETE {{baseUrl}}/api/conversations/{{conversationId}}
@@ -535,13 +556,17 @@ Content-Type: application/json
   "text": "New message after A cleared the conversation"
 }
 
-### A sees only B's new post-clear message - expected 200 with one visible message
+### A sees only post-clear messages; all pre-clear history remains hidden
 GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
 Authorization: Bearer {{token}}
 
-### A's conversation list shows the chat again with only the new preview
+### B's incoming message restores A's row with B's new message as the preview
 GET {{baseUrl}}/api/conversations
 Authorization: Bearer {{token}}
+
+### B still sees all pre-clear and post-clear messages
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
 
 ### Whitespace-only message - expected 400
 POST {{baseUrl}}/api/conversations/{{conversationId}}/messages

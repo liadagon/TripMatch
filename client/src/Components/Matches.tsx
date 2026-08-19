@@ -10,6 +10,7 @@ import {
   conversations as demoConversations,
   newMatches as demoMatches,
 } from "../data/conversations";
+import { isDemoConversationHidden } from "../services/demoConversationState";
 import "./Matches.css";
 
 function getErrorMessage(error: unknown) {
@@ -44,8 +45,10 @@ const fallbackMatches: DisplayMatch[] = demoMatches.map((match) => ({
   isDemo: true,
 }));
 
-const fallbackConversations: DisplayConversation[] = demoConversations.map(
-  (conversation) => ({
+const getFallbackConversations = (): DisplayConversation[] =>
+  demoConversations
+    .filter((conversation) => !isDemoConversationHidden(conversation.id))
+    .map((conversation) => ({
     id: conversation.id,
     userId: conversation.id,
     name: conversation.name,
@@ -55,8 +58,7 @@ const fallbackConversations: DisplayConversation[] = demoConversations.map(
     image: conversation.images[0],
     time: conversation.time || "",
     isDemo: true,
-  }),
-);
+    }));
 
 export default function Matches() {
   const navigate = useNavigate();
@@ -144,14 +146,16 @@ export default function Matches() {
           },
         );
         setConversations(
-          realConversations.length ? realConversations : fallbackConversations,
+          realConversations.length
+            ? realConversations
+            : getFallbackConversations(),
         );
       } else {
         console.warn(
           "[Matches] Backend conversations unavailable; using demo fallback.",
           getErrorMessage(conversationsResult.reason),
         );
-        setConversations(fallbackConversations);
+        setConversations(getFallbackConversations());
       }
 
       if (

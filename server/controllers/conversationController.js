@@ -51,6 +51,17 @@ const getVisibleMessages = (conversation, userId) => {
   );
 };
 
+const hasIncomingMessageAfterClear = (conversation, userId) => {
+  const clearedAt = getClearedAt(conversation, userId);
+
+  if (!clearedAt) return true;
+
+  return conversation.messages.some(
+    (message) =>
+      String(message.sender) !== String(userId) && message.createdAt > clearedAt
+  );
+};
+
 const listConversations = async (req, res, next) => {
   try {
     const matches = await Match.find({ users: req.user._id });
@@ -65,10 +76,11 @@ const listConversations = async (req, res, next) => {
     const data = conversations
       .flatMap((conversation) => {
         const visibleMessages = getVisibleMessages(conversation, req.user._id);
-        const wasCleared = Boolean(getClearedAt(conversation, req.user._id));
         const lastMessage = visibleMessages.at(-1) || null;
 
-        if (wasCleared && !lastMessage) return [];
+        // Clearing is an inbox hide for one participant. Only a later incoming
+        // message restores the row; opening Chat or sending must not undo it.
+        if (!hasIncomingMessageAfterClear(conversation, req.user._id)) return [];
 
         return [
           {
