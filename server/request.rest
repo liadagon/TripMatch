@@ -54,6 +54,10 @@ Content-Type: application/json
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{token}}
 
+### Current authenticated user's real profile statistics
+GET {{baseUrl}}/api/users/me/stats
+Authorization: Bearer {{token}}
+
 ### Current user without a token - expected 401
 GET {{baseUrl}}/api/auth/me
 

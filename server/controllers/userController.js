@@ -1,4 +1,7 @@
 const User = require("../models/User");
+const Swipe = require("../models/Swipe");
+const Match = require("../models/Match");
+const Conversation = require("../models/Conversation");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 
@@ -75,6 +78,56 @@ const getUserById = async (req, res, next) => {
   }
 };
 
+const getCurrentUserStats = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const [likeStats, realMatches, realConversations] = await Promise.all([
+      Swipe.aggregate([
+        {
+          $match: {
+            action: "like",
+            $or: [{ fromUser: userId }, { toUser: userId }],
+          },
+        },
+        {
+          $facet: {
+            outgoingLikes: [
+              { $match: { fromUser: userId } },
+              { $count: "total" },
+            ],
+            receivedLikes: [
+              { $match: { toUser: userId } },
+              { $count: "total" },
+            ],
+          },
+        },
+      ]),
+      Match.countDocuments({ users: userId }),
+      Conversation.countDocuments({ participants: userId }),
+    ]);
+
+    const realOutgoingLikes = likeStats[0]?.outgoingLikes[0]?.total || 0;
+    const likesReceived = likeStats[0]?.receivedLikes[0]?.total || 0;
+    const matchRate =
+      realOutgoingLikes === 0
+        ? 0
+        : Math.round(realMatches / realOutgoingLikes * 100);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        outgoingLikes: realOutgoingLikes,
+        likesReceived,
+        matches: realMatches,
+        conversations: realConversations,
+        matchRate,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const updateCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -134,6 +187,7 @@ const rejectLegacyMutation = (req, res) =>
 module.exports = {
   getUsers,
   getUserById,
+  getCurrentUserStats,
   updateCurrentUser,
   deleteCurrentUser,
   rejectLegacyMutation,

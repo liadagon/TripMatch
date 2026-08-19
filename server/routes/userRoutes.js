@@ -2,6 +2,7 @@ const express = require("express");
 const {
   getUsers,
   getUserById,
+  getCurrentUserStats,
   updateCurrentUser,
   deleteCurrentUser,
   rejectLegacyMutation,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.use(protect);
 
+router.get("/me/stats", getCurrentUserStats);
 router.put("/me", validate(updateProfileSchema), updateCurrentUser);
 router.delete("/me", deleteCurrentUser);
 router.put("/:id", rejectLegacyMutation);
