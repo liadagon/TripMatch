@@ -25,6 +25,10 @@ export type ConversationDetails = {
   messages: MessageRecord[];
   createdAt: string;
   updatedAt: string;
+  blockStatus: {
+    blocked: boolean;
+    blockedByMe: boolean;
+  };
 };
 
 export const getConversations = async () => {

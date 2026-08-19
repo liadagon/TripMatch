@@ -355,6 +355,72 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/conversations/with/{{userId}}
 Authorization: Bearer {{otherToken}}
 
+### Block matched User B as A - expected 200
+POST {{baseUrl}}/api/blocks/{{otherUserId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Repeat the same Block - expected 200 and no duplicate Block record
+POST {{baseUrl}}/api/blocks/{{otherUserId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Block without a token - expected 401
+POST {{baseUrl}}/api/blocks/{{otherUserId}}
+Content-Type: application/json
+
+{}
+
+### Block an invalid target - expected 400
+POST {{baseUrl}}/api/blocks/not-an-object-id
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### Nonmatched User C attempts to block B - expected 403
+POST {{baseUrl}}/api/blocks/{{otherUserId}}
+Authorization: Bearer {{thirdToken}}
+Content-Type: application/json
+
+{}
+
+### Reject a client-controlled blocker identity - expected 400
+POST {{baseUrl}}/api/blocks/{{otherUserId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "blocker": "{{thirdUserId}}"
+}
+
+### While A's Block is active, B cannot message A - expected 403
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{
+  "text": "This message must be blocked"
+}
+
+### B cannot remove A's Block - expected 200 with removed false
+DELETE {{baseUrl}}/api/blocks/{{userId}}
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{}
+
+### A unblocks B - expected 200 with removed true
+DELETE {{baseUrl}}/api/blocks/{{otherUserId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
 ### Attempt conversation without a Match - expected 404
 GET {{baseUrl}}/api/conversations/with/{{thirdUserId}}
 Authorization: Bearer {{token}}

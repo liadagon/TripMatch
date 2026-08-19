@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+import { Ban, UserRoundCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import type { PublicUser } from "../services/authService";
 import {
   getMessages,
   sendMessage as persistMessage,
 } from "../services/conversationService";
+import {
+  blockMatchedUser,
+  unblockMatchedUser,
+} from "../services/blockService";
 import {
   demoChatMessages,
   demoChatReplies,
@@ -19,6 +25,11 @@ type ChatMessage = {
   from: "me" | "them";
   text: string;
   time: string;
+};
+
+type BlockStatus = {
+  blocked: boolean;
+  blockedByMe: boolean;
 };
 
 function formatMessageTime(value: string) {
@@ -38,8 +49,18 @@ export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBlockPending, setIsBlockPending] = useState(false);
+  const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
+  const [blockStatus, setBlockStatus] = useState<BlockStatus>({
+    blocked: false,
+    blockedByMe: false,
+  });
+  const [isDemoBlocked, setIsDemoBlocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -48,10 +69,14 @@ export default function Chat() {
       if (!conversationId) return;
 
       setErrorMessage("");
+      setFeedbackMessage("");
+      setIsMenuOpen(false);
 
       if (getConversationById(conversationId)) {
         setOtherUser(null);
         setMessages(demoChatMessages.map((message) => ({ ...message })));
+        setIsDemoBlocked(false);
+        setBlockStatus({ blocked: false, blockedByMe: false });
         return;
       }
 
@@ -72,6 +97,7 @@ export default function Chat() {
             time: formatMessageTime(message.createdAt),
           })),
         );
+        setBlockStatus(conversation.blockStatus);
       } catch (error) {
         console.warn(
           "[Chat] Failed to load real conversation.",
@@ -88,13 +114,36 @@ export default function Chat() {
   }, [conversationId, user?._id]);
 
   useEffect(() => {
+    function closeMenu(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    function closeWithEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+        setShowBlockConfirmation(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeWithEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeWithEscape);
+    };
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   async function sendMessage() {
     const cleanText = text.trim();
 
-    if (!cleanText || !conversationId || isSending) return;
+    const relationshipBlocked = isDemo ? isDemoBlocked : blockStatus.blocked;
+    if (!cleanText || !conversationId || isSending || relationshipBlocked) return;
 
     setIsSending(true);
     setErrorMessage("");
@@ -151,10 +200,65 @@ export default function Chat() {
         conversationId,
         message: error instanceof Error ? error.message : "Unknown error",
       });
-      setErrorMessage("לא הצלחנו לשלוח את ההודעה נסי שוב");
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        setBlockStatus({ blocked: true, blockedByMe: false });
+        setErrorMessage("לא ניתן לשלוח הודעות בשיחה זו");
+      } else {
+        setErrorMessage("לא הצלחנו לשלוח את ההודעה נסי שוב");
+      }
     } finally {
       setIsSending(false);
     }
+  }
+
+  async function performBlockAction() {
+    if (isBlockPending) return;
+
+    setIsBlockPending(true);
+    setErrorMessage("");
+    setFeedbackMessage("");
+
+    try {
+      if (isDemo) {
+        setIsDemoBlocked((current) => !current);
+        setFeedbackMessage(
+          isDemoBlocked ? "החסימה בוטלה" : "המשתמש נחסם בשיחת ההדגמה",
+        );
+      } else if (otherUser) {
+        if (blockStatus.blockedByMe) {
+          await unblockMatchedUser(otherUser._id);
+          setBlockStatus({ blocked: false, blockedByMe: false });
+          setFeedbackMessage("החסימה בוטלה בהצלחה");
+        } else {
+          await blockMatchedUser(otherUser._id);
+          setBlockStatus({ blocked: true, blockedByMe: true });
+          setFeedbackMessage("המשתמש נחסם בהצלחה");
+        }
+      }
+
+      setShowBlockConfirmation(false);
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error("[Chat] Failed to update block state.", {
+        targetUserId: otherUser?._id,
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+      setErrorMessage("לא הצלחנו לעדכן את החסימה. נסי שוב");
+    } finally {
+      setIsBlockPending(false);
+    }
+  }
+
+  function selectBlockAction() {
+    const blockedByCurrentUser = isDemo ? isDemoBlocked : blockStatus.blockedByMe;
+
+    if (blockedByCurrentUser) {
+      void performBlockAction();
+      return;
+    }
+
+    setIsMenuOpen(false);
+    setShowBlockConfirmation(true);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -176,6 +280,8 @@ export default function Chat() {
     "/pic2.png";
   const displayDestination =
     demoConversation?.destination || destination || "שיחה חדשה";
+  const relationshipBlocked = isDemo ? isDemoBlocked : blockStatus.blocked;
+  const blockedByCurrentUser = isDemo ? isDemoBlocked : blockStatus.blockedByMe;
 
   return (
     <div className="chat-page" dir="rtl">
@@ -196,13 +302,46 @@ export default function Chat() {
             <p>✈️ {displayDestination}</p>
           </div>
 
-          <button className="chat-more-btn">⋮</button>
+          <div className="chat-more-wrap" ref={menuRef}>
+            <button
+              type="button"
+              className="chat-more-btn"
+              aria-label="אפשרויות שיחה"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen((current) => !current)}
+            >
+              ⋮
+            </button>
+
+            {isMenuOpen && (
+              <div className="chat-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={isBlockPending || (!isDemo && !otherUser)}
+                  onClick={selectBlockAction}
+                >
+                  {blockedByCurrentUser ? (
+                    <UserRoundCheck size={18} />
+                  ) : (
+                    <Ban size={18} />
+                  )}
+                  {blockedByCurrentUser ? "ביטול חסימה" : "חסימת משתמש"}
+                </button>
+              </div>
+            )}
+          </div>
         </header>
 
         <section className="chat-messages">
           <div className="chat-date-divider">היום</div>
 
           {errorMessage && <p role="alert">{errorMessage}</p>}
+          {feedbackMessage && (
+            <p className="chat-feedback" role="status">
+              {feedbackMessage}
+            </p>
+          )}
 
           {messages.map((message) => (
             <div
@@ -217,8 +356,18 @@ export default function Chat() {
           <div ref={messagesEndRef}></div>
         </section>
 
-        <footer className="chat-input-bar">
-          <button className="chat-attach-btn">📎</button>
+        <footer className={`chat-input-bar ${relationshipBlocked ? "blocked" : ""}`}>
+          {relationshipBlocked && (
+            <div className="chat-relationship-state" role="status">
+              {blockedByCurrentUser
+                ? "המשתמש חסום"
+                : "לא ניתן לשלוח הודעות בשיחה זו"}
+            </div>
+          )}
+
+          <button className="chat-attach-btn" disabled={relationshipBlocked}>
+            📎
+          </button>
 
           <div className="chat-input-wrap">
             <input
@@ -226,6 +375,7 @@ export default function Chat() {
               placeholder="כתבי הודעה..."
               value={text}
               maxLength={2000}
+              disabled={relationshipBlocked}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={handleKeyDown}
             />
@@ -234,11 +384,44 @@ export default function Chat() {
           <button
             className="chat-send-btn"
             onClick={() => void sendMessage()}
-            disabled={isSending || !text.trim()}
+            disabled={isSending || !text.trim() || relationshipBlocked}
           >
             ➤
           </button>
         </footer>
+
+        {showBlockConfirmation && (
+          <div className="chat-confirm-backdrop" role="presentation">
+            <section
+              className="chat-confirm-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chat-block-confirm-title"
+            >
+              <Ban size={28} />
+              <h2 id="chat-block-confirm-title">לחסום את המשתמש?</h2>
+              <p>לא תוכלו לשלוח הודעות זה לזה עד לביטול החסימה.</p>
+              <div>
+                <button
+                  type="button"
+                  className="chat-confirm-cancel"
+                  disabled={isBlockPending}
+                  onClick={() => setShowBlockConfirmation(false)}
+                >
+                  ביטול
+                </button>
+                <button
+                  type="button"
+                  className="chat-confirm-destructive"
+                  disabled={isBlockPending}
+                  onClick={() => void performBlockAction()}
+                >
+                  {isBlockPending ? "חוסמת..." : "חסימה"}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );

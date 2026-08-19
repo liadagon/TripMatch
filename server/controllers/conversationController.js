@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
+const getBlockStatus = require("../utils/blockRelationship");
 
 const CONVERSATION_PROFILE_FIELDS =
   "name age preferredDestinations tripDates photo photoURL";
@@ -29,6 +30,11 @@ const findAuthorizedConversation = async (conversationId, userId) => {
 
   return { conversation, statusCode: 200 };
 };
+
+const getOtherParticipantId = (conversation, currentUserId) =>
+  conversation.participants.find(
+    (participantId) => String(participantId) !== String(currentUserId)
+  );
 
 const listConversations = async (req, res, next) => {
   try {
@@ -119,10 +125,19 @@ const getMessages = async (req, res, next) => {
       "participants",
       CONVERSATION_PROFILE_FIELDS
     );
+    const otherUser = result.conversation.participants.find(
+      (participant) => String(participant._id) !== String(req.user._id)
+    );
+    const blockStatus = otherUser
+      ? await getBlockStatus(req.user._id, otherUser._id)
+      : { blocked: false, blockedByMe: false };
 
     return res.status(200).json({
       success: true,
-      data: result.conversation,
+      data: {
+        ...result.conversation.toObject(),
+        blockStatus,
+      },
     });
   } catch (error) {
     return next(error);
@@ -152,6 +167,21 @@ const sendMessage = async (req, res, next) => {
           result.statusCode === 403
             ? "You are not allowed to send messages to this conversation"
             : "Conversation not found",
+      });
+    }
+
+    const otherParticipantId = getOtherParticipantId(
+      result.conversation,
+      req.user._id
+    );
+    const blockStatus = otherParticipantId
+      ? await getBlockStatus(req.user._id, otherParticipantId)
+      : { blocked: false, blockedByMe: false };
+
+    if (blockStatus.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: "Messages are disabled for this blocked relationship",
       });
     }
 
