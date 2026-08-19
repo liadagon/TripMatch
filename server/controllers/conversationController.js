@@ -36,6 +36,21 @@ const getOtherParticipantId = (conversation, currentUserId) =>
     (participantId) => String(participantId) !== String(currentUserId)
   );
 
+const getClearedAt = (conversation, userId) =>
+  conversation.clearedFor.find(
+    (entry) => String(entry.user) === String(userId)
+  )?.clearedAt;
+
+const getVisibleMessages = (conversation, userId) => {
+  const clearedAt = getClearedAt(conversation, userId);
+
+  if (!clearedAt) return conversation.messages;
+
+  return conversation.messages.filter(
+    (message) => message.createdAt > clearedAt
+  );
+};
+
 const listConversations = async (req, res, next) => {
   try {
     const matches = await Match.find({ users: req.user._id });
@@ -47,14 +62,26 @@ const listConversations = async (req, res, next) => {
       .sort({ updatedAt: -1 })
       .populate("participants", CONVERSATION_PROFILE_FIELDS);
 
-    const data = conversations.map((conversation) => ({
-      _id: conversation._id,
-      match: conversation.match,
-      participants: conversation.participants,
-      lastMessage: conversation.messages.at(-1) || null,
-      createdAt: conversation.createdAt,
-      updatedAt: conversation.updatedAt,
-    }));
+    const data = conversations
+      .flatMap((conversation) => {
+        const visibleMessages = getVisibleMessages(conversation, req.user._id);
+        const wasCleared = Boolean(getClearedAt(conversation, req.user._id));
+        const lastMessage = visibleMessages.at(-1) || null;
+
+        if (wasCleared && !lastMessage) return [];
+
+        return [
+          {
+            _id: conversation._id,
+            match: conversation.match,
+            participants: conversation.participants,
+            lastMessage,
+            createdAt: conversation.createdAt,
+            updatedAt: lastMessage?.createdAt || conversation.createdAt,
+          },
+        ];
+      })
+      .sort((first, second) => second.updatedAt - first.updatedAt);
 
     return res.status(200).json({
       success: true,
@@ -131,13 +158,63 @@ const getMessages = async (req, res, next) => {
     const blockStatus = otherUser
       ? await getBlockStatus(req.user._id, otherUser._id)
       : { blocked: false, blockedByMe: false };
+    const visibleMessages = getVisibleMessages(
+      result.conversation,
+      req.user._id
+    );
+    const conversationData = result.conversation.toObject();
+    delete conversationData.clearedFor;
 
     return res.status(200).json({
       success: true,
       data: {
-        ...result.conversation.toObject(),
+        ...conversationData,
+        messages: visibleMessages,
         blockStatus,
       },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const clearConversationForCurrentUser = async (req, res, next) => {
+  try {
+    const result = await findAuthorizedConversation(
+      req.params.conversationId,
+      req.user._id
+    );
+
+    if (!result.conversation) {
+      return res.status(result.statusCode).json({
+        success: false,
+        message:
+          result.statusCode === 403
+            ? "You are not allowed to clear this conversation"
+            : "Conversation not found",
+      });
+    }
+
+    const clearedAt = new Date();
+    const existingEntry = result.conversation.clearedFor.find(
+      (entry) => String(entry.user) === String(req.user._id)
+    );
+
+    if (existingEntry) {
+      existingEntry.clearedAt = clearedAt;
+    } else {
+      result.conversation.clearedFor.push({
+        user: req.user._id,
+        clearedAt,
+      });
+    }
+
+    await result.conversation.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Conversation cleared for the current user",
+      clearedAt,
     });
   } catch (error) {
     return next(error);
@@ -205,4 +282,5 @@ module.exports = {
   getConversationWithUser,
   getMessages,
   sendMessage,
+  clearConversationForCurrentUser,
 };

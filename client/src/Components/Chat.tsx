@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { Ban, UserRoundCheck } from "lucide-react";
+import { Ban, Trash2, UserRoundCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import type { PublicUser } from "../services/authService";
 import {
   getMessages,
+  clearConversation,
   sendMessage as persistMessage,
 } from "../services/conversationService";
 import {
@@ -54,6 +55,8 @@ export default function Chat() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBlockPending, setIsBlockPending] = useState(false);
   const [showBlockConfirmation, setShowBlockConfirmation] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeletePending, setIsDeletePending] = useState(false);
   const [blockStatus, setBlockStatus] = useState<BlockStatus>({
     blocked: false,
     blockedByMe: false,
@@ -124,6 +127,7 @@ export default function Chat() {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
         setShowBlockConfirmation(false);
+        setShowDeleteConfirmation(false);
       }
     }
 
@@ -243,6 +247,7 @@ export default function Chat() {
         targetUserId: otherUser?._id,
         message: error instanceof Error ? error.message : "Unknown error",
       });
+      setShowBlockConfirmation(false);
       setErrorMessage("לא הצלחנו לעדכן את החסימה. נסי שוב");
     } finally {
       setIsBlockPending(false);
@@ -259,6 +264,34 @@ export default function Chat() {
 
     setIsMenuOpen(false);
     setShowBlockConfirmation(true);
+  }
+
+  async function deleteConversationForMe() {
+    if (isDeletePending) return;
+
+    setIsDeletePending(true);
+    setErrorMessage("");
+    setFeedbackMessage("");
+
+    try {
+      if (!isDemo && conversationId) {
+        await clearConversation(conversationId);
+      }
+
+      setMessages([]);
+      setShowDeleteConfirmation(false);
+      setIsMenuOpen(false);
+      setFeedbackMessage("השיחה נמחקה עבורך בלבד");
+    } catch (error) {
+      console.error("[Chat] Failed to clear conversation.", {
+        conversationId,
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+      setShowDeleteConfirmation(false);
+      setErrorMessage("לא הצלחנו למחוק את השיחה. נסי שוב");
+    } finally {
+      setIsDeletePending(false);
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -327,6 +360,18 @@ export default function Chat() {
                     <Ban size={18} />
                   )}
                   {blockedByCurrentUser ? "ביטול חסימה" : "חסימת משתמש"}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={isDeletePending || !conversationId}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setShowDeleteConfirmation(true);
+                  }}
+                >
+                  <Trash2 size={18} />
+                  מחיקת שיחה
                 </button>
               </div>
             )}
@@ -417,6 +462,39 @@ export default function Chat() {
                   onClick={() => void performBlockAction()}
                 >
                   {isBlockPending ? "חוסמת..." : "חסימה"}
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {showDeleteConfirmation && (
+          <div className="chat-confirm-backdrop" role="presentation">
+            <section
+              className="chat-confirm-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chat-delete-confirm-title"
+            >
+              <Trash2 size={28} />
+              <h2 id="chat-delete-confirm-title">למחוק את השיחה?</h2>
+              <p>השיחה תימחק עבורך בלבד.</p>
+              <div>
+                <button
+                  type="button"
+                  className="chat-confirm-cancel"
+                  disabled={isDeletePending}
+                  onClick={() => setShowDeleteConfirmation(false)}
+                >
+                  ביטול
+                </button>
+                <button
+                  type="button"
+                  className="chat-confirm-destructive"
+                  disabled={isDeletePending}
+                  onClick={() => void deleteConversationForMe()}
+                >
+                  {isDeletePending ? "מוחקת..." : "מחיקה"}
                 </button>
               </div>
             </section>

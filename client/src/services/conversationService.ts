@@ -63,3 +63,7 @@ export const sendMessage = async (conversationId: string, text: string) => {
   }>(`/api/conversations/${conversationId}/messages`, { text });
   return response.data.data;
 };
+
+export const clearConversation = async (conversationId: string) => {
+  await api.delete(`/api/conversations/${conversationId}`, { data: {} });
+};

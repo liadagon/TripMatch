@@ -17,6 +17,21 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const clearedForSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    clearedAt: {
+      type: Date,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const conversationSchema = new mongoose.Schema(
   {
     match: {
@@ -39,6 +54,10 @@ const conversationSchema = new mongoose.Schema(
     },
     messages: {
       type: [messageSchema],
+      default: [],
+    },
+    clearedFor: {
+      type: [clearedForSchema],
       default: [],
     },
   },

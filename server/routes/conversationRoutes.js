@@ -4,12 +4,14 @@ const {
   getConversationWithUser,
   getMessages,
   sendMessage,
+  clearConversationForCurrentUser,
 } = require("../controllers/conversationController");
 const protect = require("../middleware/auth");
 const validate = require("../middleware/validate");
 const validateParams = require("../middleware/validateParams");
 const {
   sendMessageSchema,
+  emptyConversationBodySchema,
 } = require("../validation/conversationValidation");
 const {
   userIdParamSchema,
@@ -35,6 +37,12 @@ router.post(
   validateParams(conversationIdParamSchema),
   validate(sendMessageSchema),
   sendMessage
+);
+router.delete(
+  "/:conversationId",
+  validateParams(conversationIdParamSchema),
+  validate(emptyConversationBodySchema),
+  clearConversationForCurrentUser
 );
 
 module.exports = router;

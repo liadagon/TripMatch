@@ -466,6 +466,60 @@ Content-Type: application/json
   "text": "Reply from B"
 }
 
+### A clears the conversation only for A - expected 200
+DELETE {{baseUrl}}/api/conversations/{{conversationId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### A now sees no messages from before the clear timestamp - expected 200 with empty messages
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+### B still sees the complete shared history - expected 200 with all old messages
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+
+### Nonparticipant C attempts to clear A-B conversation - expected 403
+DELETE {{baseUrl}}/api/conversations/{{conversationId}}
+Authorization: Bearer {{thirdToken}}
+Content-Type: application/json
+
+{}
+
+### Clear conversation without a token - expected 401
+DELETE {{baseUrl}}/api/conversations/{{conversationId}}
+Content-Type: application/json
+
+{}
+
+### Reject a client-controlled clear owner - expected 400
+DELETE {{baseUrl}}/api/conversations/{{conversationId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ownerId": "{{otherUserId}}"
+}
+
+### B sends a new message after A cleared - expected 201
+POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+Content-Type: application/json
+
+{
+  "text": "New message after A cleared the conversation"
+}
+
+### A sees only B's new post-clear message - expected 200 with one visible message
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+### A's conversation list shows the chat again with only the new preview
+GET {{baseUrl}}/api/conversations
+Authorization: Bearer {{token}}
+
 ### Whitespace-only message - expected 400
 POST {{baseUrl}}/api/conversations/{{conversationId}}/messages
 Authorization: Bearer {{token}}
