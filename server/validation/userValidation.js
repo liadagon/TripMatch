@@ -115,7 +115,7 @@ const updateProfileSchema = Joi.object({
   photoURL: Joi.string().trim().allow("").optional(),
   photos: Joi.array()
     .max(6)
-    .items(Joi.string().trim().required())
+    .items(Joi.string().trim().min(1))
     .optional(),
 })
   .min(1)
