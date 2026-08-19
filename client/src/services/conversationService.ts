@@ -16,6 +16,10 @@ export type ConversationSummary = {
   lastMessage: MessageRecord | null;
   createdAt: string;
   updatedAt: string;
+  blockStatus: {
+    blocked: boolean;
+    blockedByMe: boolean;
+  };
 };
 
 export type ConversationDetails = {

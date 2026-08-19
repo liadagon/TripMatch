@@ -19,6 +19,7 @@ import Chat from "./Components/Chat";
 import Profile from "./Components/Profile";
 import MyProfilePreview from "./Components/MyProfilePreview";
 import MatchedProfile from "./Components/MatchedProfile";
+import BlockedUsers from "./Components/BlockedUsers";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -37,6 +38,7 @@ export default function App() {
     location.pathname === "/matches" ||
     location.pathname === "/profile" ||
     location.pathname === "/profile-preview" ||
+    location.pathname === "/blocked-users" ||
     location.pathname.startsWith("/matched-profile/") ||
     location.pathname.startsWith("/chat/");
 
@@ -61,6 +63,7 @@ export default function App() {
         <Route path="/chat" element={<Navigate to="/matches" replace />} />
         <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
         <Route path="/profile" element={protectedPage(<Profile />)} />
+        <Route path="/blocked-users" element={protectedPage(<BlockedUsers />)} />
         <Route
           path="/profile-preview"
           element={protectedPage(<MyProfilePreview />)}

@@ -13,6 +13,7 @@ import {
   Eye,
   ShieldCheck,
   LogOut,
+  Ban,
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -478,6 +479,15 @@ export default function Profile() {
                 <p>המידע מוצג רק למשתמשים רלוונטיים בתוך TripMatch</p>
               </div>
             </section>
+
+            <button
+              type="button"
+              className="profile-blocked-users-btn"
+              onClick={() => navigate("/blocked-users")}
+            >
+              <Ban size={18} />
+              משתמשים חסומים
+            </button>
 
             <button type="button" className="profile-logout-btn" onClick={handleLogout}>
               <LogOut size={18} />

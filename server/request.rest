@@ -451,17 +451,33 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/matches
 Authorization: Bearer {{otherToken}}
 
-### Blocked relationship is absent from A's Conversations - expected 200 without conversationId
+### A still sees the Conversation with blocked true and blockedByMe true
 GET {{baseUrl}}/api/conversations
 Authorization: Bearer {{token}}
 
-### Blocked relationship is absent from B's Conversations too - expected 200 without conversationId
+### B still sees the same Conversation with blocked true and blockedByMe false
 GET {{baseUrl}}/api/conversations
 Authorization: Bearer {{otherToken}}
 
-### Blocked relationship cannot be reopened by user ID - expected 403
+### Blocked relationship reopens the same existing Conversation - expected 200 with conversationId
 GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
 Authorization: Bearer {{token}}
+
+### A reads the complete existing history and ownership-aware Block state - expected 200
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{token}}
+
+### B reads the complete existing history without owning A's Block - expected 200
+GET {{baseUrl}}/api/conversations/{{conversationId}}/messages
+Authorization: Bearer {{otherToken}}
+
+### A's Blocked Users list contains B and never users who merely blocked A
+GET {{baseUrl}}/api/blocks
+Authorization: Bearer {{token}}
+
+### B's Blocked Users list does not expose A's Block - expected empty unless B owns other Blocks
+GET {{baseUrl}}/api/blocks
+Authorization: Bearer {{otherToken}}
 
 ### A's received Likes exclude blocked B - expected 200 without otherUserId
 GET {{baseUrl}}/api/swipes/received
@@ -489,8 +505,12 @@ Content-Type: application/json
 GET {{baseUrl}}/api/matches
 Authorization: Bearer {{token}}
 
-### Unblock permits reopening the existing Conversation - expected 200 with original conversationId
+### Unblock keeps/reopens the same existing Conversation - expected 200 with original conversationId
 GET {{baseUrl}}/api/conversations/with/{{otherUserId}}
+Authorization: Bearer {{token}}
+
+### A's Blocked Users list no longer contains B
+GET {{baseUrl}}/api/blocks
 Authorization: Bearer {{token}}
 
 ### Attempt conversation without a Match - expected 404

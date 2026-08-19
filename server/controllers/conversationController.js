@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Conversation = require("../models/Conversation");
 const Match = require("../models/Match");
 const getBlockStatus = require("../utils/blockRelationship");
-const { getBlockedUserIds } = require("../utils/blockRelationship");
+const { getBlockStatusMap } = require("../utils/blockRelationship");
 const ensureConversation = require("../utils/ensureConversation");
 
 const CONVERSATION_PROFILE_FIELDS =
@@ -59,22 +59,14 @@ const hasIncomingMessageAfterClear = (conversation, userId) => {
 
 const listConversations = async (req, res, next) => {
   try {
-    const blockedUserIds = await getBlockedUserIds(req.user._id);
-    const matches = await Match.find({
-      $and: [
-        { users: req.user._id },
-        ...(blockedUserIds.length ? [{ users: { $nin: blockedUserIds } }] : []),
-      ],
-    });
+    const [matches, blockStatuses] = await Promise.all([
+      Match.find({ users: req.user._id }),
+      getBlockStatusMap(req.user._id),
+    ]);
     await Promise.all(matches.map(ensureConversation));
 
     const conversations = await Conversation.find({
-      $and: [
-        { participants: req.user._id },
-        ...(blockedUserIds.length
-          ? [{ participants: { $nin: blockedUserIds } }]
-          : []),
-      ],
+      participants: req.user._id,
     })
       .sort({ updatedAt: -1 })
       .populate("participants", CONVERSATION_PROFILE_FIELDS);
@@ -83,6 +75,13 @@ const listConversations = async (req, res, next) => {
       .flatMap((conversation) => {
         const visibleMessages = getVisibleMessages(conversation, req.user._id);
         const lastMessage = visibleMessages.at(-1) || null;
+        const otherUser = conversation.participants.find(
+          (participant) => String(participant._id) !== String(req.user._id)
+        );
+        const blockStatus = blockStatuses.get(String(otherUser?._id)) || {
+          blocked: false,
+          blockedByMe: false,
+        };
 
         // Clearing is an inbox hide for one participant. Only a later incoming
         // message restores the row; opening Chat or sending must not undo it.
@@ -94,6 +93,7 @@ const listConversations = async (req, res, next) => {
             match: conversation.match,
             participants: conversation.participants,
             lastMessage,
+            blockStatus,
             createdAt: conversation.createdAt,
             updatedAt: lastMessage?.createdAt || conversation.createdAt,
           },
@@ -130,15 +130,6 @@ const getConversationWithUser = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "A match is required before messaging this user",
-      });
-    }
-
-    const blockStatus = await getBlockStatus(req.user._id, userId);
-
-    if (blockStatus.blocked) {
-      return res.status(403).json({
-        success: false,
-        message: "This matched conversation is unavailable",
       });
     }
 

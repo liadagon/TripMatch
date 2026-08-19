@@ -1,0 +1,135 @@
+.blocked-users-page {
+  min-height: 100vh;
+  padding: 34px 24px var(--tripmatch-nav-space);
+  color: #102033;
+  background: linear-gradient(145deg, #eef4ff, #f9fbff 48%, #eafcff);
+}
+
+.blocked-users-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.blocked-users-header {
+  margin-bottom: 22px;
+}
+
+.blocked-users-header > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 14px;
+  color: #145cff;
+  background: #ffffff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.blocked-users-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.blocked-users-header h1,
+.blocked-user-card h2,
+.blocked-users-header p,
+.blocked-user-card p {
+  margin: 0;
+}
+
+.blocked-users-header p {
+  margin-top: 8px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.blocked-users-list {
+  display: grid;
+  gap: 14px;
+}
+
+.blocked-user-card {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(126, 153, 205, 0.2);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.blocked-user-card img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.blocked-user-card h2 {
+  font-size: 1.05rem;
+}
+
+.blocked-user-card p {
+  margin-top: 5px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.blocked-user-card > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #145cff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.blocked-user-card > button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.blocked-users-empty,
+.blocked-users-error {
+  padding: 22px;
+  border-radius: 18px;
+  text-align: center;
+  font-weight: 800;
+  background: #ffffff;
+}
+
+.blocked-users-error {
+  color: #b42318;
+}
+
+@media (max-width: 560px) {
+  .blocked-users-page {
+    padding: 24px 14px var(--tripmatch-nav-space);
+  }
+
+  .blocked-user-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+  }
+
+  .blocked-user-card img {
+    width: 54px;
+    height: 54px;
+  }
+
+  .blocked-user-card > button {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

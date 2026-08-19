@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  getBlockedUsers,
   blockMatchedUser,
   unblockMatchedUser,
 } = require("../controllers/blockController");
@@ -12,6 +13,7 @@ const { userIdParamSchema } = require("../validation/idValidation");
 const router = express.Router();
 
 router.use(protect);
+router.get("/", getBlockedUsers);
 router.post(
   "/:userId",
   validateParams(userIdParamSchema),

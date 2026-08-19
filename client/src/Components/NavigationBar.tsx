@@ -28,7 +28,8 @@ const navigationItems = [
     label: "Profile",
     path: "/profile",
     icon: UserRound,
-    isActive: (pathname: string) => pathname.startsWith("/profile"),
+    isActive: (pathname: string) =>
+      pathname.startsWith("/profile") || pathname.startsWith("/blocked-users"),
   },
 ];
 

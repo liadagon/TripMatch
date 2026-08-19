@@ -344,6 +344,7 @@
   font-weight: 700;
 }
 
+.profile-blocked-users-btn,
 .profile-logout-btn {
   width: fit-content;
   margin: 4px auto 0;
@@ -352,6 +353,23 @@
   border-radius: 999px;
   color: #b42318;
   background: rgba(254, 243, 242, 0.78);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-blocked-users-btn {
+  width: fit-content;
+  margin: 4px auto 0;
+  padding: 12px 18px;
+  border: 1px solid rgba(20, 92, 255, 0.16);
+  border-radius: 999px;
+  color: #145cff;
+  background: rgba(239, 246, 255, 0.88);
   font-size: 14px;
   font-weight: 900;
   cursor: pointer;
@@ -599,6 +617,7 @@
   .profile-stats,
   .profile-content > .profile-section:first-of-type,
   .profile-safe-box,
+  .profile-blocked-users-btn,
   .profile-logout-btn {
     grid-column: 1 / -1;
   }
@@ -651,6 +670,7 @@
     padding: 18px 30px;
   }
 
+  .profile-blocked-users-btn,
   .profile-logout-btn {
     justify-self: center;
   }
@@ -691,6 +711,7 @@
   .profile-stats,
   .profile-section,
   .profile-safe-box,
+  .profile-blocked-users-btn,
   .profile-logout-btn {
     grid-column: 1;
   }

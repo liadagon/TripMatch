@@ -320,6 +320,18 @@
   text-align: center;
 }
 
+.chat-inline-unblock {
+  margin-inline-start: 10px;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #145cff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
 .chat-input-bar button:disabled,
 .chat-input-wrap input:disabled {
   opacity: 0.55;

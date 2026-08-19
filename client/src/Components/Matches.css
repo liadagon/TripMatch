@@ -355,6 +355,22 @@
 
 }
 
+.matches-chat-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.matches-chat-status .matches-blocked-badge {
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #b42318;
+  background: #fee4e2;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
 .matches-avatar-button,
 .matches-conversation-open {
   padding: 0;

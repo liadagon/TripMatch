@@ -237,13 +237,13 @@ export default function Chat() {
         );
       } else if (otherUser) {
         if (blockStatus.blockedByMe) {
-          await unblockMatchedUser(otherUser._id);
-          setBlockStatus({ blocked: false, blockedByMe: false });
+          const result = await unblockMatchedUser(otherUser._id);
+          setBlockStatus(result.blockStatus);
           setFeedbackMessage("החסימה בוטלה בהצלחה");
         } else {
-          await blockMatchedUser(otherUser._id);
-          setBlockStatus({ blocked: true, blockedByMe: true });
-          setFeedbackMessage("המשתמש נחסם בהצלחה");
+          const nextBlockStatus = await blockMatchedUser(otherUser._id);
+          setBlockStatus(nextBlockStatus);
+          setFeedbackMessage("חסמת את המשתמש הזה");
         }
       }
 
@@ -375,19 +375,21 @@ export default function Chat() {
 
             {isMenuOpen && (
               <div className="chat-menu" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={isBlockPending || (!isDemo && !otherUser)}
-                  onClick={selectBlockAction}
-                >
-                  {blockedByCurrentUser ? (
-                    <UserRoundCheck size={18} />
-                  ) : (
-                    <Ban size={18} />
-                  )}
-                  {blockedByCurrentUser ? "ביטול חסימה" : "חסימת משתמש"}
-                </button>
+                {(!relationshipBlocked || blockedByCurrentUser) && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={isBlockPending || (!isDemo && !otherUser)}
+                    onClick={selectBlockAction}
+                  >
+                    {blockedByCurrentUser ? (
+                      <UserRoundCheck size={18} />
+                    ) : (
+                      <Ban size={18} />
+                    )}
+                    {blockedByCurrentUser ? "ביטול חסימה" : "חסימת משתמש"}
+                  </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"
@@ -432,8 +434,18 @@ export default function Chat() {
           {relationshipBlocked && (
             <div className="chat-relationship-state" role="status">
               {blockedByCurrentUser
-                ? "המשתמש חסום"
+                ? "חסמת את המשתמש הזה"
                 : "לא ניתן לשלוח הודעות בשיחה זו"}
+              {blockedByCurrentUser && (
+                <button
+                  type="button"
+                  className="chat-inline-unblock"
+                  disabled={isBlockPending}
+                  onClick={() => void performBlockAction()}
+                >
+                  {isBlockPending ? "מבטלת חסימה..." : "ביטול חסימה"}
+                </button>
+              )}
             </div>
           )}
 

@@ -38,6 +38,7 @@ type DisplayConversation = {
   image: string;
   time: string;
   isDemo: boolean;
+  blocked: boolean;
 };
 
 const getFallbackMatches = (): DisplayMatch[] =>
@@ -54,7 +55,6 @@ const getFallbackMatches = (): DisplayMatch[] =>
 const getFallbackConversations = (): DisplayConversation[] =>
   demoConversations
     .filter((conversation) => !isDemoConversationHidden(conversation.id))
-    .filter((conversation) => !isDemoUserBlocked(conversation.id))
     .map((conversation) => ({
     id: conversation.id,
     userId: conversation.id,
@@ -65,6 +65,7 @@ const getFallbackConversations = (): DisplayConversation[] =>
     image: conversation.images[0],
     time: conversation.time || "",
     isDemo: true,
+    blocked: isDemoUserBlocked(conversation.id),
     }));
 
 export default function Matches() {
@@ -147,6 +148,7 @@ export default function Matches() {
                       minute: "2-digit",
                     }),
                     isDemo: false,
+                    blocked: conversation.blockStatus.blocked,
                   },
                 ]
               : [];
@@ -264,7 +266,12 @@ export default function Matches() {
                     <h2>
                       {chat.name}, {chat.age}
                     </h2>
-                    <span>{chat.time}</span>
+                    <div className="matches-chat-status">
+                      {chat.blocked && (
+                        <span className="matches-blocked-badge">חסום</span>
+                      )}
+                      <span>{chat.time}</span>
+                    </div>
                   </div>
 
                   <p className="matches-dest">✈️ {chat.destination}</p>

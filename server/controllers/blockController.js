@@ -1,8 +1,29 @@
 const Block = require("../models/Block");
 const Match = require("../models/Match");
+const getBlockStatus = require("../utils/blockRelationship");
+
+const BLOCKED_USER_FIELDS =
+  "name age photo photoURL preferredDestinations tripDates";
 
 const findMatch = (currentUserId, otherUserId) =>
   Match.exists({ users: { $all: [currentUserId, otherUserId] } });
+
+const getBlockedUsers = async (req, res, next) => {
+  try {
+    const blocks = await Block.find({ blocker: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate("blocked", BLOCKED_USER_FIELDS);
+    const data = blocks.filter((block) => block.blocked);
+
+    return res.status(200).json({
+      success: true,
+      count: data.length,
+      data,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 const blockMatchedUser = async (req, res, next) => {
   try {
@@ -33,6 +54,7 @@ const blockMatchedUser = async (req, res, next) => {
       success: true,
       message: "User blocked successfully",
       data: block,
+      blockStatus: { blocked: true, blockedByMe: true },
     });
   } catch (error) {
     return next(error);
@@ -59,6 +81,7 @@ const unblockMatchedUser = async (req, res, next) => {
     }
 
     const result = await Block.deleteOne({ blocker, blocked });
+    const blockStatus = await getBlockStatus(blocker, blocked);
 
     return res.status(200).json({
       success: true,
@@ -67,6 +90,7 @@ const unblockMatchedUser = async (req, res, next) => {
           ? "User unblocked successfully"
           : "User was not blocked by the current user",
       removed: result.deletedCount > 0,
+      blockStatus,
     });
   } catch (error) {
     return next(error);
@@ -74,6 +98,7 @@ const unblockMatchedUser = async (req, res, next) => {
 };
 
 module.exports = {
+  getBlockedUsers,
   blockMatchedUser,
   unblockMatchedUser,
 };
