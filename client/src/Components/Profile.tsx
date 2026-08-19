@@ -17,6 +17,10 @@ import {
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../services/authService";
 import { uploadProfileImage } from "../services/profileService";
+import {
+  getProfileStatistics,
+  type ProfileStatistics,
+} from "../services/profileStatsService";
 import "./Profile.css";
 
 type ProfileData = {
@@ -136,10 +140,35 @@ export default function Profile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
 
   useEffect(() => {
     setProfile(profileFromUser(user));
   }, [user]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadStatistics() {
+      setStatistics(null);
+
+      try {
+        const nextStatistics = await getProfileStatistics();
+        if (isActive) setStatistics(nextStatistics);
+      } catch (error) {
+        console.warn(
+          "[Profile] Failed to load account statistics",
+          error instanceof Error ? error.message : "Unknown error",
+        );
+      }
+    }
+
+    void loadStatistics();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!showSuccess) return;
@@ -332,17 +361,17 @@ export default function Profile() {
 
             <div className="profile-stats">
               <div>
-                <strong>91%</strong>
-                <span>התאמה ממוצעת</span>
+                <strong>{statistics ? `${statistics.matchRate}%` : "—"}</strong>
+                <span>שיעור התאמות</span>
               </div>
 
               <div>
-                <strong>12</strong>
-                <span>לייקים</span>
+                <strong>{statistics?.likesReceived ?? "—"}</strong>
+                <span>לייקים שקיבלתי</span>
               </div>
 
               <div>
-                <strong>5</strong>
+                <strong>{statistics?.conversations ?? "—"}</strong>
                 <span>שיחות</span>
               </div>
             </div>
