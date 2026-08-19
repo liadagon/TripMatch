@@ -28,6 +28,7 @@ type ProfileData = {
   budget: string;
   travelStyle: string;
   interests: string[];
+  companionPriority: string;
   aboutMe: string;
   imageUrl: string;
 };
@@ -49,6 +50,7 @@ const defaultProfile: ProfileData = {
   budget: "בינוני",
   travelStyle: "טרקים ותרמילאות",
   interests: ["אמינות", "ראש פתוח", "תקציב דומה", "אהבה לטבע", "תקשורת טובה"],
+  companionPriority: "אמינות ואחריות",
   aboutMe:
     "מחפשת שותפה או שותף לטיול בדרום אמריקה. אוהבת טבע, טרקים, אוכל מקומי וחוויות ספונטניות, אבל כן חשוב לי לתכנן מסגרת בסיסית מראש.",
   imageUrl:
@@ -66,11 +68,11 @@ function profileFromUser(user: AuthUser | null): ProfileData {
     dates: user?.tripDates || defaultProfile.dates,
     budget: user?.budget || defaultProfile.budget,
     travelStyle: user?.travelStyle || defaultProfile.travelStyle,
-    interests: user?.questionnaire?.companionPriority
-      ? [user.questionnaire.companionPriority]
-      : user?.interests?.length
-        ? user.interests.filter(Boolean)
-        : defaultProfile.interests,
+    interests: user?.interests?.length
+      ? user.interests.filter(Boolean)
+      : defaultProfile.interests,
+    companionPriority:
+      user?.questionnaire?.companionPriority || defaultProfile.companionPriority,
     aboutMe: user?.bio || defaultProfile.aboutMe,
     imageUrl: user?.photoURL || user?.photo || defaultProfile.imageUrl,
   };
@@ -390,12 +392,20 @@ export default function Profile() {
             </section>
 
             <section className="profile-section">
-              <h3>מה חשוב לי בשותף לטיול</h3>
+              <h3>תחומי עניין</h3>
 
               <div className="profile-tags">
                 {profile.interests.map((interest) => (
                   <span key={interest}>{interest}</span>
                 ))}
+              </div>
+            </section>
+
+            <section className="profile-section">
+              <h3>מה חשוב לי בשותף לטיול</h3>
+
+              <div className="profile-tags">
+                <span>{profile.companionPriority}</span>
               </div>
             </section>
 
