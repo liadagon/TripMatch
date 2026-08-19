@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      maxlength: 80,
     },
     email: {
       type: String,
@@ -32,52 +33,73 @@ const userSchema = new mongoose.Schema(
         return this.authProvider === "local";
       },
       minlength: 8,
+      maxlength: 128,
       select: false,
     },
     photo: {
       type: String,
+      trim: true,
       default: "",
     },
     photoURL: {
       type: String,
+      trim: true,
       default: "",
     },
     photos: {
-      type: [String],
+      type: [{ type: String, trim: true }],
       default: [],
+      validate: {
+        validator: (photos) => photos.length <= 6,
+        message: "A profile can contain at most 6 photos",
+      },
     },
     bio: {
       type: String,
+      trim: true,
+      maxlength: 500,
       default: "",
     },
     age: {
       type: Number,
+      min: 18,
+      max: 120,
     },
     location: {
       type: String,
+      trim: true,
+      maxlength: 100,
     },
     interests: {
-      type: [String],
+      type: [{ type: String, trim: true, maxlength: 50 }],
       default: [],
     },
     preferredDestinations: {
-      type: [String],
+      type: [{ type: String, trim: true, maxlength: 100 }],
       default: [],
     },
     travelStyle: {
       type: String,
+      trim: true,
+      maxlength: 100,
       default: "",
     },
     budget: {
       type: String,
+      trim: true,
+      maxlength: 100,
       default: "",
     },
     tripDates: {
       type: String,
+      trim: true,
+      maxlength: 100,
       default: "",
     },
     tripDuration: {
       type: String,
+      trim: true,
+      maxlength: 100,
       default: "",
     },
     questionnaire: {
