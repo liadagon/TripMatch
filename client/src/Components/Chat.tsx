@@ -449,10 +449,6 @@ export default function Chat() {
             </div>
           )}
 
-          <button className="chat-attach-btn" disabled={relationshipBlocked}>
-            📎
-          </button>
-
           <div className="chat-input-wrap">
             <input
               type="text"
@@ -467,10 +463,11 @@ export default function Chat() {
 
           <button
             className="chat-send-btn"
+            type="button"
             onClick={() => void sendMessage()}
             disabled={isSending || !text.trim() || relationshipBlocked}
           >
-            ➤
+            שליחה
           </button>
         </footer>
 
