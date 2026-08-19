@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    tripDuration: {
+      type: String,
+      default: "",
+    },
     questionnaire: {
       planningStyle: { type: String, default: "" },
       accommodationPreference: { type: String, default: "" },

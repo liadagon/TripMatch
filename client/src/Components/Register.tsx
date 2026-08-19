@@ -109,6 +109,9 @@ export default function Register() {
         location: form.city,
         preferredDestinations: [form.dest],
         travelStyle: style,
+        budget,
+        tripDates: form.month,
+        tripDuration: form.duration,
       });
       navigate("/questionnaire");
     } catch (error) {

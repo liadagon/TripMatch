@@ -17,6 +17,7 @@ export type AuthUser = {
   travelStyle?: string;
   budget?: string;
   tripDates?: string;
+  tripDuration?: string;
   questionnaire?: {
     planningStyle: string;
     accommodationPreference: string;
@@ -66,6 +67,9 @@ export type RegisterPayload = {
   location?: string;
   preferredDestinations?: string[];
   travelStyle?: string;
+  budget?: string;
+  tripDates?: string;
+  tripDuration?: string;
 };
 
 type CurrentUserResponse = {

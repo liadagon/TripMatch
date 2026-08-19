@@ -24,7 +24,21 @@ Content-Type: application/json
   "location": "Tel Aviv",
   "interests": ["food", "beaches", "music"],
   "preferredDestinations": ["Greece", "Italy"],
-  "travelStyle": "Backpacking"
+  "travelStyle": "Backpacking",
+  "budget": "Medium",
+  "tripDates": "September",
+  "tripDuration": "Two months"
+}
+
+### Reject an invalid registration trip duration - expected 400
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Invalid Duration",
+  "email": "invalid-duration@example.com",
+  "password": "SecurePass123!",
+  "tripDuration": 123
 }
 
 ### Login
