@@ -181,6 +181,22 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/users?page=1&limit=10
 Authorization: Bearer {{token}}
 
+### Search real users by indexed travel-partner fields
+GET {{baseUrl}}/api/users?search=Greece&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Search real users with pagination
+GET {{baseUrl}}/api/users?search=ליה&page=1&limit=1
+Authorization: Bearer {{token}}
+
+### Search with no real MongoDB results
+GET {{baseUrl}}/api/users?search=unlikelytripterm&page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Search longer than 100 characters - expected 400
+GET {{baseUrl}}/api/users?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Authorization: Bearer {{token}}
+
 ### Get users by location
 GET {{baseUrl}}/api/users?location=Tel%20Aviv
 Authorization: Bearer {{token}}

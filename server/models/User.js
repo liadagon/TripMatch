@@ -121,6 +121,17 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+userSchema.index(
+  {
+    name: "text",
+    location: "text",
+    bio: "text",
+    preferredDestinations: "text",
+    interests: "text",
+  },
+  { name: "user_travel_partner_text" }
+);
+
 userSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password") || !this.password) {
     return next();

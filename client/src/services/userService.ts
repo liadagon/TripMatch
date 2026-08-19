@@ -23,9 +23,9 @@ type UsersResponse = {
   };
 };
 
-export const getUsers = async (page = 1, limit = 10) => {
+export const getUsers = async (page = 1, limit = 10, search = "") => {
   const response = await api.get<UsersResponse>("/api/users", {
-    params: { page, limit },
+    params: { page, limit, ...(search.trim() ? { search: search.trim() } : {}) },
   });
   return response.data.data;
 };
