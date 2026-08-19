@@ -5,6 +5,7 @@ import "./App.css";
 import NavigationBar from "./Components/NavigationBar";
 
 import Welcome from "./Components/Welcome";
+import EmailLogin from "./Components/EmailLogin";
 import PhoneLogin from "./Components/PhoneLogin";
 import VerifyCode from "./Components/VerifyCode";
 import Register from "./Components/Register";
@@ -40,6 +41,7 @@ export default function App() {
       <Routes>
         {/* Public / Auth routes */}
         <Route path="/" element={<Welcome />} />
+        <Route path="/email-login" element={<EmailLogin />} />
         <Route path="/phone-login" element={<PhoneLogin />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/register" element={<Register />} />

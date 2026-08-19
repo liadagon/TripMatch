@@ -76,7 +76,7 @@ export default function Welcome() {
           Trip<span>Match</span>
         </div>
 
-        <button className="top-login" onClick={() => navigate("/phone-login")}>
+        <button className="top-login" onClick={() => navigate("/email-login")}>
           כניסה לחשבון
         </button>
       </header>
