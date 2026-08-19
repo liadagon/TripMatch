@@ -18,6 +18,7 @@ import Matches from "./Components/Matches";
 import Chat from "./Components/Chat";
 import Profile from "./Components/Profile";
 import MyProfilePreview from "./Components/MyProfilePreview";
+import MatchedProfile from "./Components/MatchedProfile";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -36,6 +37,7 @@ export default function App() {
     location.pathname === "/matches" ||
     location.pathname === "/profile" ||
     location.pathname === "/profile-preview" ||
+    location.pathname.startsWith("/matched-profile/") ||
     location.pathname.startsWith("/chat/");
 
   return (
@@ -62,6 +64,10 @@ export default function App() {
         <Route
           path="/profile-preview"
           element={protectedPage(<MyProfilePreview />)}
+        />
+        <Route
+          path="/matched-profile/:userId"
+          element={protectedPage(<MatchedProfile />)}
         />
 
         {/* fallback */}

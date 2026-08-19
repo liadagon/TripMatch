@@ -301,6 +301,11 @@ export default function Chat() {
     }
   }
 
+  function openMatchedProfile() {
+    const profileUserId = isDemo ? conversationId : otherUser?._id;
+    if (profileUserId) navigate(`/matched-profile/${profileUserId}`);
+  }
+
   const destination = [
     otherUser?.preferredDestinations?.[0],
     otherUser?.tripDates,
@@ -324,16 +329,29 @@ export default function Chat() {
             ‹
           </button>
 
-          <img
-            className="chat-avatar"
-            src={displayImage}
-            alt={displayName}
-          />
+          <button
+            type="button"
+            className="chat-avatar-button"
+            aria-label={`פתיחת הפרופיל של ${displayName}`}
+            disabled={!isDemo && !otherUser}
+            onClick={openMatchedProfile}
+          >
+            <img
+              className="chat-avatar"
+              src={displayImage}
+              alt={displayName}
+            />
+          </button>
 
-          <div className="chat-meta">
+          <button
+            type="button"
+            className="chat-meta chat-meta-button"
+            disabled={!isDemo && !otherUser}
+            onClick={openMatchedProfile}
+          >
             <h1>{displayName}</h1>
             <p>✈️ {displayDestination}</p>
-          </div>
+          </button>
 
           <div className="chat-more-wrap" ref={menuRef}>
             <button

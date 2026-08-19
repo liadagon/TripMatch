@@ -1,5 +1,5 @@
 import api from "./api";
-import type { PublicUser } from "./authService";
+import type { ProfilePreviewUser, PublicUser } from "./authService";
 
 export type MatchRecord = {
   _id: string;
@@ -14,5 +14,23 @@ export const getMatches = async () => {
     count: number;
     data: MatchRecord[];
   }>("/api/matches");
+  return response.data.data;
+};
+
+export type MatchedProfileData = {
+  profile: ProfilePreviewUser;
+  compatibility: {
+    percentage: number;
+    matchedCriteria: number;
+    comparedCriteria: number;
+  };
+  conversationId: string | null;
+};
+
+export const getMatchedProfile = async (userId: string) => {
+  const response = await api.get<{
+    success: true;
+    data: MatchedProfileData;
+  }>(`/api/matches/with/${userId}/profile`);
   return response.data.data;
 };

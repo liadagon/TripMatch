@@ -43,6 +43,25 @@ export type PublicUser = Pick<
   | "photoURL"
 >;
 
+export type ProfilePreviewUser = Pick<
+  AuthUser,
+  | "_id"
+  | "name"
+  | "age"
+  | "location"
+  | "bio"
+  | "interests"
+  | "preferredDestinations"
+  | "tripDates"
+  | "tripDuration"
+  | "budget"
+  | "travelStyle"
+  | "photoURL"
+  | "photo"
+  | "photos"
+  | "questionnaire"
+>;
+
 export type GoogleLoginResponse = {
   success: true;
   message: string;

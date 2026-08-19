@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -18,7 +19,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import type { AuthUser } from "../services/authService";
+import type { ProfilePreviewUser } from "../services/authService";
 import "./MyProfilePreview.css";
 
 type DetailItem = {
@@ -27,11 +28,21 @@ type DetailItem = {
   icon: typeof Plane;
 };
 
+type ProfilePreviewViewProps = {
+  profile: ProfilePreviewUser;
+  backLabel: string;
+  onBack: () => void;
+  contextText: string;
+  galleryLabel: string;
+  compatibility?: number;
+  footerAction?: ReactNode;
+};
+
 function meaningful(value: string | undefined) {
   return value?.trim() || "";
 }
 
-function getProfilePhotos(user: AuthUser) {
+function getProfilePhotos(user: ProfilePreviewUser) {
   const galleryPhotos = Array.from(
     new Set((user.photos || []).map((photo) => photo.trim()).filter(Boolean)),
   );
@@ -42,13 +53,19 @@ function getProfilePhotos(user: AuthUser) {
   return fallbackPhoto ? [fallbackPhoto] : [];
 }
 
-export default function MyProfilePreview() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
+export function ProfilePreviewView({
+  profile: user,
+  backLabel,
+  onBack,
+  contextText,
+  galleryLabel,
+  compatibility,
+  footerAction,
+}: ProfilePreviewViewProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [failedPhotos, setFailedPhotos] = useState<Set<string>>(() => new Set());
 
-  const photos = useMemo(() => (user ? getProfilePhotos(user) : []), [user]);
+  const photos = useMemo(() => getProfilePhotos(user), [user]);
   const currentPhoto = photos[photoIndex];
   const currentPhotoFailed = currentPhoto ? failedPhotos.has(currentPhoto) : false;
 
@@ -56,8 +73,6 @@ export default function MyProfilePreview() {
     setPhotoIndex(0);
     setFailedPhotos(new Set());
   }, [user]);
-
-  if (!user) return null;
 
   const destinations = Array.from(
     new Set(
@@ -148,10 +163,10 @@ export default function MyProfilePreview() {
           <button
             type="button"
             className="profile-preview-back"
-            onClick={() => navigate("/profile")}
+            onClick={onBack}
           >
             <ArrowRight size={20} />
-            חזרה לפרופיל
+            {backLabel}
           </button>
 
           <h1 className="profile-preview-logo">
@@ -161,11 +176,11 @@ export default function MyProfilePreview() {
 
         <div className="profile-preview-context" role="status">
           <Eye size={19} />
-          כך הפרופיל שלך נראה למטיילים אחרים
+          {contextText}
         </div>
 
         <article className="profile-preview-card">
-          <section className="profile-preview-gallery" aria-label="תמונות הפרופיל שלי">
+          <section className="profile-preview-gallery" aria-label={galleryLabel}>
             {currentPhoto && !currentPhotoFailed ? (
               <img
                 src={currentPhoto}
@@ -184,6 +199,12 @@ export default function MyProfilePreview() {
             )}
 
             <div className="profile-preview-photo-shade" />
+
+            {compatibility !== undefined && (
+              <div className="profile-preview-compatibility">
+                התאמה <strong>{compatibility}%</strong>
+              </div>
+            )}
 
             {photos.length > 1 && (
               <>
@@ -308,7 +329,28 @@ export default function MyProfilePreview() {
             )}
           </div>
         </article>
+
+        {footerAction && (
+          <div className="profile-preview-footer-action">{footerAction}</div>
+        )}
       </main>
     </div>
+  );
+}
+
+export default function MyProfilePreview() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  if (!user) return null;
+
+  return (
+    <ProfilePreviewView
+      profile={user}
+      backLabel="חזרה לפרופיל"
+      onBack={() => navigate("/profile")}
+      contextText="כך הפרופיל שלך נראה למטיילים אחרים"
+      galleryLabel="תמונות הפרופיל שלי"
+    />
   );
 }

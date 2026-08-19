@@ -26,6 +26,7 @@ type DisplayMatch = {
 
 type DisplayConversation = {
   id: string;
+  userId: string;
   name: string;
   age: number;
   destination: string;
@@ -46,6 +47,7 @@ const fallbackMatches: DisplayMatch[] = demoMatches.map((match) => ({
 const fallbackConversations: DisplayConversation[] = demoConversations.map(
   (conversation) => ({
     id: conversation.id,
+    userId: conversation.id,
     name: conversation.name,
     age: conversation.age,
     destination: conversation.destination,
@@ -115,6 +117,7 @@ export default function Matches() {
               ? [
                   {
                     id: conversation._id,
+                    userId: otherUser._id,
                     name: otherUser.name,
                     age: otherUser.age || 18,
                     destination:
@@ -181,6 +184,10 @@ export default function Matches() {
     }
   }
 
+  function openConversationProfile(chat: DisplayConversation) {
+    navigate(`/matched-profile/${chat.userId}`);
+  }
+
   return (
     <div className="matches-page" dir="rtl">
       <header className="matches-topbar">
@@ -224,18 +231,24 @@ export default function Matches() {
               <p className="matches-empty-state">עדיין אין שיחות פעילות</p>
             )}
             {conversations.map((chat) => (
-              <button
+              <article
                 key={chat.id}
-                className={
-                  "matches-chat-card"
-                }
-                onClick={() => navigate(`/chat/${chat.id}`)}
+                className="matches-chat-card"
               >
-                <div className="matches-avatar-wrap">
+                <button
+                  type="button"
+                  className="matches-avatar-wrap matches-avatar-button"
+                  aria-label={`פתיחת הפרופיל של ${chat.name}`}
+                  onClick={() => openConversationProfile(chat)}
+                >
                   <img src={chat.image} alt={chat.name} />
-                </div>
+                </button>
 
-                <div className="matches-info">
+                <button
+                  type="button"
+                  className="matches-info matches-conversation-open"
+                  onClick={() => navigate(`/chat/${chat.id}`)}
+                >
                   <div className="matches-chat-top">
                     <h2>
                       {chat.name}, {chat.age}
@@ -250,9 +263,9 @@ export default function Matches() {
                   >
                     {chat.preview}
                   </p>
-                </div>
+                </button>
 
-              </button>
+              </article>
             ))}
           </div>
         </section>
