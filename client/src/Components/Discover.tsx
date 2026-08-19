@@ -32,7 +32,33 @@ type DiscoverProfile = {
   isDemo: boolean;
 };
 
-function mapUserToProfile(user: PublicUser): DiscoverProfile {
+type UsableDiscoverUser = PublicUser & {
+  age: number;
+  preferredDestinations: string[];
+  tripDates: string;
+};
+
+export function isUsableDiscoverProfile(
+  user: PublicUser,
+): user is UsableDiscoverUser {
+  const hasProfileImage = Boolean(user.photoURL?.trim() || user.photo?.trim());
+  const hasDestination = Boolean(
+    user.preferredDestinations?.some((destination) => destination.trim()),
+  );
+
+  return Boolean(
+    user.name.trim() &&
+      Number.isInteger(user.age) &&
+      user.age !== undefined &&
+      user.age >= 18 &&
+      user.age <= 120 &&
+      hasProfileImage &&
+      hasDestination &&
+      user.tripDates?.trim(),
+  );
+}
+
+function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
   const tags = [
     ...(user.interests || []),
     user.travelStyle,
@@ -43,7 +69,7 @@ function mapUserToProfile(user: PublicUser): DiscoverProfile {
     id: user._id,
     userId: user._id,
     name: user.name,
-    age: user.age || 18,
+    age: user.age,
     city: user.location || "ישראל",
     dates: user.tripDates || "גמיש",
     destination: user.preferredDestinations?.[0] || "עדיין לא נבחר יעד",
@@ -85,7 +111,9 @@ export default function Discover() {
       const realProfiles = users
           .filter(
             (candidate) =>
-              candidate._id !== user?._id && !swipedUserIds.has(candidate._id),
+              candidate._id !== user?._id &&
+              !swipedUserIds.has(candidate._id) &&
+              isUsableDiscoverProfile(candidate),
           )
           .map(mapUserToProfile);
 
