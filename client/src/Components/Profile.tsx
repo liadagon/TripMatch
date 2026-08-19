@@ -10,6 +10,7 @@ import {
   Wallet,
   Heart,
   Pencil,
+  Eye,
   ShieldCheck,
   LogOut,
   X,
@@ -128,6 +129,15 @@ function readImagePreview(file: File) {
   });
 }
 
+function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
+  const remainingPhotos = (photos || [])
+    .map((photo) => photo.trim())
+    .filter(Boolean)
+    .slice(1);
+
+  return [imageUrl, ...remainingPhotos];
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout, updateProfile: persistProfile } = useAuth();
@@ -232,7 +242,10 @@ export default function Profile() {
       setProfile((current) => ({ ...current, imageUrl: previewUrl }));
       setIsSaving(true);
       const imageUrl = await uploadProfileImage(file);
-      const updatedUser = await persistProfile({ photoURL: imageUrl });
+      const updatedUser = await persistProfile({
+        photoURL: imageUrl,
+        photos: replacePrimaryPhoto(user?.photos, imageUrl),
+      });
       setProfile(profileFromUser(updatedUser));
       setShowSuccess(true);
     } catch (error) {
@@ -268,7 +281,12 @@ export default function Profile() {
         travelStyle: draftProfile.travelStyle.trim(),
         interests: draftProfile.interests,
         bio: draftProfile.aboutMe.trim(),
-        ...(pendingProfileImage ? { photoURL: imageUrl } : {}),
+        ...(pendingProfileImage
+          ? {
+              photoURL: imageUrl,
+              photos: replacePrimaryPhoto(user?.photos, imageUrl),
+            }
+          : {}),
       });
       setProfile(profileFromUser(updatedUser));
       setPendingProfileImage(null);
@@ -353,10 +371,25 @@ export default function Profile() {
                 </p>
               </div>
 
-              <button className="profile-edit-btn" onClick={openEditModal}>
-                <Pencil size={17} />
-                עריכה
-              </button>
+              <div className="profile-title-actions">
+                <button
+                  type="button"
+                  className="profile-preview-btn"
+                  onClick={() => navigate("/profile-preview")}
+                >
+                  <Eye size={18} />
+                  איך הפרופיל שלי נראה
+                </button>
+
+                <button
+                  type="button"
+                  className="profile-edit-btn"
+                  onClick={openEditModal}
+                >
+                  <Pencil size={17} />
+                  עריכה
+                </button>
+              </div>
             </div>
 
             <div className="profile-stats">

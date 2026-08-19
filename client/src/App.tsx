@@ -17,6 +17,7 @@ import Likes from "./Components/Likes";
 import Matches from "./Components/Matches";
 import Chat from "./Components/Chat";
 import Profile from "./Components/Profile";
+import MyProfilePreview from "./Components/MyProfilePreview";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -34,6 +35,7 @@ export default function App() {
     location.pathname === "/messages" ||
     location.pathname === "/matches" ||
     location.pathname === "/profile" ||
+    location.pathname === "/profile-preview" ||
     location.pathname.startsWith("/chat/");
 
   return (
@@ -57,6 +59,10 @@ export default function App() {
         <Route path="/chat" element={<Navigate to="/matches" replace />} />
         <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
         <Route path="/profile" element={protectedPage(<Profile />)} />
+        <Route
+          path="/profile-preview"
+          element={protectedPage(<MyProfilePreview />)}
+        />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

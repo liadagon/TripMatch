@@ -183,6 +183,30 @@
   box-shadow: 0 14px 28px rgba(20, 92, 255, 0.2);
 }
 
+.profile-title-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-preview-btn {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid rgba(20, 92, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: #145cff;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+}
+
 .profile-stats {
   margin-top: 28px;
   display: grid;
@@ -707,6 +731,15 @@
 
   .profile-title-row {
     align-items: flex-start;
+  }
+
+  .profile-title-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .profile-title-actions button {
+    justify-content: center;
   }
 
   .profile-title-row h2 {
