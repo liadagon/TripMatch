@@ -5,6 +5,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -19,6 +20,8 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+app.use(helmet());
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -27,7 +30,11 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/public", express.static("public"));
+app.use(
+  "/public",
+  helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
+  express.static("public")
+);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
