@@ -464,6 +464,11 @@
   gap: 8px;
 }
 
+.profile-trip-location {
+  display: grid;
+  gap: 8px;
+}
+
 .profile-photo-picker-content {
   min-height: 104px;
   padding: 14px 16px;

@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const tripLocationSchema = require("./tripLocationValidation");
 
 const userListQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
@@ -72,6 +73,7 @@ const updateProfileSchema = Joi.object({
   bio: Joi.string().trim().max(500).allow("").optional(),
   age: Joi.number().integer().min(18).max(120).optional(),
   location: Joi.string().trim().max(100).allow("").optional(),
+  tripLocation: tripLocationSchema.optional(),
   interests: Joi.array().items(Joi.string().trim().max(50)).optional(),
   preferredDestinations: Joi.when("questionnaire", {
     is: Joi.exist(),

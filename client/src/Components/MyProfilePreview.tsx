@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import type { ProfilePreviewUser } from "../services/authService";
+import { getTripLocationLabel } from "./TripLocationPicker";
 import "./MyProfilePreview.css";
 
 type DetailItem = {
@@ -76,7 +77,10 @@ export function ProfilePreviewView({
 
   const destinations = Array.from(
     new Set(
-      (user.preferredDestinations || [])
+      [
+        ...(user.tripLocation ? [getTripLocationLabel(user.tripLocation)] : []),
+        ...(user.preferredDestinations || []),
+      ]
         .map((destination) => destination.trim())
         .filter(Boolean),
     ),

@@ -43,7 +43,8 @@ export function isUsableDiscoverProfile(
 ): user is UsableDiscoverUser {
   const hasProfileImage = Boolean(user.photoURL?.trim() || user.photo?.trim());
   const hasDestination = Boolean(
-    user.preferredDestinations?.some((destination) => destination.trim()),
+    user.tripLocation?.name?.trim() ||
+      user.preferredDestinations?.some((destination) => destination.trim()),
   );
 
   return Boolean(
@@ -70,9 +71,17 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
     userId: user._id,
     name: user.name,
     age: user.age,
-    city: user.location || "ישראל",
+    city:
+      [user.tripLocation?.city, user.tripLocation?.country]
+        .filter(Boolean)
+        .join(", ") || user.location || "ישראל",
     dates: user.tripDates || "גמיש",
-    destination: user.preferredDestinations?.[0] || "עדיין לא נבחר יעד",
+    destination:
+      [user.tripLocation?.name, user.tripLocation?.state, user.tripLocation?.country]
+        .filter(Boolean)
+        .join(", ") ||
+      user.preferredDestinations?.[0] ||
+      "עדיין לא נבחר יעד",
     match: user.compatibility.percentage,
     images: [
       user.photoURL ||

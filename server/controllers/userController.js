@@ -10,6 +10,7 @@ const PROFILE_FIELDS = [
   "bio",
   "age",
   "location",
+  "tripLocation",
   "interests",
   "preferredDestinations",
   "travelStyle",

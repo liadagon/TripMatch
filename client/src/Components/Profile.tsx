@@ -19,6 +19,10 @@ import {
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../services/authService";
 import { uploadProfileImage } from "../services/profileService";
+import TripLocationPicker, {
+  getTripLocationLabel,
+  type TripLocation,
+} from "./TripLocationPicker";
 import {
   getProfileStatistics,
   type ProfileStatistics,
@@ -29,6 +33,7 @@ type ProfileData = {
   name: string;
   age: string;
   city: string;
+  tripLocation: TripLocation | null;
   destination: string;
   dates: string;
   budget: string;
@@ -51,6 +56,7 @@ const defaultProfile: ProfileData = {
   name: "נועה",
   age: "23",
   city: "תל אביב",
+  tripLocation: null,
   destination: "דרום אמריקה",
   dates: "ספטמבר עד דצמבר",
   budget: "בינוני",
@@ -68,7 +74,10 @@ function profileFromUser(user: AuthUser | null): ProfileData {
     ...defaultProfile,
     name: user?.name || defaultProfile.name,
     age: String(user?.age ?? defaultProfile.age),
-    city: user?.location || defaultProfile.city,
+    city: user?.tripLocation
+      ? getTripLocationLabel(user.tripLocation)
+      : user?.location || defaultProfile.city,
+    tripLocation: user?.tripLocation || null,
     destination:
       user?.preferredDestinations?.[0] || defaultProfile.destination,
     dates: user?.tripDates || defaultProfile.dates,
@@ -150,6 +159,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoError, setPhotoError] = useState("");
+  const [tripLocationError, setTripLocationError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
 
@@ -197,6 +207,7 @@ export default function Profile() {
     setIsEditing(true);
     setShowSuccess(false);
     setPhotoError("");
+    setTripLocationError("");
   }
 
   function closeEditModal() {
@@ -204,9 +215,13 @@ export default function Profile() {
     setPendingProfileImage(null);
     setIsEditing(false);
     setPhotoError("");
+    setTripLocationError("");
   }
 
-  function updateDraft(field: keyof ProfileData, value: string) {
+  function updateDraft(
+    field: Exclude<keyof ProfileData, "tripLocation">,
+    value: string,
+  ) {
     setDraftProfile((current) => ({
       ...current,
       [field]: field === "interests"
@@ -263,8 +278,14 @@ export default function Profile() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!draftProfile.tripLocation) {
+      setTripLocationError("יש לבחור יעד מתוך תוצאות החיפוש");
+      return;
+    }
+
     setIsSaving(true);
     setPhotoError("");
+    setTripLocationError("");
 
     try {
       const imageUrl = pendingProfileImage
@@ -273,7 +294,7 @@ export default function Profile() {
       const updatedUser = await persistProfile({
         name: draftProfile.name.trim(),
         age: Number(draftProfile.age),
-        location: draftProfile.city.trim(),
+        tripLocation: draftProfile.tripLocation,
         preferredDestinations: draftProfile.destination.trim()
           ? [draftProfile.destination.trim()]
           : [],
@@ -541,13 +562,27 @@ export default function Profile() {
                 />
               </label>
 
-              <label>
-                <span>עיר</span>
-                <input
-                  value={draftProfile.city}
-                  onChange={(event) => updateDraft("city", event.target.value)}
+              <div className="profile-trip-location profile-form-wide">
+                <span>איפה תהיו בחו״ל? *</span>
+                <TripLocationPicker
+                  value={draftProfile.tripLocation}
+                  onChange={(tripLocation) => {
+                    setDraftProfile((current) => ({
+                      ...current,
+                      tripLocation,
+                      city: tripLocation
+                        ? getTripLocationLabel(tripLocation)
+                        : current.city,
+                    }));
+                    setTripLocationError("");
+                  }}
+                  hasError={Boolean(tripLocationError)}
+                  disabled={isSaving}
                 />
-              </label>
+                {tripLocationError && (
+                  <small className="profile-photo-error">{tripLocationError}</small>
+                )}
+              </div>
 
               <label>
                 <span>יעד</span>

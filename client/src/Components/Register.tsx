@@ -2,6 +2,9 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import TripLocationPicker, {
+  type TripLocation,
+} from "./TripLocationPicker";
 import "./Register.css";
 
 type RegisterForm = {
@@ -9,7 +12,6 @@ type RegisterForm = {
   email: string;
   password: string;
   age: string;
-  city: string;
   dest: string;
   month: string;
   duration: string;
@@ -17,7 +19,8 @@ type RegisterForm = {
   israelCheck: boolean;
 };
 
-type RegisterFieldErrors = Partial<Record<keyof RegisterForm, boolean>>;
+type RegisterFieldName = keyof RegisterForm | "tripLocation";
+type RegisterFieldErrors = Partial<Record<RegisterFieldName, boolean>>;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,7 +31,6 @@ export default function Register() {
     email: "",
     password: "",
     age: "",
-    city: "",
     dest: "",
     month: "",
     duration: "",
@@ -36,6 +38,7 @@ export default function Register() {
     israelCheck: false,
   });
 
+  const [tripLocation, setTripLocation] = useState<TripLocation | null>(null);
   const [budget, setBudget] = useState("");
   const [style, setStyle] = useState("");
   const [showError, setShowError] = useState(false);
@@ -60,7 +63,6 @@ export default function Register() {
       "email",
       "password",
       "age",
-      "city",
       "dest",
       "month",
       "duration",
@@ -88,6 +90,10 @@ export default function Register() {
       errors.israelCheck = true;
     }
 
+    if (!tripLocation) {
+      errors.tripLocation = true;
+    }
+
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
@@ -106,7 +112,7 @@ export default function Register() {
         password: form.password,
         bio: form.bio.trim(),
         age: Number(form.age),
-        location: form.city,
+        tripLocation,
         preferredDestinations: [form.dest],
         travelStyle: style,
         budget,
@@ -205,32 +211,34 @@ export default function Register() {
               />
             </div>
 
-            <div className={fieldErrors.city ? "register-field error" : "register-field"}>
-              <label>עיר בישראל *</label>
-              <select
-                value={form.city}
-                onChange={(e) => updateField("city", e.target.value)}
-              >
-                <option value="">בחרי עיר</option>
-                <option>תל אביב</option>
-                <option>ירושלים</option>
-                <option>חיפה</option>
-                <option>באר שבע</option>
-                <option>ראשון לציון</option>
-                <option>רחובות</option>
-                <option>פתח תקווה</option>
-                <option>נתניה</option>
-                <option>אשדוד</option>
-                <option>חולון</option>
-                <option>בני ברק</option>
-                <option>רמת גן</option>
-                <option>אחר</option>
-              </select>
-            </div>
           </section>
 
           <section className="register-section">
             <div className="register-section-title">תכניות טיול</div>
+
+            <div
+              className={
+                fieldErrors.tripLocation
+                  ? "register-field register-trip-location error"
+                  : "register-field register-trip-location"
+              }
+            >
+              <label>איפה תהיו בחו״ל? *</label>
+              <TripLocationPicker
+                value={tripLocation}
+                onChange={(location) => {
+                  setTripLocation(location);
+                  setFieldErrors((current) => ({
+                    ...current,
+                    tripLocation: false,
+                  }));
+                  setShowError(false);
+                  setErrorMessage("");
+                }}
+                hasError={Boolean(fieldErrors.tripLocation)}
+                disabled={isSubmitting}
+              />
+            </div>
 
             <div className={fieldErrors.dest ? "register-field error" : "register-field"}>
               <label>יעד מתוכנן *</label>

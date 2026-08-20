@@ -148,7 +148,8 @@
 }
 
 .register-chip-field,
-.register-bio-field {
+.register-bio-field,
+.register-trip-location {
   grid-column: 1 / -1;
 }
 

@@ -12,6 +12,7 @@ export type ProfileUpdatePayload = Partial<
     | "name"
     | "age"
     | "location"
+    | "tripLocation"
     | "bio"
     | "interests"
     | "preferredDestinations"

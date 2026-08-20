@@ -1,4 +1,5 @@
 import api from "./api";
+import type { TripLocation } from "../Components/TripLocationPicker";
 
 export type AuthUser = {
   _id: string;
@@ -12,6 +13,7 @@ export type AuthUser = {
   bio?: string;
   age?: number;
   location?: string;
+  tripLocation?: TripLocation;
   interests?: string[];
   preferredDestinations?: string[];
   travelStyle?: string;
@@ -41,7 +43,12 @@ export type PublicUser = Pick<
   | "tripDates"
   | "photo"
   | "photoURL"
->;
+> & {
+  tripLocation?: Omit<
+    TripLocation,
+    "placeId" | "formattedAddress" | "latitude" | "longitude"
+  >;
+};
 
 export type ProfilePreviewUser = Pick<
   AuthUser,
@@ -49,6 +56,7 @@ export type ProfilePreviewUser = Pick<
   | "name"
   | "age"
   | "location"
+  | "tripLocation"
   | "bio"
   | "interests"
   | "preferredDestinations"
@@ -84,6 +92,7 @@ export type RegisterPayload = {
   bio?: string;
   age?: number;
   location?: string;
+  tripLocation: TripLocation;
   preferredDestinations?: string[];
   travelStyle?: string;
   budget?: string;

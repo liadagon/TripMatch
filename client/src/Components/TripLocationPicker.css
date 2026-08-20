@@ -1,0 +1,153 @@
+.trip-location-picker {
+  position: relative;
+  width: 100%;
+}
+
+.trip-location-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trip-location-input-wrap > svg {
+  position: absolute;
+  right: 15px;
+  z-index: 1;
+  color: #667085;
+  pointer-events: none;
+}
+
+.trip-location-picker .trip-location-input-wrap input {
+  width: 100%;
+  padding-right: 43px;
+  padding-left: 43px;
+}
+
+.trip-location-picker.error .trip-location-input-wrap input {
+  border-color: rgba(217, 45, 32, 0.72);
+}
+
+.trip-location-spinner {
+  position: absolute;
+  left: 16px;
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(20, 92, 255, 0.2);
+  border-top-color: #145cff;
+  border-radius: 50%;
+  animation: trip-location-spin 0.72s linear infinite;
+}
+
+.trip-location-suggestions {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  max-height: 280px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 16px;
+  list-style: none;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(16, 24, 40, 0.16);
+}
+
+.trip-location-suggestions button {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 12px;
+  color: #101828;
+  background: transparent;
+  text-align: right;
+  cursor: pointer;
+}
+
+.trip-location-suggestions button:hover,
+.trip-location-suggestions button:focus-visible {
+  outline: none;
+  background: rgba(20, 92, 255, 0.07);
+}
+
+.trip-location-suggestions svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #145cff;
+}
+
+.trip-location-suggestions span {
+  min-width: 0;
+}
+
+.trip-location-suggestions strong,
+.trip-location-suggestions small {
+  display: block;
+}
+
+.trip-location-suggestions strong {
+  font-size: 14px;
+}
+
+.trip-location-suggestions small {
+  margin-top: 3px;
+  overflow: hidden;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trip-location-message {
+  display: block;
+  margin-top: 7px;
+  color: #b54708;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trip-location-selected {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  border: 1px solid rgba(20, 92, 255, 0.2);
+  border-radius: 15px;
+  color: #174ea6;
+  background: linear-gradient(135deg, rgba(20, 92, 255, 0.08), rgba(45, 212, 191, 0.1));
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.trip-location-selected > svg {
+  flex: 0 0 auto;
+  color: #145cff;
+}
+
+.trip-location-selected span {
+  flex: 1;
+}
+
+.trip-location-selected button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #475467;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+}
+
+@keyframes trip-location-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

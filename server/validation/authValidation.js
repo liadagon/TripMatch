@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const tripLocationSchema = require("./tripLocationValidation");
 
 const email = Joi.string().trim().lowercase().email();
 const password = Joi.string().min(8).max(128);
@@ -12,6 +13,7 @@ const registerSchema = Joi.object({
   bio: Joi.string().trim().max(500).allow("").optional(),
   age: Joi.number().integer().min(18).max(120).optional(),
   location: Joi.string().trim().max(100).allow("").optional(),
+  tripLocation: tripLocationSchema.required(),
   interests: Joi.array().items(Joi.string().trim().max(50)).optional(),
   preferredDestinations: Joi.array()
     .items(Joi.string().trim().max(100))
