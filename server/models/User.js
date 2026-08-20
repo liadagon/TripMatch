@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
+const hideNonDefaultUserVirtuals = (_doc, ret) => {
+  delete ret.password;
+  delete ret.matches;
+  return ret;
+};
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -112,12 +118,12 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    id: false,
     toJSON: {
-      transform: (_doc, ret) => {
-        delete ret.password;
-        return ret;
-      },
+      virtuals: true,
+      transform: hideNonDefaultUserVirtuals,
     },
+    toObject: { virtuals: true },
   }
 );
 
@@ -131,6 +137,12 @@ userSchema.index(
   },
   { name: "user_travel_partner_text" }
 );
+
+userSchema.virtual("matches", {
+  ref: "Match",
+  localField: "_id",
+  foreignField: "users",
+});
 
 userSchema.pre("save", async function hashPassword(next) {
   if (!this.isModified("password") || !this.password) {

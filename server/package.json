@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "verify:virtual-populate": "node scripts/verifyUserMatchesVirtual.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
