@@ -4,6 +4,16 @@ const Match = require("../models/Match");
 const Conversation = require("../models/Conversation");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
+const {
+  RELEVANCE_RADIUS_KM,
+  calculateDistanceKm,
+  getGeographicDestinationLabel,
+  hasValidCoordinates,
+  isSameCityAndCountry,
+} = require("../utils/matchesMap");
+
+const DISCOVER_INTERNAL_FIELDS =
+  "tripLocation.latitude tripLocation.longitude questionnaire";
 
 const PROFILE_FIELDS = [
   "name",
@@ -41,7 +51,7 @@ const getUsers = async (req, res, next) => {
     }
 
     const usersQuery = User.find(filter).select(
-      `${PUBLIC_PROFILE_FIELDS} questionnaire`
+      `${PUBLIC_PROFILE_FIELDS} ${DISCOVER_INTERNAL_FIELDS}`
     );
 
     if (search) {
@@ -58,12 +68,52 @@ const getUsers = async (req, res, next) => {
     ]);
     const data = users.map((user) => {
       const profile = user.toObject();
+      const candidateLocation = user.tripLocation;
+      const destinationLabel = getGeographicDestinationLabel(candidateLocation);
+      const hasComparableDestinations =
+        hasValidCoordinates(req.user.tripLocation) &&
+        hasValidCoordinates(candidateLocation) &&
+        Boolean(destinationLabel);
+      const distanceKm = hasComparableDestinations
+        ? calculateDistanceKm(req.user.tripLocation, candidateLocation)
+        : null;
+
       delete profile.questionnaire;
       delete profile.score;
+
+      if (profile.tripLocation) {
+        profile.tripLocation = {
+          ...(profile.tripLocation.city
+            ? { city: profile.tripLocation.city }
+            : {}),
+          ...(profile.tripLocation.state
+            ? { state: profile.tripLocation.state }
+            : {}),
+          ...(profile.tripLocation.country
+            ? { country: profile.tripLocation.country }
+            : {}),
+          ...(profile.tripLocation.countryCode
+            ? { countryCode: profile.tripLocation.countryCode }
+            : {}),
+        };
+      }
 
       return {
         ...profile,
         compatibility: calculateProfileCompatibility(req.user, user),
+        ...(hasComparableDestinations
+          ? {
+              destinationInfo: {
+                label: destinationLabel,
+                distanceKm: Number(distanceKm.toFixed(1)),
+                sameCity: isSameCityAndCountry(
+                  req.user.tripLocation,
+                  candidateLocation
+                ),
+                nearby: distanceKm <= RELEVANCE_RADIUS_KM,
+              },
+            }
+          : {}),
       };
     });
 

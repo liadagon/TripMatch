@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
-import type { DiscoverUser } from "../services/userService";
+import type { DestinationInfo, DiscoverUser } from "../services/userService";
+import type { TripLocation } from "./TripLocationPicker";
 import { getConversationWithUser } from "../services/conversationService";
 import { getDemoDiscoverProfiles } from "../data/demoProfiles";
 import {
@@ -30,6 +31,7 @@ type DiscoverProfile = {
   images: string[];
   tags: string[];
   isDemo: boolean;
+  destinationInfo?: DestinationInfo;
 };
 
 type UsableDiscoverUser = DiscoverUser & {
@@ -43,7 +45,9 @@ export function isUsableDiscoverProfile(
 ): user is UsableDiscoverUser {
   const hasProfileImage = Boolean(user.photoURL?.trim() || user.photo?.trim());
   const hasDestination = Boolean(
-    user.tripLocation?.name?.trim() ||
+    user.tripLocation?.city?.trim() ||
+      user.tripLocation?.state?.trim() ||
+      user.tripLocation?.country?.trim() ||
       user.preferredDestinations?.some((destination) => destination.trim()),
   );
 
@@ -77,7 +81,11 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
         .join(", ") || user.location || "ישראל",
     dates: user.tripDates || "גמיש",
     destination:
-      [user.tripLocation?.name, user.tripLocation?.state, user.tripLocation?.country]
+      [
+        user.tripLocation?.city,
+        user.tripLocation?.state,
+        user.tripLocation?.country,
+      ]
         .filter(Boolean)
         .join(", ") ||
       user.preferredDestinations?.[0] ||
@@ -90,7 +98,47 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
     ],
     tags: tags.length ? tags.slice(0, 5) : ["מטיילת ב-TripMatch"],
     isDemo: false,
+    destinationInfo: user.destinationInfo,
   };
+}
+
+const DEMO_DISTANCES_KM = [3.4, 18.7, 76.2];
+
+function getDemoProfiles(currentLocation?: TripLocation): DiscoverProfile[] {
+  const profiles = getDemoDiscoverProfiles();
+  const currentDestinationLabel = currentLocation
+    ? Array.from(
+        new Set(
+          [currentLocation.city, currentLocation.state, currentLocation.country]
+            .map((part) => part?.trim() || "")
+            .filter(Boolean),
+        ),
+      ).join(", ")
+    : "";
+
+  return profiles.map((profile, index) => ({
+    ...profile,
+    ...(currentDestinationLabel
+      ? {
+          destinationInfo: {
+            label: index < 2 ? currentDestinationLabel : profile.destination,
+            distanceKm: DEMO_DISTANCES_KM[index] ?? 76.2,
+            sameCity: index === 0,
+            nearby: index < 2,
+          },
+        }
+      : {}),
+  }));
+}
+
+function getDestinationTitle(destinationInfo: DestinationInfo) {
+  if (destinationInfo.sameCity) {
+    const city = destinationInfo.label.split(",")[0]?.trim();
+    return city ? `גם ב${city}` : "גם ביעד שלך";
+  }
+
+  if (destinationInfo.nearby) return "באזור שלך";
+  return destinationInfo.label;
 }
 
 export default function Discover() {
@@ -126,10 +174,12 @@ export default function Discover() {
           )
           .map(mapUserToProfile);
 
-      setProfiles(realProfiles.length ? realProfiles : getDemoDiscoverProfiles());
+      setProfiles(
+        realProfiles.length ? realProfiles : getDemoProfiles(user?.tripLocation),
+      );
     } catch (error) {
       console.warn("[Discover] Backend profiles unavailable; using demo fallback.", error);
-      setProfiles(getDemoDiscoverProfiles());
+      setProfiles(getDemoProfiles(user?.tripLocation));
       setSwipeError("לא הצלחנו לטעון התאמות מהשרת. מוצגות התאמות לדוגמה");
     } finally {
       setIsLoading(false);
@@ -138,7 +188,7 @@ export default function Discover() {
 
   useEffect(() => {
     void loadProfiles();
-  }, [user?._id]);
+  }, [user?._id, user?.tripLocation?.placeId]);
 
   const profile = profiles[0];
 
@@ -369,10 +419,40 @@ export default function Discover() {
                   {profile.dates}
                 </p>
 
-                <p className="discover-destination">
-                  <Plane size={21} />
-                  {profile.destination}
-                </p>
+                {profile.destinationInfo ? (
+                  <div
+                    className={`discover-proximity ${
+                      profile.destinationInfo.sameCity
+                        ? "same-city"
+                        : profile.destinationInfo.nearby
+                          ? "nearby"
+                          : "far"
+                    }`}
+                  >
+                    <p>
+                      <MapPin size={18} />
+                      {getDestinationTitle(profile.destinationInfo)}
+                    </p>
+                    {(profile.destinationInfo.sameCity ||
+                      profile.destinationInfo.nearby) && (
+                      <small>
+                        {profile.destinationInfo.distanceKm.toLocaleString(
+                          "he-IL",
+                          {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          },
+                        )}{" "}
+                        ק״מ מהיעד שלך
+                      </small>
+                    )}
+                  </div>
+                ) : (
+                  <p className="discover-destination">
+                    <Plane size={21} />
+                    {profile.destination}
+                  </p>
+                )}
 
                 <div className="discover-tags">
                   {profile.tags.map((tag) => (

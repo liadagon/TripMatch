@@ -55,6 +55,15 @@ const getDestinationLabel = (tripLocation) =>
     )
   ).join(", ");
 
+const getGeographicDestinationLabel = (tripLocation) =>
+  Array.from(
+    new Set(
+      [tripLocation?.city, tripLocation?.state, tripLocation?.country]
+        .map((part) => (typeof part === "string" ? part.trim() : ""))
+        .filter(Boolean)
+    )
+  ).join(", ");
+
 const hashIdentifier = (identifier) => {
   let hash = 2166136261;
 
@@ -104,6 +113,7 @@ module.exports = {
   approximateCoordinates,
   calculateDistanceKm,
   getDestinationLabel,
+  getGeographicDestinationLabel,
   hasValidCoordinates,
   isSameCityAndCountry,
 };

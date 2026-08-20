@@ -1,7 +1,21 @@
 import api from "./api";
 import type { PublicUser } from "./authService";
 
-export type DiscoverUser = PublicUser & {
+export type DestinationInfo = {
+  label: string;
+  distanceKm: number;
+  sameCity: boolean;
+  nearby: boolean;
+};
+
+export type DiscoverUser = Omit<PublicUser, "tripLocation"> & {
+  tripLocation?: {
+    city?: string;
+    state?: string;
+    country?: string;
+    countryCode?: string;
+  };
+  destinationInfo?: DestinationInfo;
   compatibility: {
     percentage: number;
     matchedCriteria: number;

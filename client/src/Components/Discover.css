@@ -289,6 +289,48 @@
   color: #00f0d0;
 }
 
+.discover-proximity {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 16px;
+  display: grid;
+  gap: 3px;
+  padding: 9px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.discover-proximity p {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #73f7df;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.discover-proximity p svg {
+  flex: 0 0 auto;
+}
+
+.discover-proximity small {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.discover-proximity.far p {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 16px;
+}
+
 .discover-tags {
   margin-top: 22px;
   display: flex;
@@ -436,6 +478,19 @@
 
   .discover-destination {
     font-size: 23px;
+  }
+
+  .discover-proximity {
+    margin-top: 13px;
+    padding: 8px 11px;
+  }
+
+  .discover-proximity p {
+    font-size: 16px;
+  }
+
+  .discover-proximity small {
+    font-size: 12px;
   }
 
   .discover-tags span {
