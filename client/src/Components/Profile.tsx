@@ -6,7 +6,6 @@ import {
   Camera,
   MapPin,
   CalendarDays,
-  Plane,
   Wallet,
   Heart,
   Pencil,
@@ -34,7 +33,6 @@ type ProfileData = {
   age: string;
   city: string;
   tripLocation: TripLocation | null;
-  destination: string;
   dates: string;
   budget: string;
   travelStyle: string;
@@ -57,7 +55,6 @@ const defaultProfile: ProfileData = {
   age: "23",
   city: "תל אביב",
   tripLocation: null,
-  destination: "דרום אמריקה",
   dates: "ספטמבר עד דצמבר",
   budget: "בינוני",
   travelStyle: "טרקים ותרמילאות",
@@ -78,8 +75,6 @@ function profileFromUser(user: AuthUser | null): ProfileData {
       ? getTripLocationLabel(user.tripLocation)
       : user?.location || defaultProfile.city,
     tripLocation: user?.tripLocation || null,
-    destination:
-      user?.preferredDestinations?.[0] || defaultProfile.destination,
     dates: user?.tripDates || defaultProfile.dates,
     budget: user?.budget || defaultProfile.budget,
     travelStyle: user?.travelStyle || defaultProfile.travelStyle,
@@ -295,9 +290,6 @@ export default function Profile() {
         name: draftProfile.name.trim(),
         age: Number(draftProfile.age),
         tripLocation: draftProfile.tripLocation,
-        preferredDestinations: draftProfile.destination.trim()
-          ? [draftProfile.destination.trim()]
-          : [],
         tripDates: draftProfile.dates.trim(),
         budget: draftProfile.budget.trim(),
         travelStyle: draftProfile.travelStyle.trim(),
@@ -435,14 +427,6 @@ export default function Profile() {
               <h3>הטיול שלי</h3>
 
               <div className="profile-info-grid">
-                <div className="profile-info-item">
-                  <Plane size={22} />
-                  <div>
-                    <span>יעד</span>
-                    <strong>{profile.destination}</strong>
-                  </div>
-                </div>
-
                 <div className="profile-info-item">
                   <CalendarDays size={22} />
                   <div>
@@ -583,14 +567,6 @@ export default function Profile() {
                   <small className="profile-photo-error">{tripLocationError}</small>
                 )}
               </div>
-
-              <label>
-                <span>יעד</span>
-                <input
-                  value={draftProfile.destination}
-                  onChange={(event) => updateDraft("destination", event.target.value)}
-                />
-              </label>
 
               <label>
                 <span>תאריכי טיול</span>

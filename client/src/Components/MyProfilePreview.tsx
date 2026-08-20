@@ -77,10 +77,10 @@ export function ProfilePreviewView({
 
   const destinations = Array.from(
     new Set(
-      [
-        ...(user.tripLocation ? [getTripLocationLabel(user.tripLocation)] : []),
-        ...(user.preferredDestinations || []),
-      ]
+      (user.tripLocation
+        ? [getTripLocationLabel(user.tripLocation)]
+        : user.preferredDestinations || []
+      )
         .map((destination) => destination.trim())
         .filter(Boolean),
     ),

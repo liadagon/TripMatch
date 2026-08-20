@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { Map, MapPin, MessageCircle, RefreshCw, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -10,10 +10,74 @@ import {
   type MatchesMapData,
   type MatchesMapMarker,
 } from "../services/matchesMapService";
+import { conversations as demoConversations } from "../data/conversations";
+import { isDemoUserBlocked } from "../services/demoConversationState";
 import "leaflet/dist/leaflet.css";
 import "./MatchesMap.css";
 
 const FALLBACK_PHOTO = "/pic2.png";
+const DEMO_DISTANCES_KM = [2.4, 4.8, 7.1, 11.3];
+const DEMO_BEARINGS_DEGREES = [28, 112, 205, 318];
+
+type DisplayMapMarker = MatchesMapMarker & {
+  isDemo: boolean;
+};
+
+function createDemoMarkers(
+  me: NonNullable<MatchesMapData["me"]>,
+): DisplayMapMarker[] {
+  const latitudeRadians = me.latitude * Math.PI / 180;
+  const longitudeScale = Math.max(Math.cos(latitudeRadians), 0.2);
+
+  return demoConversations
+    .filter((conversation) => !isDemoUserBlocked(conversation.id))
+    .slice(0, DEMO_DISTANCES_KM.length)
+    .map((conversation, index) => {
+      const distanceKm = DEMO_DISTANCES_KM[index];
+      const bearing = DEMO_BEARINGS_DEGREES[index] * Math.PI / 180;
+      const latitudeOffset = distanceKm * Math.cos(bearing) / 111.32;
+      const longitudeOffset =
+        distanceKm * Math.sin(bearing) / (111.32 * longitudeScale);
+
+      return {
+        userId: conversation.id,
+        name: conversation.name,
+        photoURL: conversation.images[0] || FALLBACK_PHOTO,
+        destinationLabel: me.destinationLabel,
+        latitude: Number((me.latitude + latitudeOffset).toFixed(5)),
+        longitude: Number((me.longitude + longitudeOffset).toFixed(5)),
+        distanceKm,
+        isDemo: true,
+      };
+    });
+}
+
+function FitMapBounds({
+  me,
+  matches,
+}: {
+  me: NonNullable<MatchesMapData["me"]>;
+  matches: DisplayMapMarker[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const bounds = L.latLngBounds([
+      [me.latitude, me.longitude],
+      ...matches.map(
+        (match) => [match.latitude, match.longitude] as [number, number],
+      ),
+    ]);
+
+    map.fitBounds(bounds, {
+      padding: [54, 54],
+      maxZoom: 13,
+      animate: false,
+    });
+  }, [map, matches, me.latitude, me.longitude]);
+
+  return null;
+}
 
 function createPhotoIcon(photoURL: string, isCurrentUser = false) {
   const marker = document.createElement("div");
@@ -49,8 +113,8 @@ function MatchPhotoMarker({
   onMessage,
   isOpeningChat,
 }: {
-  match: MatchesMapMarker;
-  onMessage: (match: MatchesMapMarker) => Promise<void>;
+  match: DisplayMapMarker;
+  onMessage: (match: DisplayMapMarker) => Promise<void>;
   isOpeningChat: boolean;
 }) {
   const navigate = useNavigate();
@@ -133,9 +197,28 @@ export default function MatchesMap() {
     [user?.photo, user?.photoURL],
   );
 
-  async function openConversation(match: MatchesMapMarker) {
+  const demoMatches = useMemo(
+    () => (data?.me ? createDemoMarkers(data.me) : []),
+    [data?.me],
+  );
+  const isDemoMode = Boolean(
+    data?.me && data.matches.length === 0 && demoMatches.length > 0,
+  );
+  const realMatches = useMemo<DisplayMapMarker[]>(
+    () =>
+      data?.matches.map((match) => ({ ...match, isDemo: false })) || [],
+    [data?.matches],
+  );
+  const displayMatches = realMatches.length ? realMatches : demoMatches;
+
+  async function openConversation(match: DisplayMapMarker) {
     setOpeningChatUserId(match.userId);
     setLoadError("");
+
+    if (match.isDemo) {
+      navigate(`/chat/${match.userId}`);
+      return;
+    }
 
     try {
       const conversation = await getConversationWithUser(match.userId);
@@ -155,17 +238,23 @@ export default function MatchesMap() {
   return (
     <div className="matches-map-page" dir="rtl">
       <header className="matches-map-topbar">
-        <div>
-          <span className="matches-map-eyebrow">היעד שלך, האנשים שלך</span>
-          <h1>מפת התאמות</h1>
-          <p>התאמות שנוסעות לאותו אזור או נמצאות עד 50 ק״מ מהיעד שלך</p>
-        </div>
         <div className="matches-map-brand" dir="ltr">
           Trip<span>Match</span>
         </div>
       </header>
 
       <main className="matches-map-shell">
+        <header className="matches-map-hero">
+          <span className="matches-map-hero-icon">
+            <Map size={27} />
+          </span>
+          <div>
+            <span className="matches-map-eyebrow">היעד שלך, האנשים שלך</span>
+            <h1>מפת ההתאמות</h1>
+            <p>מי מההתאמות שלך מטייל באזור שבחרת?</p>
+          </div>
+        </header>
+
         {isLoading ? (
           <section className="matches-map-state" role="status">
             <span className="matches-map-loader" />
@@ -184,10 +273,10 @@ export default function MatchesMap() {
         ) : !data?.me ? (
           <section className="matches-map-state">
             <MapPin size={42} />
-            <h2>עוד לא בחרתם יעד מדויק</h2>
-            <p>בחרו יעד בחו״ל בפרופיל כדי לראות התאמות רלוונטיות על המפה.</p>
+            <h2>עוד לא בחרת יעד לטיול</h2>
+            <p>בחרו יעד מדויק כדי לראות מי מההתאמות שלכם נמצא באזור.</p>
             <button type="button" onClick={() => navigate("/profile")}>
-              עדכון יעד הטיול
+              בחירת יעד
             </button>
           </section>
         ) : !apiKey ? (
@@ -196,7 +285,7 @@ export default function MatchesMap() {
             <h2>שירות המפה עדיין לא הוגדר</h2>
             <p>חסר מפתח Geoapify מקומי. אפשר להמשיך להשתמש בשאר TripMatch.</p>
           </section>
-        ) : data.eligibleMatchCount === 0 ? (
+        ) : displayMatches.length === 0 && data.eligibleMatchCount === 0 ? (
           <section className="matches-map-state">
             <UserRound size={42} />
             <h2>עדיין אין התאמות להצגה</h2>
@@ -205,7 +294,7 @@ export default function MatchesMap() {
               חזרה ל-Discover
             </button>
           </section>
-        ) : data.matches.length === 0 ? (
+        ) : displayMatches.length === 0 ? (
           <section className="matches-map-state">
             <MapPin size={42} />
             <h2>אין כרגע חפיפה ביעדים</h2>
@@ -219,11 +308,20 @@ export default function MatchesMap() {
         ) : (
           <section className="matches-map-card">
             <div className="matches-map-summary">
-              <div>
+              <div className="matches-map-summary-chip destination">
                 <MapPin size={18} />
                 <span>{data.me.destinationLabel}</span>
               </div>
-              <strong>{data.matches.length} התאמות רלוונטיות</strong>
+              <div className="matches-map-summary-chip">
+                <UserRound size={17} />
+                <strong>{displayMatches.length} התאמות באזור</strong>
+              </div>
+              <div className="matches-map-summary-chip">
+                עד {data.radiusKm} ק״מ מהיעד שלך
+              </div>
+              {isDemoMode && (
+                <span className="matches-map-demo-badge">מצב הדגמה</span>
+              )}
             </div>
 
             {loadError && <p className="matches-map-inline-error">{loadError}</p>}
@@ -237,6 +335,7 @@ export default function MatchesMap() {
                 scrollWheelZoom
                 className="matches-map-canvas"
               >
+                <FitMapBounds me={data.me} matches={displayMatches} />
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.geoapify.com/">Geoapify</a>'
                   url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(apiKey)}`}
@@ -262,7 +361,7 @@ export default function MatchesMap() {
                   </Popup>
                 </Marker>
 
-                {data.matches.map((match) => (
+                {displayMatches.map((match) => (
                   <MatchPhotoMarker
                     key={match.userId}
                     match={match}
@@ -289,7 +388,9 @@ export default function MatchesMap() {
             </div>
 
             <p className="matches-map-privacy-note">
-              מיקומי ההתאמות מעוגלים ומוזזים מעט לשמירה על פרטיות. הם אינם כתובת מדויקת.
+              {isDemoMode
+                ? "הסמנים במצב הדגמה הם מקומיים וסינתטיים ואינם נשמרים בשרת."
+                : "מיקומי ההתאמות מעוגלים ומוזזים מעט לשמירה על פרטיות. הם אינם כתובת מדויקת."}
             </p>
           </section>
         )}

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import TripLocationPicker, {
+  getTripLocationLabel,
   type TripLocation,
 } from "./TripLocationPicker";
 import "./Register.css";
@@ -12,7 +13,6 @@ type RegisterForm = {
   email: string;
   password: string;
   age: string;
-  dest: string;
   month: string;
   duration: string;
   bio: string;
@@ -31,7 +31,6 @@ export default function Register() {
     email: "",
     password: "",
     age: "",
-    dest: "",
     month: "",
     duration: "",
     bio: "",
@@ -63,7 +62,6 @@ export default function Register() {
       "email",
       "password",
       "age",
-      "dest",
       "month",
       "duration",
     ];
@@ -113,7 +111,7 @@ export default function Register() {
         bio: form.bio.trim(),
         age: Number(form.age),
         tripLocation,
-        preferredDestinations: [form.dest],
+        preferredDestinations: [getTripLocationLabel(tripLocation)],
         travelStyle: style,
         budget,
         tripDates: form.month,
@@ -238,26 +236,6 @@ export default function Register() {
                 hasError={Boolean(fieldErrors.tripLocation)}
                 disabled={isSubmitting}
               />
-            </div>
-
-            <div className={fieldErrors.dest ? "register-field error" : "register-field"}>
-              <label>יעד מתוכנן *</label>
-              <select
-                value={form.dest}
-                onChange={(e) => updateField("dest", e.target.value)}
-              >
-                <option value="">לאן חולמים לטוס?</option>
-                <option>דרום אמריקה</option>
-                <option>מרכז אמריקה</option>
-                <option>תאילנד וויאטנם</option>
-                <option>הודו</option>
-                <option>אוסטרליה וניו זילנד</option>
-                <option>מזרח אסיה</option>
-                <option>אפריקה</option>
-                <option>אירופה</option>
-                <option>ארה&quot;ב</option>
-                <option>אחר</option>
-              </select>
             </div>
 
             <div className={fieldErrors.month ? "register-field error" : "register-field"}>
