@@ -25,6 +25,7 @@ type DisplayMapMarker = MatchesMapMarker & {
 
 function createDemoMarkers(
   me: NonNullable<MatchesMapData["me"]>,
+  destinationLabel: string,
 ): DisplayMapMarker[] {
   const latitudeRadians = me.latitude * Math.PI / 180;
   const longitudeScale = Math.max(Math.cos(latitudeRadians), 0.2);
@@ -43,13 +44,37 @@ function createDemoMarkers(
         userId: conversation.id,
         name: conversation.name,
         photoURL: conversation.images[0] || FALLBACK_PHOTO,
-        destinationLabel: me.destinationLabel,
+        destinationLabel,
         latitude: Number((me.latitude + latitudeOffset).toFixed(5)),
         longitude: Number((me.longitude + longitudeOffset).toFixed(5)),
         distanceKm,
         isDemo: true,
       };
     });
+}
+
+function getGeographicDestinationLabel(
+  tripLocation: { city?: string; state?: string; country?: string } | undefined,
+  fallbackLabel: string,
+) {
+  const geographicParts = [
+    tripLocation?.city,
+    tripLocation?.state,
+    tripLocation?.country,
+  ]
+    .map((part) => part?.trim() || "")
+    .filter(Boolean);
+
+  if (geographicParts.length > 0) {
+    return Array.from(new Set(geographicParts)).join(", ");
+  }
+
+  const fallbackParts = fallbackLabel
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return fallbackParts.slice(-2).join(", ") || fallbackLabel;
 }
 
 function FitMapBounds({
@@ -197,9 +222,21 @@ export default function MatchesMap() {
     [user?.photo, user?.photoURL],
   );
 
+  const destinationLabel = useMemo(
+    () =>
+      data?.me
+        ? getGeographicDestinationLabel(
+            user?.tripLocation,
+            data.me.destinationLabel,
+          )
+        : "",
+    [data?.me, user?.tripLocation],
+  );
+
   const demoMatches = useMemo(
-    () => (data?.me ? createDemoMarkers(data.me) : []),
-    [data?.me],
+    () =>
+      data?.me ? createDemoMarkers(data.me, destinationLabel) : [],
+    [data?.me, destinationLabel],
   );
   const isDemoMode = Boolean(
     data?.me && data.matches.length === 0 && demoMatches.length > 0,
@@ -310,7 +347,7 @@ export default function MatchesMap() {
             <div className="matches-map-summary">
               <div className="matches-map-summary-chip destination">
                 <MapPin size={18} />
-                <span>{data.me.destinationLabel}</span>
+                <span>{destinationLabel}</span>
               </div>
               <div className="matches-map-summary-chip">
                 <UserRound size={17} />
@@ -356,7 +393,7 @@ export default function MatchesMap() {
                   <Popup>
                     <div className="matches-map-me-popup" dir="rtl">
                       <strong>היעד שלי</strong>
-                      <span>{data.me.destinationLabel}</span>
+                      <span>{destinationLabel}</span>
                     </div>
                   </Popup>
                 </Marker>
