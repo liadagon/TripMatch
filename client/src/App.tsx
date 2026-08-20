@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./App.css";
 
@@ -23,6 +23,8 @@ import BlockedUsers from "./Components/BlockedUsers";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
+const MatchesMap = lazy(() => import("./Components/MatchesMap"));
+
 const protectedPage = (page: ReactNode) => (
   <ProtectedRoute>{page}</ProtectedRoute>
 );
@@ -36,6 +38,7 @@ export default function App() {
     location.pathname === "/likes" ||
     location.pathname === "/messages" ||
     location.pathname === "/matches" ||
+    location.pathname === "/matches-map" ||
     location.pathname === "/profile" ||
     location.pathname === "/profile-preview" ||
     location.pathname === "/blocked-users" ||
@@ -60,6 +63,14 @@ export default function App() {
         <Route path="/likes" element={protectedPage(<Likes />)} />
         <Route path="/messages" element={protectedPage(<Matches />)} />
         <Route path="/matches" element={protectedPage(<Matches />)} />
+        <Route
+          path="/matches-map"
+          element={protectedPage(
+            <Suspense fallback={null}>
+              <MatchesMap />
+            </Suspense>,
+          )}
+        />
         <Route path="/chat" element={<Navigate to="/matches" replace />} />
         <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
         <Route path="/profile" element={protectedPage(<Profile />)} />

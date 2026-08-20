@@ -1,6 +1,7 @@
 const express = require("express");
 const {
   getCurrentUserMatches,
+  getMatchesMap,
   getMatchedUserProfile,
 } = require("../controllers/matchController");
 const protect = require("../middleware/auth");
@@ -11,6 +12,7 @@ const router = express.Router();
 
 router.use(protect);
 router.get("/", getCurrentUserMatches);
+router.get("/map", getMatchesMap);
 router.get(
   "/with/:userId/profile",
   validateParams(userIdParamSchema),

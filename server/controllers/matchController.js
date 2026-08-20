@@ -4,6 +4,14 @@ const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 const ensureConversation = require("../utils/ensureConversation");
+const {
+  RELEVANCE_RADIUS_KM,
+  approximateCoordinates,
+  calculateDistanceKm,
+  getDestinationLabel,
+  hasValidCoordinates,
+  isSameCityAndCountry,
+} = require("../utils/matchesMap");
 
 const MATCH_PROFILE_FIELDS = "name photo photoURL";
 const EXPANDED_MATCH_PROFILE_FIELDS = [
@@ -22,6 +30,7 @@ const EXPANDED_MATCH_PROFILE_FIELDS = [
   "photos",
   "questionnaire",
 ].join(" ");
+const MAP_PROFILE_FIELDS = "name photo photoURL tripLocation";
 
 const getCurrentUserMatches = async (req, res, next) => {
   try {
@@ -39,6 +48,94 @@ const getCurrentUserMatches = async (req, res, next) => {
       success: true,
       count: matches.length,
       data: matches,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const getMatchesMap = async (req, res, next) => {
+  try {
+    const currentLocation = req.user.tripLocation;
+
+    if (!hasValidCoordinates(currentLocation)) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          me: null,
+          matches: [],
+          eligibleMatchCount: 0,
+          radiusKm: RELEVANCE_RADIUS_KM,
+        },
+      });
+    }
+
+    const blockedUserIds = await getBlockedUserIds(req.user._id);
+    const matches = await Match.find({
+      $and: [
+        { users: req.user._id },
+        ...(blockedUserIds.length ? [{ users: { $nin: blockedUserIds } }] : []),
+      ],
+    })
+      .select("users")
+      .lean();
+    const matchedUserIds = matches.flatMap((match) =>
+      match.users.filter((userId) => String(userId) !== String(req.user._id))
+    );
+    const matchedUsers = matchedUserIds.length
+      ? await User.find({ _id: { $in: matchedUserIds } })
+          .select(MAP_PROFILE_FIELDS)
+          .lean()
+      : [];
+    const mapMatches = matchedUsers.flatMap((matchedUser) => {
+      if (!hasValidCoordinates(matchedUser.tripLocation)) return [];
+
+      const distanceKm = calculateDistanceKm(
+        currentLocation,
+        matchedUser.tripLocation
+      );
+      const isRelevant =
+        isSameCityAndCountry(currentLocation, matchedUser.tripLocation) ||
+        distanceKm <= RELEVANCE_RADIUS_KM;
+
+      if (!isRelevant) return [];
+
+      const approximatePosition = approximateCoordinates(
+        matchedUser.tripLocation,
+        matchedUser._id
+      );
+
+      return [
+        {
+          userId: matchedUser._id,
+          name: matchedUser.name,
+          photoURL: matchedUser.photoURL || matchedUser.photo || "",
+          destinationLabel: getDestinationLabel(matchedUser.tripLocation),
+          latitude: approximatePosition.latitude,
+          longitude: approximatePosition.longitude,
+          distanceKm: Number(distanceKm.toFixed(1)),
+        },
+      ];
+    });
+
+    mapMatches.sort(
+      (first, second) =>
+        first.distanceKm - second.distanceKm ||
+        first.name.localeCompare(second.name)
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        me: {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          destinationLabel: getDestinationLabel(currentLocation),
+        },
+        matches: mapMatches,
+        eligibleMatchCount: matchedUsers.length,
+        radiusKm: RELEVANCE_RADIUS_KM,
+      },
     });
   } catch (error) {
     return next(error);
@@ -106,5 +203,6 @@ const getMatchedUserProfile = async (req, res, next) => {
 
 module.exports = {
   getCurrentUserMatches,
+  getMatchesMap,
   getMatchedUserProfile,
 };

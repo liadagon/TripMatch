@@ -360,6 +360,15 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/api/matches
 Authorization: Bearer {{otherToken}}
 
+### Matches Map as A - expected only unblocked matched users near/same destination
+### Privacy: matched-user latitude/longitude are deterministic approximate markers.
+### The response must not include matched-user placeId, formattedAddress, or exact coordinates.
+GET {{baseUrl}}/api/matches/map
+Authorization: Bearer {{token}}
+
+### Matches Map without a token - expected 401
+GET {{baseUrl}}/api/matches/map
+
 ### A gets B's expanded matched profile and deterministic compatibility - expected 200
 GET {{baseUrl}}/api/matches/with/{{otherUserId}}/profile
 Authorization: Bearer {{token}}

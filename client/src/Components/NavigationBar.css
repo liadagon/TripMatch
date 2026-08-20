@@ -14,10 +14,10 @@
 }
 
 .tripmatch-nav-inner {
-  width: min(372px, calc(100% - 32px));
+  width: min(440px, calc(100% - 32px));
   height: 74px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   align-items: center;
   gap: 9px;
   padding: 10px;
@@ -75,7 +75,7 @@
   }
 
   .tripmatch-nav-inner {
-    width: min(336px, calc(100% - 24px));
+    width: min(380px, calc(100% - 24px));
     height: 66px;
     gap: 7px;
     padding: 8px;

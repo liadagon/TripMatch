@@ -1,4 +1,4 @@
-import { Heart, Home, MessageCircle, UserRound } from "lucide-react";
+import { Heart, Home, Map, MessageCircle, UserRound } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./NavigationBar.css";
 
@@ -20,9 +20,15 @@ const navigationItems = [
     path: "/matches",
     icon: MessageCircle,
     isActive: (pathname: string) =>
-      pathname.startsWith("/matches") ||
+      pathname === "/matches" ||
       pathname.startsWith("/messages") ||
       pathname.startsWith("/chat"),
+  },
+  {
+    label: "מפת התאמות",
+    path: "/matches-map",
+    icon: Map,
+    isActive: (pathname: string) => pathname === "/matches-map",
   },
   {
     label: "Profile",
