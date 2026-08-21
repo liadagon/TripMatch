@@ -11,6 +11,19 @@
 ### Health check
 GET {{baseUrl}}/api/health
 
+### General API rate-limit headers
+# Expected on a normal response: RateLimit-Policy and RateLimit headers.
+GET {{baseUrl}}/api/health
+
+### General API rate limit - expected 429 after the shared limit is exhausted
+# Repeat this request more than 500 times within 15 minutes from the same IP.
+# Expected JSON: {"success":false,"message":"Too many requests, please try again later."}
+GET {{baseUrl}}/api/health
+
+### Static profile files are outside the general /api limiter
+# Replace the filename with an existing image from server/public.
+GET {{baseUrl}}/public/paste-profile-image-filename-here.jpg
+
 ### Register
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json

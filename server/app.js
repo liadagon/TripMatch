@@ -15,6 +15,7 @@ const matchRoutes = require("./routes/matchRoutes");
 const conversationRoutes = require("./routes/conversationRoutes");
 const blockRoutes = require("./routes/blockRoutes");
 const protect = require("./middleware/auth");
+const apiLimiter = require("./middleware/rateLimiter");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -35,6 +36,7 @@ app.use(
   helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
   express.static("public")
 );
+app.use("/api", apiLimiter);
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
