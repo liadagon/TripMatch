@@ -17,7 +17,8 @@ GET {{baseUrl}}/api/health
 GET {{baseUrl}}/api/health?diagnostic=request-logger
 
 ### General API rate-limit headers
-# Expected on a normal response: RateLimit-Policy and RateLimit headers.
+# Expected on a normal response: RateLimit-Limit, RateLimit-Remaining,
+# RateLimit-Reset, and RateLimit-Policy headers.
 GET {{baseUrl}}/api/health
 
 ### General API rate limit - expected 429 after the shared limit is exhausted
@@ -45,7 +46,18 @@ Content-Type: application/json
   "travelStyle": "Backpacking",
   "budget": "Medium",
   "tripDates": "September",
-  "tripDuration": "Two months"
+  "tripDuration": "Two months",
+  "tripLocation": {
+    "placeId": "51de1f1a8f321b014059e39f5e6f013f4140f00101f901f5e8750000000000c00208",
+    "name": "Barcelona",
+    "formattedAddress": "Barcelona, Catalonia, Spain",
+    "latitude": 41.3874,
+    "longitude": 2.1686,
+    "city": "Barcelona",
+    "state": "Catalonia",
+    "country": "Spain",
+    "countryCode": "es"
+  }
 }
 
 ### Reject an invalid registration trip duration - expected 400
@@ -56,7 +68,18 @@ Content-Type: application/json
   "name": "Invalid Duration",
   "email": "invalid-duration@example.com",
   "password": "SecurePass123!",
-  "tripDuration": 123
+  "tripDuration": 123,
+  "tripLocation": {
+    "placeId": "51de1f1a8f321b014059e39f5e6f013f4140f00101f901f5e8750000000000c00208",
+    "name": "Barcelona",
+    "formattedAddress": "Barcelona, Catalonia, Spain",
+    "latitude": 41.3874,
+    "longitude": 2.1686,
+    "city": "Barcelona",
+    "state": "Catalonia",
+    "country": "Spain",
+    "countryCode": "es"
+  }
 }
 
 ### Login
@@ -264,7 +287,18 @@ Content-Type: application/json
 {
   "name": "Noa Cohen",
   "email": "noa@example.com",
-  "password": "SecurePass123!"
+  "password": "SecurePass123!",
+  "tripLocation": {
+    "placeId": "51de1f1a8f321b014059e39f5e6f013f4140f00101f901f5e8750000000000c00208",
+    "name": "Barcelona",
+    "formattedAddress": "Barcelona, Catalonia, Spain",
+    "latitude": 41.3874,
+    "longitude": 2.1686,
+    "city": "Barcelona",
+    "state": "Catalonia",
+    "country": "Spain",
+    "countryCode": "es"
+  }
 }
 
 ### Login for a legacy user without a password - expected 401, not 500
