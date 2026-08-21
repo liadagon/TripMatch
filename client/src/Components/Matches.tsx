@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import useConversations from "../hooks/useConversations";
 import { getMatches } from "../services/matchService";
 import { getConversationWithUser } from "../services/conversationService";
 import type { ConversationSummary } from "../services/conversationService";
@@ -14,8 +14,6 @@ import {
   isDemoUserBlocked,
 } from "../services/demoConversationState";
 import LoadingState from "./LoadingState";
-import { fetchRealConversations } from "../store/conversationsSlice";
-import type { AppDispatch, RootState } from "../store/store";
 import "./Matches.css";
 
 function getErrorMessage(error: unknown) {
@@ -106,11 +104,12 @@ function mapRealConversations(
 
 export default function Matches() {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
-  const conversationSummaries = useSelector(
-    (state: RootState) => state.conversations.summaries,
-  );
+  const {
+    summaries: conversationSummaries,
+    dispatch,
+    actions: conversationActions,
+  } = useConversations();
   const [matches, setMatches] = useState<DisplayMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -130,7 +129,7 @@ export default function Matches() {
 
       const [matchesResult, conversationsResult] = await Promise.allSettled([
         getMatches(),
-        dispatch(fetchRealConversations()).unwrap(),
+        dispatch(conversationActions.fetchList()).unwrap(),
       ]);
 
       if (!isActive) return;
@@ -183,7 +182,7 @@ export default function Matches() {
     return () => {
       isActive = false;
     };
-  }, [dispatch, user?._id]);
+  }, [conversationActions, dispatch, user?._id]);
 
   async function openMatchConversation(match: DisplayMatch) {
     if (match.isDemo) {

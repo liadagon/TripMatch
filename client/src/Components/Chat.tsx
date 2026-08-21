@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { Ban, Trash2, UserRoundCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import useConversations from "../hooks/useConversations";
 import {
   blockMatchedUser,
   unblockMatchedUser,
@@ -18,13 +18,7 @@ import {
   isDemoUserBlocked,
   setDemoUserBlocked,
 } from "../services/demoConversationState";
-import {
-  clearRealConversation,
-  fetchRealConversation,
-  isConversationRequestError,
-  sendRealMessage,
-} from "../store/conversationsSlice";
-import type { AppDispatch, RootState } from "../store/store";
+import { isConversationRequestError } from "../store/conversationsSlice";
 import LoadingState from "./LoadingState";
 import "./Chat.css";
 
@@ -49,12 +43,10 @@ function formatMessageTime(value: string) {
 
 export default function Chat() {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const { userId: conversationId } = useParams();
   const { user } = useAuth();
-  const activeConversation = useSelector(
-    (state: RootState) => state.conversations.activeConversation,
-  );
+  const { activeConversation, dispatch, actions: conversationActions } =
+    useConversations();
   const demoConversation = getConversationById(conversationId);
   const isDemo = Boolean(demoConversation);
   const [demoMessages, setDemoMessages] = useState<ChatMessage[]>([]);
@@ -115,7 +107,7 @@ export default function Chat() {
 
       try {
         const conversation = await dispatch(
-          fetchRealConversation({ conversationId }),
+          conversationActions.open({ conversationId }),
         ).unwrap();
 
         if (!isActive) return;
@@ -135,7 +127,7 @@ export default function Chat() {
     return () => {
       isActive = false;
     };
-  }, [conversationId, dispatch, user?._id]);
+  }, [conversationActions, conversationId, dispatch, user?._id]);
 
   useEffect(() => {
     function closeMenu(event: PointerEvent) {
@@ -210,7 +202,7 @@ export default function Chat() {
 
     try {
       await dispatch(
-        sendRealMessage({ conversationId, text: cleanText }),
+        conversationActions.send({ conversationId, text: cleanText }),
       ).unwrap();
       setText("");
     } catch (error) {
@@ -294,7 +286,9 @@ export default function Chat() {
         hideDemoConversation(conversationId);
         setDemoMessages([]);
       } else if (conversationId) {
-        await dispatch(clearRealConversation({ conversationId })).unwrap();
+        await dispatch(
+          conversationActions.clear({ conversationId }),
+        ).unwrap();
       }
 
       setShowDeleteConfirmation(false);
