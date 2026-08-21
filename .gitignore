@@ -3,6 +3,8 @@ client/node_modules/
 dist/
 client/dist/
 .env
+.env.local
+.env.*.local
 client/.env
 _backup_root_react_duplicate/
 *firebase-adminsdk*.json
