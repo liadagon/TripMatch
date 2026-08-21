@@ -73,6 +73,13 @@ export function shouldConfirmExistingAccount(
   return intent === "register" && !isNewUser;
 }
 
+export function shouldShowEmailLoginSuccessTransition(
+  intent: AuthenticationIntent,
+  isNewUser: boolean,
+) {
+  return intent === "login" && !isNewUser;
+}
+
 export function getAuthenticationIntent(state: unknown): AuthenticationIntent {
   if (
     typeof state === "object" &&

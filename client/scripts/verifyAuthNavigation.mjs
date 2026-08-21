@@ -39,6 +39,7 @@ const {
   getGoogleLoginPath,
   getProfileCompletionPath,
   shouldConfirmExistingAccount,
+  shouldShowEmailLoginSuccessTransition,
 } = await import(moduleUrl);
 
 const completedQuestionnaire = {
@@ -92,6 +93,9 @@ assert.equal(
 assert.equal(shouldConfirmExistingAccount("register", false), true);
 assert.equal(shouldConfirmExistingAccount("register", true), false);
 assert.equal(shouldConfirmExistingAccount("login", false), false);
+assert.equal(shouldShowEmailLoginSuccessTransition("login", false), true);
+assert.equal(shouldShowEmailLoginSuccessTransition("login", true), false);
+assert.equal(shouldShowEmailLoginSuccessTransition("register", false), false);
 assert.equal(
   EXISTING_ACCOUNT_CONFIRMATION.title,
   "החשבון כבר קיים",
@@ -117,6 +121,17 @@ assert.match(
   emailOtpVerifySource,
   /setPendingExistingAccountPath\(destination\);\s+return;/,
 );
+assert.match(
+  emailOtpVerifySource,
+  /setPendingLoginDestination\(destination\);\s+return;/,
+);
+assert.match(emailOtpVerifySource, /LOGIN_SUCCESS_TRANSITION_MS = 1350/);
+assert.match(emailOtpVerifySource, /window\.setTimeout/);
+assert.match(emailOtpVerifySource, /window\.clearTimeout/);
+assert.match(emailOtpVerifySource, /role="status"/);
+assert.match(emailOtpVerifySource, /aria-live="polite"/);
+assert.match(emailOtpVerifySource, /התחברת בהצלחה/);
+assert.match(emailOtpVerifySource, /עוד רגע ואת בפנים\.\.\./);
 assert.match(
   emailOtpVerifySource,
   /navigate\(pendingExistingAccountPath,\s*\{\s*replace:\s*true\s*\}\)/,
@@ -175,4 +190,8 @@ console.log("Authentication navigation verification passed", {
   emailRegistrationExistingWaitsForConfirmation: true,
   emailExistingContinueUsesCompletionPath: true,
   emailExistingExitClearsSession: true,
+  returningEmailLoginSuccessTransition: true,
+  emailLoginSuccessTransitionDurationMs: 1350,
+  newEmailUserKeepsOnboardingFlow: true,
+  registrationExistingAccountDialogUnchanged: true,
 });

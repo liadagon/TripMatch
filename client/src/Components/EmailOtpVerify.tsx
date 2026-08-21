@@ -15,11 +15,13 @@ import {
   getAuthenticationIntent,
   getAuthenticationPath,
   shouldConfirmExistingAccount,
+  shouldShowEmailLoginSuccessTransition,
 } from "../utils/authNavigation";
 import ExistingAccountDialog from "./ExistingAccountDialog";
 import "./EmailOtp.css";
 
 const EMPTY_CODE = ["", "", "", "", "", ""];
+const LOGIN_SUCCESS_TRANSITION_MS = 1350;
 
 type OtpRouteState = {
   email?: unknown;
@@ -75,6 +77,9 @@ export default function EmailOtpVerify() {
   const [pendingExistingAccountPath, setPendingExistingAccountPath] = useState<
     ReturnType<typeof getAuthenticationPath> | null
   >(null);
+  const [pendingLoginDestination, setPendingLoginDestination] = useState<
+    ReturnType<typeof getAuthenticationPath> | null
+  >(null);
   const codeValue = useMemo(() => code.join(""), [code]);
   const isCodeComplete = /^\d{6}$/.test(codeValue);
 
@@ -95,6 +100,18 @@ export default function EmailOtpVerify() {
 
     return () => window.clearInterval(timer);
   }, [cooldownSeconds]);
+
+  useEffect(() => {
+    if (!pendingLoginDestination) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      navigate(pendingLoginDestination, { replace: true });
+    }, LOGIN_SUCCESS_TRANSITION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [navigate, pendingLoginDestination]);
 
   function resetCode() {
     setCode([...EMPTY_CODE]);
@@ -151,6 +168,13 @@ export default function EmailOtpVerify() {
 
       if (shouldConfirmExistingAccount(authIntent, result.isNewUser)) {
         setPendingExistingAccountPath(destination);
+        return;
+      }
+
+      if (
+        shouldShowEmailLoginSuccessTransition(authIntent, result.isNewUser)
+      ) {
+        setPendingLoginDestination(destination);
         return;
       }
 
@@ -243,50 +267,80 @@ export default function EmailOtpVerify() {
 
       <section className="email-otp-layout email-otp-verify-layout">
         <div className="email-otp-card email-otp-verify-card">
-          <div className="email-otp-icon" aria-hidden="true">✦</div>
-          <h1>הזינו את הקוד שקיבלתם</h1>
-          <p className="email-otp-subtitle">שלחנו קוד בן שש ספרות אל</p>
-          <p className="email-otp-masked" dir="ltr">{maskEmail(email)}</p>
-
-          <form className="email-otp-form" onSubmit={handleSubmit}>
-            <div className="email-otp-code" dir="ltr" onPaste={handlePaste}>
-              {code.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={(element) => {
-                    inputsRef.current[index] = element;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete={index === 0 ? "one-time-code" : "off"}
-                  maxLength={1}
-                  value={digit}
-                  onChange={(event) => handleChange(index, event.target.value)}
-                  onKeyDown={(event) => handleKeyDown(index, event)}
-                  aria-label={`ספרה ${index + 1}`}
-                />
-              ))}
+          {pendingLoginDestination ? (
+            <div
+              className="email-otp-success"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="email-otp-success-icon" aria-hidden="true">
+                ✓
+              </div>
+              <h1>התחברת בהצלחה</h1>
+              <p className="email-otp-subtitle">עוד רגע ואת בפנים...</p>
+              <div className="email-otp-success-loader" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="email-otp-icon" aria-hidden="true">✦</div>
+              <h1>הזינו את הקוד שקיבלתם</h1>
+              <p className="email-otp-subtitle">שלחנו קוד בן שש ספרות אל</p>
+              <p className="email-otp-masked" dir="ltr">{maskEmail(email)}</p>
 
-            {error && <p className="email-otp-error" role="alert">{error}</p>}
+              <form className="email-otp-form" onSubmit={handleSubmit}>
+                <div className="email-otp-code" dir="ltr" onPaste={handlePaste}>
+                  {code.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(element) => {
+                        inputsRef.current[index] = element;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete={index === 0 ? "one-time-code" : "off"}
+                      maxLength={1}
+                      value={digit}
+                      onChange={(event) =>
+                        handleChange(index, event.target.value)
+                      }
+                      onKeyDown={(event) => handleKeyDown(index, event)}
+                      aria-label={`ספרה ${index + 1}`}
+                    />
+                  ))}
+                </div>
 
-            <button type="submit" disabled={!isCodeComplete || isVerifying}>
-              {isVerifying ? "מאמתים..." : "אימות"}
-            </button>
-          </form>
+                {error && (
+                  <p className="email-otp-error" role="alert">
+                    {error}
+                  </p>
+                )}
 
-          <button
-            type="button"
-            className="email-otp-resend"
-            onClick={handleResend}
-            disabled={cooldownSeconds > 0 || isResending}
-          >
-            {isResending
-              ? "שולחים..."
-              : cooldownSeconds > 0
-                ? `שליחה מחדש בעוד ${cooldownSeconds} שניות`
-                : "שליחה מחדש"}
-          </button>
+                <button
+                  type="submit"
+                  disabled={!isCodeComplete || isVerifying}
+                >
+                  {isVerifying ? "מאמתים..." : "אימות"}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                className="email-otp-resend"
+                onClick={handleResend}
+                disabled={cooldownSeconds > 0 || isResending}
+              >
+                {isResending
+                  ? "שולחים..."
+                  : cooldownSeconds > 0
+                    ? `שליחה מחדש בעוד ${cooldownSeconds} שניות`
+                    : "שליחה מחדש"}
+              </button>
+            </>
+          )}
         </div>
 
         <aside className="email-otp-side" aria-hidden="true">
