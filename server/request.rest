@@ -63,6 +63,36 @@ Content-Type: application/json
   "password": "SecurePass123!"
 }
 
+### Auth rate-limit headers on email login
+# Expected: RateLimit-Limit: 30 plus RateLimit-Remaining/Reset/Policy headers.
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "noa@example.com",
+  "password": "SecurePass123!"
+}
+
+### Google auth is protected by the same auth-specific limiter
+POST {{baseUrl}}/api/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "paste_firebase_id_token_here"
+}
+
+### Auth rate limit - expected 429 after 30 combined auth attempts
+# Repeat this request, or any mix of register/login/google requests, more than
+# 30 times within 15 minutes from the same IP.
+# Expected JSON: {"success":false,"message":"Too many requests, please try again later."}
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "rate-limit-check@example.com",
+  "password": "WrongPassword123!"
+}
+
 ### Current authenticated user
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{token}}

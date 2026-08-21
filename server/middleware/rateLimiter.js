@@ -13,4 +13,18 @@ const apiLimiter = rateLimit({
   },
 });
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many requests, please try again later.",
+    });
+  },
+});
+
 module.exports = apiLimiter;
+module.exports.authLimiter = authLimiter;
