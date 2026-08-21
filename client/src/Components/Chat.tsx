@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { Ban, Trash2, UserRoundCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import type { PublicUser } from "../services/authService";
-import {
-  getMessages,
-  clearConversation,
-  sendMessage as persistMessage,
-} from "../services/conversationService";
 import {
   blockMatchedUser,
   unblockMatchedUser,
@@ -24,6 +18,13 @@ import {
   isDemoUserBlocked,
   setDemoUserBlocked,
 } from "../services/demoConversationState";
+import {
+  clearRealConversation,
+  fetchRealConversation,
+  isConversationRequestError,
+  sendRealMessage,
+} from "../store/conversationsSlice";
+import type { AppDispatch, RootState } from "../store/store";
 import LoadingState from "./LoadingState";
 import "./Chat.css";
 
@@ -48,12 +49,15 @@ function formatMessageTime(value: string) {
 
 export default function Chat() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { userId: conversationId } = useParams();
   const { user } = useAuth();
+  const activeConversation = useSelector(
+    (state: RootState) => state.conversations.activeConversation,
+  );
   const demoConversation = getConversationById(conversationId);
   const isDemo = Boolean(demoConversation);
-  const [otherUser, setOtherUser] = useState<PublicUser | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [demoMessages, setDemoMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -71,6 +75,19 @@ export default function Chat() {
   const [isDemoBlocked, setIsDemoBlocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const otherUser = isDemo
+    ? null
+    : activeConversation?.participants.find(
+        (participant) => participant._id !== user?._id,
+      ) || null;
+  const messages = isDemo
+    ? demoMessages
+    : (activeConversation?.messages || []).map((message): ChatMessage => ({
+        id: message._id,
+        from: message.sender === user?._id ? "me" : "them",
+        text: message.text,
+        time: formatMessageTime(message.createdAt),
+      }));
 
   useEffect(() => {
     let isActive = true;
@@ -89,8 +106,7 @@ export default function Chat() {
       setIsMenuOpen(false);
 
       if (getConversationById(conversationId)) {
-        setOtherUser(null);
-        setMessages(demoChatMessages.map((message) => ({ ...message })));
+        setDemoMessages(demoChatMessages.map((message) => ({ ...message })));
         setIsDemoBlocked(isDemoUserBlocked(conversationId));
         setBlockStatus({ blocked: false, blockedByMe: false });
         setIsLoading(false);
@@ -98,22 +114,11 @@ export default function Chat() {
       }
 
       try {
-        const conversation = await getMessages(conversationId);
+        const conversation = await dispatch(
+          fetchRealConversation({ conversationId }),
+        ).unwrap();
 
         if (!isActive) return;
-        setOtherUser(
-          conversation.participants.find(
-            (participant) => participant._id !== user?._id,
-          ) || null,
-        );
-        setMessages(
-          conversation.messages.map((message) => ({
-            id: message._id,
-            from: message.sender === user?._id ? "me" : "them",
-            text: message.text,
-            time: formatMessageTime(message.createdAt),
-          })),
-        );
         setBlockStatus(conversation.blockStatus);
       } catch (error) {
         console.warn(
@@ -130,7 +135,7 @@ export default function Chat() {
     return () => {
       isActive = false;
     };
-  }, [conversationId, user?._id]);
+  }, [conversationId, dispatch, user?._id]);
 
   useEffect(() => {
     function closeMenu(event: PointerEvent) {
@@ -157,7 +162,7 @@ export default function Chat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [activeConversation?.messages, demoMessages, isDemo]);
 
   async function sendMessage() {
     const cleanText = text.trim();
@@ -180,14 +185,14 @@ export default function Chat() {
         time: now,
       };
 
-      setMessages((current) => [...current, localMessage]);
+      setDemoMessages((current) => [...current, localMessage]);
       setText("");
       setIsSending(false);
 
       window.setTimeout(() => {
         const reply =
           demoChatReplies[Math.floor(Math.random() * demoChatReplies.length)];
-        setMessages((current) => [
+        setDemoMessages((current) => [
           ...current,
           {
             id: `demo-reply-${Date.now()}`,
@@ -204,23 +209,16 @@ export default function Chat() {
     }
 
     try {
-      const message = await persistMessage(conversationId, cleanText);
-      setMessages((current) => [
-        ...current,
-        {
-          id: message._id,
-          from: "me",
-          text: message.text,
-          time: formatMessageTime(message.createdAt),
-        },
-      ]);
+      await dispatch(
+        sendRealMessage({ conversationId, text: cleanText }),
+      ).unwrap();
       setText("");
     } catch (error) {
       console.error("[Chat] Failed to persist message.", {
         conversationId,
         message: error instanceof Error ? error.message : "Unknown error",
       });
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
+      if (isConversationRequestError(error) && error.status === 403) {
         setBlockStatus({ blocked: true, blockedByMe: false });
         setErrorMessage("לא ניתן לשלוח הודעות בשיחה זו");
       } else {
@@ -294,11 +292,11 @@ export default function Chat() {
     try {
       if (isDemo && conversationId) {
         hideDemoConversation(conversationId);
+        setDemoMessages([]);
       } else if (conversationId) {
-        await clearConversation(conversationId);
+        await dispatch(clearRealConversation({ conversationId })).unwrap();
       }
 
-      setMessages([]);
       setShowDeleteConfirmation(false);
       setIsMenuOpen(false);
       navigate("/matches", { replace: true });

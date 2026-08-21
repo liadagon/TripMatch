@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMatches } from "../services/matchService";
-import {
-  getConversations,
-  getConversationWithUser,
-} from "../services/conversationService";
+import { getConversationWithUser } from "../services/conversationService";
+import type { ConversationSummary } from "../services/conversationService";
 import {
   conversations as demoConversations,
   newMatches as demoMatches,
@@ -15,6 +14,8 @@ import {
   isDemoUserBlocked,
 } from "../services/demoConversationState";
 import LoadingState from "./LoadingState";
+import { fetchRealConversations } from "../store/conversationsSlice";
+import type { AppDispatch, RootState } from "../store/store";
 import "./Matches.css";
 
 function getErrorMessage(error: unknown) {
@@ -69,13 +70,57 @@ const getFallbackConversations = (): DisplayConversation[] =>
     blocked: isDemoUserBlocked(conversation.id),
     }));
 
+function mapRealConversations(
+  conversations: ConversationSummary[],
+  currentUserId: string | undefined,
+): DisplayConversation[] {
+  return conversations.flatMap((conversation) => {
+    const otherUser = conversation.participants.find(
+      (participant) => participant._id !== currentUserId,
+    );
+
+    return otherUser
+      ? [
+          {
+            id: conversation._id,
+            userId: otherUser._id,
+            name: otherUser.name,
+            age: otherUser.age || 18,
+            destination:
+              [otherUser.preferredDestinations?.[0], otherUser.tripDates]
+                .filter(Boolean)
+                .join(" · ") || "TripMatch",
+            preview: conversation.lastMessage?.text || "התחילו שיחה חדשה",
+            image: otherUser.photoURL || otherUser.photo || "/pic2.png",
+            time: new Date(conversation.updatedAt).toLocaleTimeString("he-IL", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            isDemo: false,
+            blocked: conversation.blockStatus.blocked,
+          },
+        ]
+      : [];
+  });
+}
+
 export default function Matches() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const { user } = useAuth();
+  const conversationSummaries = useSelector(
+    (state: RootState) => state.conversations.summaries,
+  );
   const [matches, setMatches] = useState<DisplayMatch[]>([]);
-  const [conversations, setConversations] = useState<DisplayConversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const realConversations = mapRealConversations(
+    conversationSummaries,
+    user?._id,
+  );
+  const conversations = realConversations.length
+    ? realConversations
+    : getFallbackConversations();
 
   useEffect(() => {
     let isActive = true;
@@ -85,7 +130,7 @@ export default function Matches() {
 
       const [matchesResult, conversationsResult] = await Promise.allSettled([
         getMatches(),
-        getConversations(),
+        dispatch(fetchRealConversations()).unwrap(),
       ]);
 
       if (!isActive) return;
@@ -117,55 +162,11 @@ export default function Matches() {
         setMatches(getFallbackMatches());
       }
 
-      if (conversationsResult.status === "fulfilled") {
-        const realConversations = conversationsResult.value.flatMap(
-          (conversation) => {
-            const otherUser = conversation.participants.find(
-              (participant) => participant._id !== user?._id,
-            );
-
-            return otherUser
-              ? [
-                  {
-                    id: conversation._id,
-                    userId: otherUser._id,
-                    name: otherUser.name,
-                    age: otherUser.age || 18,
-                    destination:
-                      [
-                        otherUser.preferredDestinations?.[0],
-                        otherUser.tripDates,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || "TripMatch",
-                    preview:
-                      conversation.lastMessage?.text || "התחילו שיחה חדשה",
-                    image:
-                      otherUser.photoURL || otherUser.photo || "/pic2.png",
-                    time: new Date(
-                      conversation.updatedAt,
-                    ).toLocaleTimeString("he-IL", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }),
-                    isDemo: false,
-                    blocked: conversation.blockStatus.blocked,
-                  },
-                ]
-              : [];
-          },
-        );
-        setConversations(
-          realConversations.length
-            ? realConversations
-            : getFallbackConversations(),
-        );
-      } else {
+      if (conversationsResult.status === "rejected") {
         console.warn(
           "[Matches] Backend conversations unavailable; using demo fallback.",
           getErrorMessage(conversationsResult.reason),
         );
-        setConversations(getFallbackConversations());
       }
 
       if (
@@ -182,7 +183,7 @@ export default function Matches() {
     return () => {
       isActive = false;
     };
-  }, [user?._id]);
+  }, [dispatch, user?._id]);
 
   async function openMatchConversation(match: DisplayMatch) {
     if (match.isDemo) {
