@@ -14,6 +14,7 @@ import {
   isDemoConversationHidden,
   isDemoUserBlocked,
 } from "../services/demoConversationState";
+import LoadingState from "./LoadingState";
 import "./Matches.css";
 
 function getErrorMessage(error: unknown) {
@@ -216,6 +217,10 @@ export default function Matches() {
         </header>
 
         <section className="matches-scroll">
+          {isLoading ? (
+            <LoadingState message="טוענים התאמות ושיחות..." />
+          ) : (
+            <>
           <div className="matches-section-label">התאמות חדשות</div>
 
           <div className="matches-stories-row">
@@ -286,6 +291,8 @@ export default function Matches() {
               </article>
             ))}
           </div>
+            </>
+          )}
         </section>
       </main>
     </div>

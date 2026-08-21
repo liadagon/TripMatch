@@ -22,6 +22,7 @@ import MatchedProfile from "./Components/MatchedProfile";
 import BlockedUsers from "./Components/BlockedUsers";
 import NotFound from "./Components/NotFound";
 import ProtectedRoute from "./Components/ProtectedRoute";
+import LoadingState from "./Components/LoadingState";
 import { useAuth } from "./context/AuthContext";
 
 const MatchesMap = lazy(() => import("./Components/MatchesMap"));
@@ -73,7 +74,11 @@ export default function App() {
         <Route
           path="/matches-map"
           element={protectedPage(
-            <Suspense fallback={null}>
+            <Suspense
+              fallback={
+                <LoadingState message="טוענים את מפת ההתאמות..." fullScreen />
+              }
+            >
               <MatchesMap />
             </Suspense>,
           )}

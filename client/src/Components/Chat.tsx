@@ -24,6 +24,7 @@ import {
   isDemoUserBlocked,
   setDemoUserBlocked,
 } from "../services/demoConversationState";
+import LoadingState from "./LoadingState";
 import "./Chat.css";
 
 type ChatMessage = {
@@ -56,6 +57,7 @@ export default function Chat() {
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isBlockPending, setIsBlockPending] = useState(false);
@@ -74,7 +76,13 @@ export default function Chat() {
     let isActive = true;
 
     async function loadConversation() {
-      if (!conversationId) return;
+      setIsLoading(true);
+
+      if (!conversationId) {
+        setErrorMessage("לא הצלחנו לזהות את השיחה");
+        setIsLoading(false);
+        return;
+      }
 
       setErrorMessage("");
       setFeedbackMessage("");
@@ -85,6 +93,7 @@ export default function Chat() {
         setMessages(demoChatMessages.map((message) => ({ ...message })));
         setIsDemoBlocked(isDemoUserBlocked(conversationId));
         setBlockStatus({ blocked: false, blockedByMe: false });
+        setIsLoading(false);
         return;
       }
 
@@ -112,6 +121,8 @@ export default function Chat() {
           error instanceof Error ? error.message : "Unknown error",
         );
         if (isActive) setErrorMessage("לא הצלחנו לטעון את השיחה");
+      } finally {
+        if (isActive) setIsLoading(false);
       }
     }
 
@@ -408,6 +419,10 @@ export default function Chat() {
         </header>
 
         <section className="chat-messages">
+          {isLoading ? (
+            <LoadingState message="טוענים את השיחה..." />
+          ) : (
+            <>
           <div className="chat-date-divider">היום</div>
 
           {errorMessage && <p role="alert">{errorMessage}</p>}
@@ -428,6 +443,8 @@ export default function Chat() {
           ))}
 
           <div ref={messagesEndRef}></div>
+            </>
+          )}
         </section>
 
         <footer className={`chat-input-bar ${relationshipBlocked ? "blocked" : ""}`}>
@@ -455,7 +472,7 @@ export default function Chat() {
               placeholder="כתבי הודעה..."
               value={text}
               maxLength={2000}
-              disabled={relationshipBlocked}
+              disabled={isLoading || relationshipBlocked}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={handleKeyDown}
             />
@@ -465,7 +482,7 @@ export default function Chat() {
             className="chat-send-btn"
             type="button"
             onClick={() => void sendMessage()}
-            disabled={isSending || !text.trim() || relationshipBlocked}
+            disabled={isLoading || isSending || !text.trim() || relationshipBlocked}
           >
             שליחה
           </button>
