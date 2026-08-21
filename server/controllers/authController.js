@@ -302,6 +302,14 @@ async function findOrCreateVerifiedEmailUser(email) {
     if (!user) {
       throw error;
     }
+
+    if (!user.emailVerified) {
+      await User.updateOne(
+        { _id: user._id },
+        { $set: { emailVerified: true } },
+      );
+      user.emailVerified = true;
+    }
   }
 
   return { user, isNewUser };

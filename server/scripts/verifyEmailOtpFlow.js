@@ -18,6 +18,7 @@ let nextOtpId = 1;
 let nextUserId = 1;
 let userCreateCount = 0;
 let emailSendCount = 0;
+let duplicateRaceUser = null;
 
 function installModuleMock(modulePath, exports) {
   require.cache[modulePath] = {
@@ -151,6 +152,14 @@ const UserMock = {
     return { modifiedCount: user ? 1 : 0 };
   },
   async create(payload) {
+    if (duplicateRaceUser?.email === payload.email) {
+      createUser(duplicateRaceUser);
+      duplicateRaceUser = null;
+      const duplicateError = new Error("Duplicate user race");
+      duplicateError.code = 11000;
+      throw duplicateError;
+    }
+
     if (users.some((user) => user.email === payload.email)) {
       const duplicateError = new Error("Duplicate user");
       duplicateError.code = 11000;
@@ -307,6 +316,28 @@ async function run() {
   assert.equal(users.length, usersAfterNewRegistration);
   assert.equal(userCreateCount, createsAfterNewRegistration);
 
+  const existingEmailUser = createUser({
+    _id: "existing-email-user",
+    name: "Existing Email Traveler",
+    email: "existing.email@example.com",
+    authProvider: "email",
+    emailVerified: false,
+  });
+  const usersBeforeExistingEmailLogin = users.length;
+  await requestCode(existingEmailUser.email);
+  const existingEmailVerification = await verifyCode(
+    existingEmailUser.email,
+    sentCodes.get(existingEmailUser.email),
+  );
+  assert.equal(existingEmailVerification.response.statusCode, 200);
+  assert.equal(existingEmailVerification.response.body.isNewUser, false);
+  assert.equal(
+    existingEmailVerification.response.body.data._id,
+    existingEmailUser._id,
+  );
+  assert.equal(existingEmailUser.emailVerified, true);
+  assert.equal(users.length, usersBeforeExistingEmailLogin);
+
   const authRequest = {
     headers: {
       authorization: `Bearer ${newVerification.response.body.token}`,
@@ -356,6 +387,36 @@ async function run() {
   assert.equal(users.length, usersBeforeExistingLogin);
   assert.equal(userCreateCount, createsBeforeExistingLogin);
 
+  const raceEmail = "duplicate.race@example.com";
+  const usersBeforeRace = users.length;
+  const createsBeforeRace = userCreateCount;
+  duplicateRaceUser = {
+    _id: "duplicate-race-google-user",
+    name: "Concurrent Google Traveler",
+    email: raceEmail,
+    authProvider: "google",
+    firebaseUid: "duplicate-race-google-uid",
+    emailVerified: false,
+  };
+  await requestCode(raceEmail);
+  const raceVerification = await verifyCode(
+    raceEmail,
+    sentCodes.get(raceEmail),
+  );
+  const recoveredRaceUser = raceVerification.response.body.data;
+  assert.equal(raceVerification.response.statusCode, 200);
+  assert.equal(raceVerification.response.body.isNewUser, false);
+  assert.equal(recoveredRaceUser._id, "duplicate-race-google-user");
+  assert.equal(recoveredRaceUser.authProvider, "google");
+  assert.equal(recoveredRaceUser.firebaseUid, "duplicate-race-google-uid");
+  assert.equal(recoveredRaceUser.emailVerified, true);
+  assert.equal(
+    users.filter((user) => user.email === raceEmail).length,
+    1,
+  );
+  assert.equal(users.length, usersBeforeRace + 1);
+  assert.equal(userCreateCount, createsBeforeRace);
+
   await verifyEndpointRateLimit();
 
   console.log("Email OTP authentication verification passed", {
@@ -365,7 +426,10 @@ async function run() {
     maxAttempts: 5,
     resendCooldownSeconds: 60,
     newUserCreatedOnce: true,
+    existingEmailUserReusedAndVerified: true,
     existingGoogleUserReused: true,
+    duplicateKeyRaceUserReusedAndVerified: true,
+    duplicateKeyRaceIdentityPreserved: true,
     duplicateUsersCreated: false,
     wrongExpiredAndReusedCodesRejected: true,
     jwtRestorationPassed: true,
