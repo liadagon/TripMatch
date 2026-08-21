@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import TripLocationPicker, {
   getTripLocationLabel,
-  type TripLocation,
 } from "./TripLocationPicker";
+import type { TripLocation } from "../types/tripLocation";
 import "./Register.css";
 
 type RegisterForm = {
@@ -94,7 +94,7 @@ export default function Register() {
 
     setFieldErrors(errors);
 
-    if (Object.keys(errors).length > 0) {
+    if (Object.keys(errors).length > 0 || !tripLocation) {
       setShowError(true);
       setErrorMessage("יש למלא את כל השדות הנדרשים בצורה תקינה");
       window.scrollTo({ top: 0, behavior: "smooth" });

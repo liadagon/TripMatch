@@ -20,8 +20,8 @@ import type { AuthUser } from "../services/authService";
 import { uploadProfileImage } from "../services/profileService";
 import TripLocationPicker, {
   getTripLocationLabel,
-  type TripLocation,
 } from "./TripLocationPicker";
+import type { TripLocation } from "../types/tripLocation";
 import {
   getProfileStatistics,
   type ProfileStatistics,

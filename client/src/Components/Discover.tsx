@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
 import type { DestinationInfo, DiscoverUser } from "../services/userService";
-import type { TripLocation } from "./TripLocationPicker";
+import type { TripLocation } from "../types/tripLocation";
 import { getConversationWithUser } from "../services/conversationService";
 import { getDemoDiscoverProfiles } from "../data/demoProfiles";
 import {
@@ -166,13 +166,13 @@ export default function Discover() {
       const [users, swipes] = await Promise.all([getUsers(), getSwipes()]);
       const swipedUserIds = new Set(swipes.map((swipe) => swipe.toUser));
       const realProfiles = users
-          .filter(
-            (candidate) =>
-              candidate._id !== user?._id &&
-              !swipedUserIds.has(candidate._id) &&
-              isUsableDiscoverProfile(candidate),
-          )
-          .map(mapUserToProfile);
+        .filter(
+          (candidate) =>
+            candidate._id !== user?._id &&
+            !swipedUserIds.has(candidate._id),
+        )
+        .filter(isUsableDiscoverProfile)
+        .map(mapUserToProfile);
 
       setProfiles(
         realProfiles.length ? realProfiles : getDemoProfiles(user?.tripLocation),

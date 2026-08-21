@@ -1,5 +1,5 @@
 import api from "./api";
-import type { TripLocation } from "../Components/TripLocationPicker";
+import type { TripLocation } from "../types/tripLocation";
 
 export type AuthUser = {
   _id: string;

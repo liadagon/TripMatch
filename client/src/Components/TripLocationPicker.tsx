@@ -1,18 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Search, X } from "lucide-react";
+import type { TripLocation } from "../types/tripLocation";
 import "./TripLocationPicker.css";
-
-export type TripLocation = {
-  placeId: string;
-  name: string;
-  formattedAddress: string;
-  latitude: number;
-  longitude: number;
-  city?: string;
-  state?: string;
-  country: string;
-  countryCode: string;
-};
 
 type GeoapifyFeature = {
   properties?: {
@@ -142,7 +131,7 @@ export default function TripLocationPicker({
         setMessage(
           nextSuggestions.length ? "" : "לא מצאנו יעדים מתאימים מחוץ לישראל.",
         );
-      } catch (error) {
+      } catch {
         if (controller.signal.aborted || requestId !== requestIdRef.current) return;
 
         setSuggestions([]);

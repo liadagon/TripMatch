@@ -1,19 +1,20 @@
 import { useMemo, useRef, useState } from "react";
+import type { ClipboardEvent, FormEvent, KeyboardEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./VerifyCode.css";
 
 export default function VerifyCode() {
   const navigate = useNavigate();
   const location = useLocation();
-  const inputsRef = useRef([]);
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const phone = location.state?.phone || "";
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
 
   const codeValue = useMemo(() => code.join(""), [code]);
   const isCodeComplete = codeValue.length === 6;
 
-  function handleChange(index, value) {
+  function handleChange(index: number, value: string) {
     const digit = value.replace(/\D/g, "").slice(-1);
 
     const nextCode = [...code];
@@ -25,7 +26,10 @@ export default function VerifyCode() {
     }
   }
 
-  function handleKeyDown(index, event) {
+  function handleKeyDown(
+    index: number,
+    event: KeyboardEvent<HTMLInputElement>,
+  ) {
     if (event.key === "Backspace" && !code[index] && index > 0) {
       inputsRef.current[index - 1]?.focus();
     }
@@ -39,7 +43,7 @@ export default function VerifyCode() {
     }
   }
 
-  function handlePaste(event) {
+  function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
     event.preventDefault();
 
     const pastedDigits = event.clipboardData
@@ -64,7 +68,7 @@ export default function VerifyCode() {
     inputsRef.current[nextFocusIndex]?.focus();
   }
 
-  function handleSubmit(event) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!isCodeComplete) {
