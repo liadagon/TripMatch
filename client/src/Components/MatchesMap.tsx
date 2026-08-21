@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { Map, MapPin, MessageCircle, RefreshCw, UserRound } from "lucide-react";
@@ -133,15 +133,17 @@ function createPhotoIcon(photoURL: string, isCurrentUser = false) {
   });
 }
 
-function MatchPhotoMarker({
-  match,
-  onMessage,
-  isOpeningChat,
-}: {
+type MatchPhotoMarkerProps = {
   match: DisplayMapMarker;
   onMessage: (match: DisplayMapMarker) => Promise<void>;
   isOpeningChat: boolean;
-}) {
+};
+
+const MatchPhotoMarker = memo(function MatchPhotoMarker({
+  match,
+  onMessage,
+  isOpeningChat,
+}: MatchPhotoMarkerProps) {
   const navigate = useNavigate();
   const icon = useMemo(() => createPhotoIcon(match.photoURL), [match.photoURL]);
 
@@ -186,7 +188,7 @@ function MatchPhotoMarker({
       </Popup>
     </Marker>
   );
-}
+});
 
 export default function MatchesMap() {
   const navigate = useNavigate();
@@ -248,23 +250,26 @@ export default function MatchesMap() {
   );
   const displayMatches = realMatches.length ? realMatches : demoMatches;
 
-  async function openConversation(match: DisplayMapMarker) {
-    setOpeningChatUserId(match.userId);
-    setLoadError("");
+  const openConversation = useCallback(
+    async (match: DisplayMapMarker) => {
+      setOpeningChatUserId(match.userId);
+      setLoadError("");
 
-    if (match.isDemo) {
-      navigate(`/chat/${match.userId}`);
-      return;
-    }
+      if (match.isDemo) {
+        navigate(`/chat/${match.userId}`);
+        return;
+      }
 
-    try {
-      const conversation = await getConversationWithUser(match.userId);
-      navigate(`/chat/${conversation._id}`);
-    } catch {
-      setLoadError("לא הצלחנו לפתוח את השיחה. נסו שוב.");
-      setOpeningChatUserId("");
-    }
-  }
+      try {
+        const conversation = await getConversationWithUser(match.userId);
+        navigate(`/chat/${conversation._id}`);
+      } catch {
+        setLoadError("לא הצלחנו לפתוח את השיחה. נסו שוב.");
+        setOpeningChatUserId("");
+      }
+    },
+    [navigate],
+  );
 
   function retryMapTiles() {
     setMapError("");
