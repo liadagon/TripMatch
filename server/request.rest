@@ -11,6 +11,11 @@
 ### Health check
 GET {{baseUrl}}/api/health
 
+### Request logger check
+# Expected server-console format: GET /api/health 200 <duration>ms
+# Query values are intentionally omitted from logs.
+GET {{baseUrl}}/api/health?diagnostic=request-logger
+
 ### General API rate-limit headers
 # Expected on a normal response: RateLimit-Policy and RateLimit headers.
 GET {{baseUrl}}/api/health

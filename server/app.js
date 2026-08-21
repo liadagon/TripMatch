@@ -16,6 +16,7 @@ const conversationRoutes = require("./routes/conversationRoutes");
 const blockRoutes = require("./routes/blockRoutes");
 const protect = require("./middleware/auth");
 const apiLimiter = require("./middleware/rateLimiter");
+const requestLogger = require("./middleware/requestLogger");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -29,6 +30,7 @@ app.use(
   })
 );
 
+app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
