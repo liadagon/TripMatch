@@ -20,6 +20,7 @@ import Profile from "./Components/Profile";
 import MyProfilePreview from "./Components/MyProfilePreview";
 import MatchedProfile from "./Components/MatchedProfile";
 import BlockedUsers from "./Components/BlockedUsers";
+import NotFound from "./Components/NotFound";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
@@ -55,8 +56,14 @@ export default function App() {
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/register" element={<Register />} />
         <Route path="/post-login-welcome" element={<PostLoginWelcome />} />
-        <Route path="/photo-upload" element={<PhotoUpload />} />
-        <Route path="/questionnaire" element={<Questionnaire />} />
+        <Route
+          path="/photo-upload"
+          element={protectedPage(<PhotoUpload />)}
+        />
+        <Route
+          path="/questionnaire"
+          element={protectedPage(<Questionnaire />)}
+        />
 
         {/* App routes */}
         <Route path="/discover" element={protectedPage(<Discover />)} />
@@ -85,7 +92,7 @@ export default function App() {
         />
 
         {/* fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       {isAuthenticated && isApplicationScreen && <NavigationBar />}
