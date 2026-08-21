@@ -1,11 +1,14 @@
 import { type ChangeEvent, type FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getAuthenticationIntent } from "../utils/authNavigation";
 import "./PhoneLogin.css";
 
 const MAX_PHONE_LENGTH = 10;
 
 export default function PhoneLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const authIntent = getAuthenticationIntent(location.state);
   const [phone, setPhone] = useState("");
 
   const isPhoneValid = /^05\d{8}$/.test(phone);
@@ -27,6 +30,7 @@ export default function PhoneLogin() {
 
     navigate("/verify-code", {
       state: {
+        authIntent,
         phone: `+972${phone.replace(/^0/, "")}`,
       },
     });
@@ -77,7 +81,11 @@ export default function PhoneLogin() {
             </svg>
           </div>
 
-          <h1>התחברות עם טלפון</h1>
+          <h1>
+            {authIntent === "register"
+              ? "הרשמה עם טלפון"
+              : "התחברות עם טלפון"}
+          </h1>
 
           <p className="phone-subtitle">נשלח לך קוד אימות ב־SMS</p>
 

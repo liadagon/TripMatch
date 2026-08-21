@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signOut,
   type Auth,
 } from "firebase/auth";
 
@@ -80,6 +81,12 @@ export async function signInWithGoogle() {
       message: getErrorMessage(error),
     });
     throw error;
+  }
+}
+
+export async function signOutFromFirebase() {
+  if (auth) {
+    await signOut(auth);
   }
 }
 

@@ -78,6 +78,11 @@ export type GoogleLoginResponse = {
   isNewUser: boolean;
 };
 
+export type GoogleAuthenticationResult = {
+  user: AuthUser;
+  isNewUser: boolean;
+};
+
 export type EmailLoginResponse = {
   success: true;
   message: string;

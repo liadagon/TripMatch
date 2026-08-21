@@ -1,8 +1,15 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getProfileCompletionPath } from "../utils/authNavigation";
 import "./PostLoginWelcome.css";
 
 export default function PostLoginWelcome() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  function continueOnboarding() {
+    navigate(user ? getProfileCompletionPath(user) : "/", { replace: true });
+  }
 
   return (
     <main className="post-login-welcome-page" dir="rtl">
@@ -68,7 +75,7 @@ export default function PostLoginWelcome() {
           <button
             type="button"
             className="post-login-welcome-continue-button"
-            onClick={() => navigate("/photo-upload")}
+            onClick={continueOnboarding}
           >
             המשך
           </button>

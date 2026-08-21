@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getProfileCompletionPath } from "../utils/authNavigation";
 import {
   Globe2,
   CalendarDays,
@@ -97,7 +98,7 @@ export default function Questionnaire() {
       setSaveError("");
 
       try {
-        await updateProfile({
+        const updatedUser = await updateProfile({
           preferredDestinations: answers[0] ? [answers[0]] : [],
           tripDates: answers[1],
           budget: answers[2],
@@ -110,7 +111,7 @@ export default function Questionnaire() {
             dealBreaker: answers[8],
           },
         });
-        navigate("/discover");
+        navigate(getProfileCompletionPath(updatedUser), { replace: true });
       } catch {
         setSaveError("לא הצלחנו לשמור את התשובות נסי שוב");
       } finally {

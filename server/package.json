@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "verify:google-auth": "node scripts/verifyGoogleAuthFlow.js",
     "verify:virtual-populate": "node scripts/verifyUserMatchesVirtual.js"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { ClipboardEvent, FormEvent, KeyboardEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getAuthenticationIntent } from "../utils/authNavigation";
 import "./VerifyCode.css";
 
 export default function VerifyCode() {
@@ -9,6 +10,7 @@ export default function VerifyCode() {
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const phone = location.state?.phone || "";
+  const authIntent = getAuthenticationIntent(location.state);
   const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
 
   const codeValue = useMemo(() => code.join(""), [code]);
@@ -77,6 +79,7 @@ export default function VerifyCode() {
 
     navigate("/post-login-welcome", {
       state: {
+        authIntent,
         phone,
         code: codeValue,
       },
@@ -98,7 +101,9 @@ export default function VerifyCode() {
         <button
           className="verify-back-button"
           type="button"
-          onClick={() => navigate("/phone-login")}
+          onClick={() =>
+            navigate("/phone-login", { state: { authIntent } })
+          }
         >
           חזרה
         </button>

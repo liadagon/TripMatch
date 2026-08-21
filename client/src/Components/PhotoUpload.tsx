@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { uploadProfileImage } from "../services/profileService";
+import { getProfileCompletionPath } from "../utils/authNavigation";
 
 import "./PhotoUpload.css";
 
@@ -148,11 +149,11 @@ const PhotoUpload = () => {
         selectedPhotos.map((photo) => uploadProfileImage(photo.file)),
       );
 
-      await updateProfile({
+      const updatedUser = await updateProfile({
         photos: uploadedUrls,
         photoURL: uploadedUrls[0],
       });
-      navigate("/questionnaire");
+      navigate(getProfileCompletionPath(updatedUser), { replace: true });
     } catch {
       setError("לא הצלחנו להעלות ולשמור את התמונות. הבחירות נשמרו, נסו שוב.");
     } finally {

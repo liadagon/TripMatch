@@ -10,11 +10,13 @@ import {
   type AuthUser,
   emailLogin,
   getCurrentUser,
+  type GoogleAuthenticationResult,
   googleLogin,
   registerUser,
   type RegisterPayload,
 } from "../services/authService";
 import { TRIPMATCH_TOKEN_KEY } from "../services/api";
+import { signOutFromFirebase } from "../firebase";
 import {
   updateCurrentProfile,
   type ProfileUpdatePayload,
@@ -26,9 +28,11 @@ type AuthContextValue = {
   isInitializing: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<AuthUser>;
-  authenticateWithGoogle: (idToken: string) => Promise<AuthUser>;
+  authenticateWithGoogle: (
+    idToken: string,
+  ) => Promise<GoogleAuthenticationResult>;
   updateProfile: (payload: ProfileUpdatePayload) => Promise<AuthUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -117,7 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
     setUser(response.data.data);
-    return response.data.data;
+    return {
+      user: response.data.data,
+      isNewUser: response.data.isNewUser,
+    };
   }
 
   async function updateProfile(payload: ProfileUpdatePayload) {
@@ -126,9 +133,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return updatedUser;
   }
 
-  function logout() {
+  async function logout() {
     localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
     setUser(null);
+
+    try {
+      await signOutFromFirebase();
+    } catch (error) {
+      console.error("[Logout] Firebase session cleanup failed", error);
+    }
   }
 
   return (
