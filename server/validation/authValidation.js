@@ -33,8 +33,19 @@ const googleLoginSchema = Joi.object({
   idToken: Joi.string().trim().required(),
 }).unknown(false);
 
+const emailOtpRequestSchema = Joi.object({
+  email: email.required(),
+}).unknown(false);
+
+const emailOtpVerifySchema = Joi.object({
+  email: email.required(),
+  code: Joi.string().pattern(/^\d{6}$/).required(),
+}).unknown(false);
+
 module.exports = {
   registerSchema,
   loginSchema,
   googleLoginSchema,
+  emailOtpRequestSchema,
+  emailOtpVerifySchema,
 };

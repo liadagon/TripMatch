@@ -8,11 +8,13 @@ import {
 import axios from "axios";
 import {
   type AuthUser,
+  type AuthenticationResult,
   emailLogin,
   getCurrentUser,
   type GoogleAuthenticationResult,
   googleLogin,
   registerUser,
+  verifyEmailOtp,
   type RegisterPayload,
 } from "../services/authService";
 import { TRIPMATCH_TOKEN_KEY } from "../services/api";
@@ -31,6 +33,10 @@ type AuthContextValue = {
   authenticateWithGoogle: (
     idToken: string,
   ) => Promise<GoogleAuthenticationResult>;
+  authenticateWithEmailCode: (
+    email: string,
+    code: string,
+  ) => Promise<AuthenticationResult>;
   updateProfile: (payload: ProfileUpdatePayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
 };
@@ -127,6 +133,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }
 
+  async function authenticateWithEmailCode(email: string, code: string) {
+    const response = await verifyEmailOtp(email, code);
+
+    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
+    setUser(response.data.data);
+
+    return {
+      user: response.data.data,
+      isNewUser: response.data.isNewUser,
+    };
+  }
+
   async function updateProfile(payload: ProfileUpdatePayload) {
     const updatedUser = await updateCurrentProfile(payload);
     setUser(updatedUser);
@@ -153,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         authenticateWithGoogle,
+        authenticateWithEmailCode,
         updateProfile,
         logout,
       }}

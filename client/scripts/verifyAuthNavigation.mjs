@@ -13,6 +13,14 @@ const authContextSource = await readFile(
   new URL("../src/context/AuthContext.tsx", import.meta.url),
   "utf8",
 );
+const existingAccountDialogSource = await readFile(
+  new URL("../src/Components/ExistingAccountDialog.tsx", import.meta.url),
+  "utf8",
+);
+const emailOtpVerifySource = await readFile(
+  new URL("../src/Components/EmailOtpVerify.tsx", import.meta.url),
+  "utf8",
+);
 const firebaseSource = await readFile(
   new URL("../src/firebase.ts", import.meta.url),
   "utf8",
@@ -27,6 +35,7 @@ const moduleUrl = `data:text/javascript;base64,${Buffer.from(outputText).toStrin
 const {
   EXISTING_ACCOUNT_CONFIRMATION,
   getAuthenticationIntent,
+  getAuthenticationPath,
   getGoogleLoginPath,
   getProfileCompletionPath,
   shouldConfirmExistingAccount,
@@ -57,6 +66,29 @@ assert.equal(
   getGoogleLoginPath({ user: completeGoogleUser, isNewUser: false }),
   "/discover",
 );
+const incompleteEmailUser = {
+  ...completeGoogleUser,
+  _id: "email-user",
+  authProvider: "email",
+  questionnaire: undefined,
+};
+const completeEmailUser = {
+  ...completeGoogleUser,
+  _id: "complete-email-user",
+  authProvider: "email",
+};
+assert.equal(
+  getAuthenticationPath({ user: incompleteEmailUser, isNewUser: true }),
+  "/post-login-welcome",
+);
+assert.equal(
+  getAuthenticationPath({ user: incompleteEmailUser, isNewUser: false }),
+  "/questionnaire",
+);
+assert.equal(
+  getAuthenticationPath({ user: completeEmailUser, isNewUser: false }),
+  "/discover",
+);
 assert.equal(shouldConfirmExistingAccount("register", false), true);
 assert.equal(shouldConfirmExistingAccount("register", true), false);
 assert.equal(shouldConfirmExistingAccount("login", false), false);
@@ -73,11 +105,25 @@ assert.equal(getAuthenticationIntent({ authIntent: "register" }), "register");
 assert.equal(getAuthenticationIntent({ authIntent: "login" }), "login");
 assert.equal(getAuthenticationIntent(undefined), "login");
 assert.doesNotMatch(welcomeSource, /setTimeout/);
-assert.match(welcomeSource, /role="dialog"/);
+assert.match(existingAccountDialogSource, /role="dialog"/);
 assert.match(welcomeSource, /setPendingExistingAccountPath\(destination\);\s+return;/);
-assert.match(welcomeSource, /onClick=\{continueToExistingAccount\}/);
-assert.match(welcomeSource, /onClick=\{exitExistingAccount\}/);
+assert.match(welcomeSource, /<ExistingAccountDialog/);
+assert.match(emailOtpVerifySource, /<ExistingAccountDialog/);
+assert.match(
+  emailOtpVerifySource,
+  /shouldConfirmExistingAccount\(authIntent,\s*result\.isNewUser\)/,
+);
+assert.match(
+  emailOtpVerifySource,
+  /setPendingExistingAccountPath\(destination\);\s+return;/,
+);
+assert.match(
+  emailOtpVerifySource,
+  /navigate\(pendingExistingAccountPath,\s*\{\s*replace:\s*true\s*\}\)/,
+);
 assert.match(welcomeSource, /await logout\(\)/);
+assert.match(emailOtpVerifySource, /await logout\(\)/);
+assert.match(authContextSource, /authenticateWithEmailCode/);
 assert.match(authContextSource, /localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)/);
 assert.match(authContextSource, /await signOutFromFirebase\(\)/);
 assert.match(firebaseSource, /await signOut\(auth\)/);
@@ -124,5 +170,9 @@ console.log("Authentication navigation verification passed", {
   registrationExistingAccountFeedback: true,
   existingAccountWaitsForConfirmation: true,
   existingAccountExitClearsSession: true,
-  phoneIntentPreservedForFutureVerification: true,
+  emailOtpUsesCentralAuthContext: true,
+  googleAndEmailShareExistingAccountDialog: true,
+  emailRegistrationExistingWaitsForConfirmation: true,
+  emailExistingContinueUsesCompletionPath: true,
+  emailExistingExitClearsSession: true,
 });

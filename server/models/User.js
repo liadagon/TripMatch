@@ -62,8 +62,12 @@ const userSchema = new mongoose.Schema(
     },
     authProvider: {
       type: String,
-      enum: ["local", "google"],
+      enum: ["local", "google", "email"],
       default: "local",
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
     },
     firebaseUid: {
       type: String,

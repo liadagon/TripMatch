@@ -5,7 +5,8 @@ export type AuthUser = {
   _id: string;
   name: string;
   email: string;
-  authProvider: "local" | "google";
+  authProvider: "local" | "google" | "email";
+  emailVerified?: boolean;
   firebaseUid?: string;
   photo?: string;
   photoURL?: string;
@@ -78,10 +79,21 @@ export type GoogleLoginResponse = {
   isNewUser: boolean;
 };
 
-export type GoogleAuthenticationResult = {
+export type AuthenticationResult = {
   user: AuthUser;
   isNewUser: boolean;
 };
+
+export type GoogleAuthenticationResult = AuthenticationResult;
+
+export type EmailOtpRequestResponse = {
+  success: true;
+  message: string;
+  expiresInSeconds: number;
+  cooldownSeconds: number;
+};
+
+export type EmailOtpVerifyResponse = GoogleLoginResponse;
 
 export type EmailLoginResponse = {
   success: true;
@@ -112,6 +124,15 @@ type CurrentUserResponse = {
 
 export const googleLogin = (idToken: string) =>
   api.post<GoogleLoginResponse>("/api/auth/google", { idToken });
+
+export const requestEmailOtp = (email: string) =>
+  api.post<EmailOtpRequestResponse>("/api/auth/email/request-code", { email });
+
+export const verifyEmailOtp = (email: string, code: string) =>
+  api.post<EmailOtpVerifyResponse>("/api/auth/email/verify-code", {
+    email,
+    code,
+  });
 
 export const emailLogin = (email: string, password: string) =>
   api.post<EmailLoginResponse>("/api/auth/login", { email, password });

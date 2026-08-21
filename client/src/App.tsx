@@ -6,8 +6,8 @@ import NavigationBar from "./Components/NavigationBar";
 
 import Welcome from "./Components/Welcome";
 import EmailLogin from "./Components/EmailLogin";
-import PhoneLogin from "./Components/PhoneLogin";
-import VerifyCode from "./Components/VerifyCode";
+import EmailOtpRequest from "./Components/EmailOtpRequest";
+import EmailOtpVerify from "./Components/EmailOtpVerify";
 import Register from "./Components/Register";
 import Questionnaire from "./Components/Questionnaire";
 import PostLoginWelcome from "./Components/PostLoginWelcome";
@@ -53,8 +53,8 @@ export default function App() {
         {/* Public / Auth routes */}
         <Route path="/" element={<Welcome />} />
         <Route path="/email-login" element={<EmailLogin />} />
-        <Route path="/phone-login" element={<PhoneLogin />} />
-        <Route path="/verify-code" element={<VerifyCode />} />
+        <Route path="/email-otp" element={<EmailOtpRequest />} />
+        <Route path="/email-otp/verify" element={<EmailOtpVerify />} />
         <Route path="/register" element={<Register />} />
         <Route path="/post-login-welcome" element={<PostLoginWelcome />} />
         <Route

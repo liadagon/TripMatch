@@ -1,0 +1,344 @@
+* {
+  box-sizing: border-box;
+}
+
+.email-otp-page {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  color: #101828;
+  font-family: Assistant, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 0% 0%, #075ec7 0%, #0a7adb 18%, rgba(10, 122, 219, 0.18) 38%, transparent 58%),
+    radial-gradient(circle at 88% 92%, rgba(99, 102, 241, 0.18), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(45, 212, 191, 0.18), transparent 28%),
+    linear-gradient(135deg, #eaf6ff 0%, #eef4ff 48%, #f7f4ff 100%);
+}
+
+.email-otp-header {
+  width: min(1180px, calc(100% - 64px));
+  height: 84px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  direction: ltr;
+}
+
+.email-otp-logo {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1.4px;
+  text-shadow: 0 12px 28px rgba(16, 24, 40, 0.22);
+}
+
+.email-otp-logo span,
+.email-otp-side > div span {
+  color: #20e0d3;
+}
+
+.email-otp-header button {
+  min-height: 44px;
+  padding: 0 25px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #101828;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 16px 34px rgba(16, 24, 40, 0.1);
+}
+
+.email-otp-layout {
+  width: min(1180px, calc(100% - 64px));
+  min-height: calc(100dvh - 84px);
+  margin: 0 auto;
+  padding: 34px 0 58px;
+  display: grid;
+  grid-template-columns: minmax(430px, 540px) minmax(370px, 440px);
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  direction: ltr;
+}
+
+.email-otp-card {
+  width: 100%;
+  min-height: 540px;
+  padding: 50px 48px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 34px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 30px 80px rgba(16, 24, 40, 0.12);
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  text-align: center;
+}
+
+.email-otp-icon {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: #0faaa4;
+  background: rgba(45, 212, 191, 0.16);
+  font-size: 34px;
+}
+
+.email-otp-card h1 {
+  margin: 0;
+  color: #101828;
+  font-size: clamp(34px, 3vw, 44px);
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.email-otp-subtitle {
+  max-width: 390px;
+  margin: 16px 0 0;
+  color: #667085;
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.email-otp-form {
+  width: 100%;
+  margin-top: 34px;
+}
+
+.email-otp-form label {
+  display: block;
+  margin-bottom: 9px;
+  color: #344054;
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.email-otp-form > input {
+  width: 100%;
+  height: 60px;
+  padding: 0 20px;
+  border: 1.5px solid rgba(16, 24, 40, 0.11);
+  border-radius: 18px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.97);
+  color: #101828;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.06);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.email-otp-form > input:focus,
+.email-otp-code input:focus {
+  border-color: rgba(0, 92, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(0, 92, 255, 0.1);
+}
+
+.email-otp-form > button {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 26px;
+  border: none;
+  border-radius: 18px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #005cff, #8735ff);
+  box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.email-otp-form > button:disabled,
+.email-otp-resend:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.email-otp-error {
+  margin: 12px 0 0;
+  color: #b42318;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.email-otp-side {
+  position: relative;
+  width: 100%;
+  min-height: 540px;
+  padding: 48px 42px;
+  border-radius: 34px;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 84% 16%, rgba(255, 255, 255, 0.25), transparent 26%),
+    linear-gradient(145deg, #005cff 0%, #6d43dc 58%, #1bc8bd 100%);
+  box-shadow: 0 30px 80px rgba(16, 24, 40, 0.16);
+  direction: rtl;
+}
+
+.email-otp-side > div {
+  color: #ffffff;
+  font-size: 30px;
+  font-weight: 900;
+  direction: ltr;
+}
+
+.email-otp-side h2 {
+  margin: 78px 0 0;
+  color: #ffffff;
+  font-size: clamp(36px, 3.4vw, 48px);
+  line-height: 1.18;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.email-otp-side p {
+  margin: 26px 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  line-height: 1.7;
+  font-weight: 700;
+}
+
+.email-otp-masked {
+  margin: 12px 0 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #005cff;
+  background: rgba(0, 92, 255, 0.08);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.email-otp-code {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.email-otp-code input {
+  width: 100%;
+  height: 64px;
+  border: 1.5px solid rgba(16, 24, 40, 0.11);
+  border-radius: 17px;
+  outline: none;
+  background: #ffffff;
+  color: #101828;
+  font-size: 27px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.email-otp-resend {
+  margin-top: 22px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: #005cff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.email-otp-resend:not(:disabled):hover {
+  text-decoration: underline;
+}
+
+.email-otp-header button:focus-visible,
+.email-otp-form input:focus-visible,
+.email-otp-form button:focus-visible,
+.email-otp-resend:focus-visible {
+  outline: 4px solid rgba(45, 212, 191, 0.52);
+  outline-offset: 3px;
+}
+
+@media (max-width: 980px) {
+  .email-otp-header,
+  .email-otp-layout {
+    width: min(100% - 32px, 1180px);
+  }
+
+  .email-otp-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 24px 0 48px;
+  }
+
+  .email-otp-card,
+  .email-otp-side {
+    max-width: 580px;
+    min-height: auto;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .email-otp-header,
+  .email-otp-layout {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .email-otp-header {
+    height: 70px;
+  }
+
+  .email-otp-logo {
+    font-size: 25px;
+  }
+
+  .email-otp-header button {
+    min-height: 40px;
+    padding: 0 18px;
+  }
+
+  .email-otp-layout {
+    padding: 18px 0 36px;
+    gap: 24px;
+  }
+
+  .email-otp-card {
+    padding: 36px 20px;
+    border-radius: 28px;
+  }
+
+  .email-otp-card h1 {
+    font-size: 31px;
+  }
+
+  .email-otp-code {
+    gap: 6px;
+  }
+
+  .email-otp-code input {
+    height: 52px;
+    border-radius: 13px;
+    font-size: 21px;
+  }
+
+  .email-otp-side {
+    padding: 34px 24px;
+    border-radius: 28px;
+  }
+
+  .email-otp-side h2 {
+    margin-top: 45px;
+    font-size: 32px;
+  }
+}

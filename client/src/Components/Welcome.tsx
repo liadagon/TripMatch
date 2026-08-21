@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,11 +7,11 @@ import {
 } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import {
-  EXISTING_ACCOUNT_CONFIRMATION,
-  getGoogleLoginPath,
+  getAuthenticationPath,
   shouldConfirmExistingAccount,
   type AuthenticationIntent,
 } from "../utils/authNavigation";
+import ExistingAccountDialog from "./ExistingAccountDialog";
 import "./welcome.css";
 
 const heroImages = [
@@ -27,12 +27,11 @@ export default function Welcome() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [googleError, setGoogleError] = useState("");
   const [pendingExistingAccountPath, setPendingExistingAccountPath] = useState<
-    ReturnType<typeof getGoogleLoginPath> | null
+    ReturnType<typeof getAuthenticationPath> | null
   >(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
   const [authMode, setAuthMode] = useState<AuthenticationIntent>("login");
-  const confirmationButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -44,12 +43,6 @@ export default function Welcome() {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (pendingExistingAccountPath) {
-      confirmationButtonRef.current?.focus();
-    }
-  }, [pendingExistingAccountPath]);
-
   const handleGoogleAuthentication = async () => {
     setGoogleError("");
     setPendingExistingAccountPath(null);
@@ -59,7 +52,7 @@ export default function Welcome() {
       const { idToken } = await signInWithGoogle();
       const result = await authenticateWithGoogle(idToken);
 
-      const destination = getGoogleLoginPath(result);
+      const destination = getAuthenticationPath(result);
 
       if (shouldConfirmExistingAccount(authMode, result.isNewUser)) {
         setPendingExistingAccountPath(destination);
@@ -102,8 +95,8 @@ export default function Welcome() {
     setAuthMode(mode);
   }
 
-  function continueWithPhone() {
-    navigate("/phone-login", { state: { authIntent: authMode } });
+  function continueWithEmail() {
+    navigate("/email-otp", { state: { authIntent: authMode } });
   }
 
   function continueToExistingAccount() {
@@ -191,9 +184,9 @@ export default function Welcome() {
               type="button"
               className="main-action-btn"
               disabled={isGoogleLoading}
-              onClick={continueWithPhone}
+              onClick={continueWithEmail}
             >
-              {authMode === "login" ? "המשך עם טלפון" : "הרשמה עם טלפון"}
+              {authMode === "login" ? "המשך עם אימייל" : "הרשמה עם אימייל"}
             </button>
 
             <p className="auth-mode-prompt">
@@ -218,43 +211,11 @@ export default function Welcome() {
       </section>
 
       {pendingExistingAccountPath && (
-        <div className="existing-account-overlay">
-          <section
-            className="existing-account-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-busy={isLogoutLoading}
-            aria-labelledby="existing-account-title"
-            aria-describedby="existing-account-message"
-          >
-            <div className="existing-account-icon" aria-hidden="true">
-              ✓
-            </div>
-            <h2 id="existing-account-title">
-              {EXISTING_ACCOUNT_CONFIRMATION.title}
-            </h2>
-            <p id="existing-account-message">
-              {EXISTING_ACCOUNT_CONFIRMATION.message}
-            </p>
-            <button
-              ref={confirmationButtonRef}
-              type="button"
-              className="existing-account-action"
-              onClick={continueToExistingAccount}
-              disabled={isLogoutLoading}
-            >
-              {EXISTING_ACCOUNT_CONFIRMATION.actionLabel}
-            </button>
-            <button
-              type="button"
-              className="existing-account-exit"
-              onClick={exitExistingAccount}
-              disabled={isLogoutLoading}
-            >
-              {isLogoutLoading ? "יוצאים..." : "יציאה"}
-            </button>
-          </section>
-        </div>
+        <ExistingAccountDialog
+          isExiting={isLogoutLoading}
+          onContinue={continueToExistingAccount}
+          onExit={exitExistingAccount}
+        />
       )}
     </main>
   );

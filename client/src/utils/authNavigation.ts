@@ -1,6 +1,6 @@
 import type {
   AuthUser,
-  GoogleAuthenticationResult,
+  AuthenticationResult,
 } from "../services/authService";
 
 export type AuthenticationIntent = "login" | "register";
@@ -58,11 +58,13 @@ export function getProfileCompletionPath(
   return "/discover";
 }
 
-export function getGoogleLoginPath(result: GoogleAuthenticationResult) {
+export function getAuthenticationPath(result: AuthenticationResult) {
   return result.isNewUser
     ? "/post-login-welcome"
     : getProfileCompletionPath(result.user);
 }
+
+export const getGoogleLoginPath = getAuthenticationPath;
 
 export function shouldConfirmExistingAccount(
   intent: AuthenticationIntent,
