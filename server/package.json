@@ -10,6 +10,7 @@
     "verify:email-otp": "node scripts/verifyEmailOtpFlow.js",
     "verify:gridfs-upload": "node scripts/verifyGridFsUpload.js",
     "verify:google-auth": "node scripts/verifyGoogleAuthFlow.js",
+    "verify:paypal-oauth": "node scripts/verifyPayPalOAuth.js",
     "verify:virtual-populate": "node scripts/verifyUserMatchesVirtual.js"
   },
   "dependencies": {
