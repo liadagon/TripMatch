@@ -14,7 +14,6 @@ const swipeRoutes = require("./routes/swipeRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const conversationRoutes = require("./routes/conversationRoutes");
 const blockRoutes = require("./routes/blockRoutes");
-const protect = require("./middleware/auth");
 const apiLimiter = require("./middleware/rateLimiter");
 const requestLogger = require("./middleware/requestLogger");
 const notFound = require("./middleware/notFound");
@@ -49,7 +48,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/file", protect, fileRoutes);
+app.use("/api/file", fileRoutes);
 app.use("/api/swipes", swipeRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/conversations", conversationRoutes);
