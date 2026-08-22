@@ -19,6 +19,18 @@ class PayPalOAuthError extends Error {
   }
 }
 
+class PayPalApiError extends Error {
+  constructor(message, { status, providerError, debugId, path, details } = {}) {
+    super(message);
+    this.name = "PayPalApiError";
+    this.status = status;
+    this.providerError = providerError;
+    this.debugId = debugId;
+    this.path = path;
+    this.details = details;
+  }
+}
+
 function normalizeBaseUrl(baseUrl) {
   return baseUrl.replace(/\/+$/, "");
 }
@@ -68,6 +80,17 @@ async function readResponseBody(response) {
   } catch {
     return {};
   }
+}
+
+function getProviderError(responseBody, fallback) {
+  if (typeof responseBody?.name === "string") return responseBody.name;
+  if (typeof responseBody?.error === "string") return responseBody.error;
+
+  const issue = responseBody?.details?.find(
+    (detail) => typeof detail?.issue === "string",
+  )?.issue;
+
+  return issue || fallback;
 }
 
 async function requestPayPalAccessToken() {
@@ -130,10 +153,188 @@ async function requestPayPalAccessToken() {
   return { accessToken, tokenType, expiresIn };
 }
 
+async function requestPayPalApi({
+  accessToken,
+  method = "GET",
+  path,
+  body,
+  requestId,
+}) {
+  const { baseUrl } = getPayPalConfiguration();
+
+  if (!accessToken?.trim()) {
+    throw new PayPalConfigurationError(
+      "A PayPal OAuth access token is required for the Sandbox API request",
+    );
+  }
+
+  const headers = {
+    Accept: "application/json",
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    headers.Prefer = "return=representation";
+  }
+
+  if (requestId) {
+    headers["PayPal-Request-Id"] = requestId;
+  }
+
+  let response;
+
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    throw new PayPalApiError("PayPal Sandbox API request failed", {
+      providerError: error?.name === "TimeoutError" ? "timeout" : "network_error",
+    });
+  }
+
+  const responseBody = response.status === 204 ? {} : await readResponseBody(response);
+
+  if (!response.ok) {
+    throw new PayPalApiError(
+      `PayPal Sandbox API request failed with status ${response.status}`,
+      {
+        status: response.status,
+        providerError: getProviderError(responseBody, "api_request_failed"),
+        debugId:
+          typeof responseBody?.debug_id === "string"
+            ? responseBody.debug_id
+            : undefined,
+        path: path.split("?")[0],
+        details: Array.isArray(responseBody?.details)
+          ? responseBody.details.map((detail) => ({
+              issue: detail?.issue,
+              field: detail?.field,
+              description: detail?.description,
+            }))
+          : undefined,
+      },
+    );
+  }
+
+  return responseBody;
+}
+
+function buildPagePath(path, page, query = {}) {
+  const searchParams = new URLSearchParams({
+    ...query,
+    page_size: "20",
+    page: String(page),
+    total_required: "true",
+  });
+
+  return `${path}?${searchParams.toString()}`;
+}
+
+async function listAllPayPalResources(accessToken, path, query) {
+  const resources = [];
+
+  for (let page = 1; page <= 100; page += 1) {
+    const response = await requestPayPalApi({
+      accessToken,
+      path: buildPagePath(path, page, query),
+    });
+    const pageResources = Array.isArray(response?.products)
+      ? response.products
+      : Array.isArray(response?.plans)
+        ? response.plans
+        : [];
+
+    resources.push(...pageResources);
+
+    const hasNextLink = response?.links?.some((link) => link?.rel === "next");
+    const totalPages = Number(response?.total_pages);
+    const hasAnotherPage = Number.isFinite(totalPages)
+      ? page < totalPages
+      : hasNextLink;
+
+    if (!hasAnotherPage) return resources;
+  }
+
+  throw new PayPalApiError("PayPal Sandbox API pagination exceeded safe limit", {
+    providerError: "pagination_limit_exceeded",
+  });
+}
+
+function listPayPalProducts(accessToken) {
+  return listAllPayPalResources(
+    accessToken,
+    "/v1/catalogs/products",
+    {},
+  );
+}
+
+function getPayPalProduct(accessToken, productId) {
+  return requestPayPalApi({
+    accessToken,
+    path: `/v1/catalogs/products/${encodeURIComponent(productId)}`,
+  });
+}
+
+function createPayPalProduct(accessToken, product, requestId) {
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: "/v1/catalogs/products",
+    body: product,
+    requestId,
+  });
+}
+
+function listPayPalPlans(accessToken, productId) {
+  return listAllPayPalResources(
+    accessToken,
+    "/v1/billing/plans",
+    { product_id: productId },
+  );
+}
+
+function getPayPalPlan(accessToken, planId) {
+  return requestPayPalApi({
+    accessToken,
+    path: `/v1/billing/plans/${encodeURIComponent(planId)}`,
+  });
+}
+
+function createPayPalPlan(accessToken, plan, requestId) {
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: "/v1/billing/plans",
+    body: plan,
+    requestId,
+  });
+}
+
+function activatePayPalPlan(accessToken, planId) {
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: `/v1/billing/plans/${encodeURIComponent(planId)}/activate`,
+  });
+}
+
 module.exports = {
   PAYPAL_SANDBOX_BASE_URL,
+  PayPalApiError,
   PayPalConfigurationError,
   PayPalOAuthError,
+  activatePayPalPlan,
+  createPayPalPlan,
+  createPayPalProduct,
+  getPayPalPlan,
+  getPayPalProduct,
   getPayPalConfigurationStatus,
+  listPayPalPlans,
+  listPayPalProducts,
   requestPayPalAccessToken,
 };

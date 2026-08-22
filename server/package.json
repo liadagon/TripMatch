@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "setup:paypal-boost": "node scripts/setupPayPalBoostPlan.js",
     "verify:brevo-email": "node scripts/verifyBrevoEmail.js",
     "verify:email-otp": "node scripts/verifyEmailOtpFlow.js",
     "verify:gridfs-upload": "node scripts/verifyGridFsUpload.js",
