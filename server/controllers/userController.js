@@ -9,6 +9,7 @@ const {
   markRegistrationCompleteIfEligible,
   normalizeAuthenticatedUser,
 } = require("../utils/onboarding");
+const { deleteUserAccount } = require("../services/accountDeletionService");
 const {
   compareDiscoverCandidates,
   getDiscoverRankingScore,
@@ -279,20 +280,8 @@ const updateCurrentUser = async (req, res, next) => {
 
 const deleteCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-      data: user,
-    });
+    await deleteUserAccount(req.user);
+    return res.status(200).json({ success: true });
   } catch (error) {
     return next(error);
   }

@@ -168,3 +168,6 @@ export const registerUser = (payload: RegisterPayload) =>
 
 export const getCurrentUser = () =>
   api.get<CurrentUserResponse>("/api/auth/me");
+
+export const deleteCurrentAccount = () =>
+  api.delete<{ success: true }>("/api/users/me");

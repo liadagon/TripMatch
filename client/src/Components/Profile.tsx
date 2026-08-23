@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   LogOut,
   Ban,
+  Trash2,
   X,
   Zap,
 } from "lucide-react";
@@ -153,7 +154,7 @@ function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, updateProfile: persistProfile } = useAuth();
+  const { user, logout, deleteAccount, updateProfile: persistProfile } = useAuth();
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
   const modalPhotoInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData>(() => profileFromUser(user));
@@ -166,6 +167,9 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
   const [hasPrivateBoostBadge, setHasPrivateBoostBadge] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState("");
 
   useEffect(() => {
     setProfile(profileFromUser(user));
@@ -349,6 +353,26 @@ export default function Profile() {
     navigate(getSafeProfileReturnPath(location.state) || "/discover", {
       replace: true,
     });
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeletingAccount(true);
+    setDeleteAccountError("");
+
+    try {
+      await deleteAccount();
+      navigate("/", { replace: true });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        setDeleteAccountError("החיבור לחשבון פג. יש להתחבר מחדש ולנסות שוב.");
+      } else {
+        setDeleteAccountError(
+          "לא הצלחנו למחוק את החשבון בבטחה. החשבון נשמר ולא נמחק. נסי שוב.",
+        );
+      }
+    } finally {
+      setIsDeletingAccount(false);
+    }
   }
 
   return (
@@ -545,6 +569,18 @@ export default function Profile() {
               <LogOut size={18} />
               יציאה מהחשבון
             </button>
+
+            <button
+              type="button"
+              className="profile-delete-account-btn"
+              onClick={() => {
+                setDeleteAccountError("");
+                setIsDeleteModalOpen(true);
+              }}
+            >
+              <Trash2 size={18} />
+              מחיקת חשבון
+            </button>
           </div>
         </section>
       </main>
@@ -698,6 +734,52 @@ export default function Profile() {
                 </button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <div className="profile-modal-backdrop" role="presentation">
+          <section
+            className="profile-delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-delete-title"
+          >
+            <Trash2 size={34} aria-hidden="true" />
+            <h2 id="profile-delete-title">מחיקת חשבון</h2>
+            <p>
+              מחיקת החשבון תמחק לצמיתות את הפרופיל, הלייקים, ההתאמות והשיחות שלך.
+              לא ניתן לבטל פעולה זו.
+            </p>
+            {hasPrivateBoostBadge && (
+              <p className="profile-delete-subscription-notice">
+                מנוי TripMatch Boost הפעיל יבוטל כחלק ממחיקת החשבון.
+              </p>
+            )}
+            {deleteAccountError && (
+              <div className="profile-delete-error" role="alert">
+                {deleteAccountError}
+              </div>
+            )}
+            <div className="profile-delete-actions">
+              <button
+                type="button"
+                className="profile-cancel-btn"
+                disabled={isDeletingAccount}
+                onClick={() => setIsDeleteModalOpen(false)}
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                className="profile-confirm-delete-btn"
+                disabled={isDeletingAccount}
+                onClick={handleDeleteAccount}
+              >
+                {isDeletingAccount ? "מוחקת..." : "מחקי את החשבון לצמיתות"}
+              </button>
+            </div>
           </section>
         </div>
       )}

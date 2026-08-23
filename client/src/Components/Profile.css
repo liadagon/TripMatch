@@ -370,7 +370,8 @@
 }
 
 .profile-blocked-users-btn,
-.profile-logout-btn {
+.profile-logout-btn,
+.profile-delete-account-btn {
   width: fit-content;
   margin: 4px auto 0;
   padding: 12px 18px;
@@ -385,6 +386,96 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.profile-delete-account-btn {
+  width: fit-content;
+  margin: 4px auto 0;
+  padding: 12px 18px;
+  border: 1px solid rgba(180, 35, 24, 0.28);
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #b42318, #d92d20);
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 12px 24px rgba(180, 35, 24, 0.2);
+}
+
+.profile-delete-modal {
+  width: min(500px, 100%);
+  padding: 34px;
+  border-radius: 28px;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid rgba(180, 35, 24, 0.14);
+  box-shadow: 0 32px 90px rgba(15, 23, 42, 0.3);
+  text-align: center;
+}
+
+.profile-delete-modal > svg {
+  color: #b42318;
+}
+
+.profile-delete-modal h2 {
+  margin: 12px 0 10px;
+  color: #7a271a;
+  font-size: 28px;
+}
+
+.profile-delete-modal p {
+  margin: 0;
+  line-height: 1.75;
+  font-weight: 700;
+}
+
+.profile-delete-subscription-notice {
+  margin-top: 16px !important;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #7a2e0e;
+  background: #fffaeb;
+  border: 1px solid #fedf89;
+}
+
+.profile-delete-error {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #b42318;
+  background: #fef3f2;
+  font-weight: 800;
+}
+
+.profile-delete-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.profile-delete-actions button {
+  min-height: 48px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.profile-confirm-delete-btn {
+  color: #ffffff;
+  background: #b42318;
+}
+
+.profile-delete-actions button:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .profile-blocked-users-btn {
@@ -648,7 +739,8 @@
   .profile-content > .profile-section:first-of-type,
   .profile-safe-box,
   .profile-blocked-users-btn,
-  .profile-logout-btn {
+  .profile-logout-btn,
+  .profile-delete-account-btn {
     grid-column: 1 / -1;
   }
 
@@ -701,7 +793,8 @@
   }
 
   .profile-blocked-users-btn,
-  .profile-logout-btn {
+  .profile-logout-btn,
+  .profile-delete-account-btn {
     justify-self: center;
   }
 
@@ -832,6 +925,11 @@
 
   .profile-modal-actions button {
     padding: 0 18px;
+  }
+
+  .profile-delete-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
 }

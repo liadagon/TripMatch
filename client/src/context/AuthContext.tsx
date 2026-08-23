@@ -9,6 +9,7 @@ import axios from "axios";
 import {
   type AuthUser,
   type AuthenticationResult,
+  deleteCurrentAccount,
   emailLogin,
   getCurrentUser,
   type GoogleAuthenticationResult,
@@ -23,6 +24,8 @@ import {
   updateCurrentProfile,
   type ProfileUpdatePayload,
 } from "../services/profileService";
+import { clearDemoConversationState } from "../services/demoConversationState";
+import { clearBoostPromoSnooze } from "../utils/boostPromoSnooze";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -39,6 +42,7 @@ type AuthContextValue = {
   ) => Promise<AuthenticationResult>;
   updateProfile: (payload: ProfileUpdatePayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -162,6 +166,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function deleteAccount() {
+    await deleteCurrentAccount();
+
+    localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+    clearDemoConversationState();
+    clearBoostPromoSnooze();
+    setUser(null);
+
+    try {
+      await signOutFromFirebase();
+    } catch (error) {
+      console.error("[Account deletion] Firebase session cleanup failed", error);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -174,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authenticateWithEmailCode,
         updateProfile,
         logout,
+        deleteAccount,
       }}
     >
       {children}

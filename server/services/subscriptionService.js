@@ -281,6 +281,64 @@ function createSubscriptionOperations(dependencies = {}) {
     return getSafeSubscriptionState(user);
   }
 
+  async function cancelForAccountDeletion(user) {
+    const subscriptionId = user?.paypalSubscriptionId?.trim();
+
+    if (!subscriptionId) {
+      if (EXISTING_SUBSCRIPTION_STATUSES.has(user?.subscriptionStatus)) {
+        throw new SubscriptionServiceError(
+          "SUBSCRIPTION_ID_MISSING",
+          "The account subscription cannot be cancelled safely",
+          409,
+        );
+      }
+      return { cancelled: false, terminal: true };
+    }
+
+    const { accessToken } = await deps.requestAccessToken();
+    let remoteSubscription;
+
+    try {
+      remoteSubscription = await deps.getSubscription(accessToken, subscriptionId);
+    } catch (error) {
+      if (error?.status === 404) return { cancelled: false, terminal: true };
+      throw error;
+    }
+
+    const remoteStatus = normalizePayPalSubscriptionStatus(
+      remoteSubscription?.status,
+    );
+    if (TERMINAL_STATUSES.has(remoteStatus)) {
+      return { cancelled: false, terminal: true };
+    }
+
+    try {
+      await deps.cancelSubscription(
+        accessToken,
+        subscriptionId,
+        "Cancelled because the authenticated TripMatch user deleted their account",
+      );
+    } catch (cancellationError) {
+      try {
+        const refreshed = await deps.getSubscription(accessToken, subscriptionId);
+        const refreshedStatus = normalizePayPalSubscriptionStatus(
+          refreshed?.status,
+        );
+        if (TERMINAL_STATUSES.has(refreshedStatus)) {
+          return { cancelled: false, terminal: true };
+        }
+      } catch (refreshError) {
+        if (refreshError?.status === 404) {
+          return { cancelled: false, terminal: true };
+        }
+      }
+
+      throw cancellationError;
+    }
+
+    return { cancelled: true, terminal: true };
+  }
+
   async function resolveWebhookUser(event, subscriptionId) {
     let user = subscriptionId
       ? await deps.UserModel.findOne({ paypalSubscriptionId: subscriptionId })
@@ -400,6 +458,7 @@ function createSubscriptionOperations(dependencies = {}) {
   }
 
   return {
+    cancelForAccountDeletion,
     cancelForUser,
     createForUser,
     handleWebhook,

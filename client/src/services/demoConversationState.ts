@@ -42,3 +42,8 @@ export function setDemoUserBlocked(userId: string, blocked: boolean) {
     JSON.stringify([...blockedIds]),
   );
 }
+
+export function clearDemoConversationState(storage: Storage = localStorage) {
+  storage.removeItem(HIDDEN_DEMO_CONVERSATIONS_KEY);
+  storage.removeItem(BLOCKED_DEMO_USERS_KEY);
+}

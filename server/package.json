@@ -14,6 +14,8 @@
     "verify:onboarding": "node scripts/verifyOnboardingFlow.js",
     "verify:onboarding-mongo": "node scripts/verifyOnboardingMongo.js",
     "verify:registration-mongo": "node scripts/verifyRegistrationMongo.js",
+    "verify:account-deletion": "node scripts/verifyAccountDeletionFlow.js",
+    "verify:account-deletion-mongo": "node scripts/verifyAccountDeletionMongo.js",
     "verify:paypal-oauth": "node scripts/verifyPayPalOAuth.js",
     "verify:paypal-subscriptions": "node scripts/verifyPayPalSubscriptionFlow.js",
     "verify:paypal-webhooks": "node scripts/verifyPayPalWebhookFlow.js",
