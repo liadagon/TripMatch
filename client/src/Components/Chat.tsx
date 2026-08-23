@@ -315,7 +315,11 @@ export default function Chat() {
 
   function openMatchedProfile() {
     const profileUserId = isDemo ? conversationId : otherUser?._id;
-    if (profileUserId) navigate(`/matched-profile/${profileUserId}`);
+    if (profileUserId) {
+      navigate(`/matched-profile/${profileUserId}`, {
+        state: { from: `/chat/${conversationId}` },
+      });
+    }
   }
 
   const destination = [

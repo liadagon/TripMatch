@@ -209,7 +209,7 @@ export default function Likes() {
         <button
           type="button"
           className="likes-profile-button"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/profile", { state: { from: "/likes" } })}
         >
           <span>
             <strong>נועה רגב</strong>

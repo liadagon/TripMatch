@@ -199,7 +199,7 @@ export default function Matches() {
   }
 
   function openConversationProfile(chat: DisplayConversation) {
-    navigate(`/matched-profile/${chat.userId}`);
+    navigate(`/matched-profile/${chat.userId}`, { state: { from: "/matches" } });
   }
 
   return (

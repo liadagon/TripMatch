@@ -169,7 +169,11 @@ const MatchPhotoMarker = memo(function MatchPhotoMarker({
           <div className="matches-map-popup-actions">
             <button
               type="button"
-              onClick={() => navigate(`/matched-profile/${match.userId}`)}
+              onClick={() =>
+                navigate(`/matched-profile/${match.userId}`, {
+                  state: { from: "/matches-map" },
+                })
+              }
             >
               <UserRound size={16} />
               צפייה בפרופיל

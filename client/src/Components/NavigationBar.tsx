@@ -1,5 +1,6 @@
 import { Heart, Home, Map, MessageCircle, UserRound } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { createProfileNavigationState } from "../utils/profileNavigation";
 import "./NavigationBar.css";
 
 const navigationItems = [
@@ -69,7 +70,13 @@ export default function NavigationBar() {
               aria-label={item.label}
               aria-current={active ? "page" : undefined}
               title={item.label}
-              onClick={() => navigate(item.path)}
+              onClick={() =>
+                navigate(item.path, {
+                  state: item.path === "/profile"
+                    ? createProfileNavigationState(location)
+                    : undefined,
+                })
+              }
             >
               <Icon size={24} strokeWidth={2.45} />
             </button>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BedDouble,
@@ -19,6 +19,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import {
+  getOuterProfileNavigationState,
+  getSafeParentProfilePath,
+} from "../utils/profileNavigation";
 import type { ProfilePreviewUser } from "../services/authService";
 import { getTripLocationLabel } from "./TripLocationPicker";
 import "./MyProfilePreview.css";
@@ -344,7 +348,10 @@ export function ProfilePreviewView({
 
 export default function MyProfilePreview() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  const parentProfile = getSafeParentProfilePath(location.state) || "/profile";
+  const parentState = getOuterProfileNavigationState(location.state);
 
   if (!user) return null;
 
@@ -352,7 +359,9 @@ export default function MyProfilePreview() {
     <ProfilePreviewView
       profile={user}
       backLabel="חזרה לפרופיל"
-      onBack={() => navigate("/profile")}
+      onBack={() =>
+        navigate(parentProfile, { replace: true, state: parentState })
+      }
       contextText="כך הפרופיל שלך נראה למטיילים אחרים"
       galleryLabel="תמונות הפרופיל שלי"
     />

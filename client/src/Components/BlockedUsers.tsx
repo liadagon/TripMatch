@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Ban, UserRoundCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   getBlockedUsers,
   unblockMatchedUser,
@@ -10,6 +10,7 @@ import "./BlockedUsers.css";
 
 export default function BlockedUsers() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [blocks, setBlocks] = useState<BlockedUserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingUserId, setPendingUserId] = useState("");
@@ -59,7 +60,12 @@ export default function BlockedUsers() {
     <div className="blocked-users-page" dir="rtl">
       <main className="blocked-users-shell">
         <header className="blocked-users-header">
-          <button type="button" onClick={() => navigate("/profile")}>
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/profile", { replace: true, state: location.state })
+            }
+          >
             <ArrowRight size={20} />
             חזרה לפרופיל
           </button>

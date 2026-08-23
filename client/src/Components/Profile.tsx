@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Camera,
@@ -28,6 +28,10 @@ import {
   type ProfileStatistics,
 } from "../services/profileStatsService";
 import "./Profile.css";
+import {
+  createInnerProfileNavigationState,
+  getSafeProfileReturnPath,
+} from "../utils/profileNavigation";
 import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
 
@@ -148,6 +152,7 @@ function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, updateProfile: persistProfile } = useAuth();
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
   const modalPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -340,11 +345,17 @@ export default function Profile() {
     navigate("/");
   }
 
+  function handleBack() {
+    navigate(getSafeProfileReturnPath(location.state) || "/discover", {
+      replace: true,
+    });
+  }
+
   return (
     <div className="profile-page" dir="rtl">
       <main className="profile-layout">
         <header className="profile-header">
-          <button className="profile-back-btn" onClick={() => navigate("/discover")}>
+          <button className="profile-back-btn" onClick={handleBack}>
             <ArrowRight size={20} />
             חזרה
           </button>
@@ -418,7 +429,14 @@ export default function Profile() {
                 <button
                   type="button"
                   className="profile-preview-btn"
-                  onClick={() => navigate("/profile-preview")}
+                  onClick={() =>
+                    navigate("/profile-preview", {
+                      state: createInnerProfileNavigationState(
+                        "/profile",
+                        location.state,
+                      ),
+                    })
+                  }
                 >
                   <Eye size={18} />
                   איך הפרופיל שלי נראה
@@ -517,7 +535,7 @@ export default function Profile() {
             <button
               type="button"
               className="profile-blocked-users-btn"
-              onClick={() => navigate("/blocked-users")}
+              onClick={() => navigate("/blocked-users", { state: location.state })}
             >
               <Ban size={18} />
               משתמשים חסומים

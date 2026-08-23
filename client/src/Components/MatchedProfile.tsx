@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
   ProfilePreviewView,
@@ -14,6 +14,7 @@ import {
   type Conversation as DemoConversation,
 } from "../data/conversations";
 import { demoDiscoverProfiles } from "../data/demoProfiles";
+import { getSafeProfileReturnPath } from "../utils/profileNavigation";
 
 function getDemoProfile(
   conversation: DemoConversation,
@@ -48,9 +49,12 @@ function getDemoProfile(
 
 export default function MatchedProfile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useParams();
   const [data, setData] = useState<MatchedProfileData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const returnTarget = getSafeProfileReturnPath(location.state) || "/discover";
+  const handleBack = () => navigate(returnTarget, { replace: true });
 
   useEffect(() => {
     let isActive = true;
@@ -103,8 +107,8 @@ export default function MatchedProfile() {
             <h1>{errorMessage ? "הפרופיל אינו זמין" : "טוענים את הפרופיל..."}</h1>
             <p>{errorMessage || "רק רגע, הפרטים נטענים מההתאמה שלכם"}</p>
             {errorMessage && (
-              <button type="button" onClick={() => navigate("/matches")}>
-                חזרה להתאמות
+              <button type="button" onClick={handleBack}>
+                חזרה
               </button>
             )}
           </section>
@@ -113,21 +117,17 @@ export default function MatchedProfile() {
     );
   }
 
-  const chatTarget = data.conversationId
-    ? `/chat/${data.conversationId}`
-    : "/matches";
-
   return (
     <ProfilePreviewView
       profile={data.profile}
-      backLabel="חזרה לשיחה"
-      onBack={() => navigate(chatTarget)}
+      backLabel="חזרה"
+      onBack={handleBack}
       contextText={`זה הפרופיל המלא של ${data.profile.name}`}
       galleryLabel={`התמונות של ${data.profile.name}`}
       compatibility={data.compatibility.percentage}
       footerAction={
-        <button type="button" onClick={() => navigate(chatTarget)}>
-          חזרה לשיחה
+        <button type="button" onClick={handleBack}>
+          חזרה
         </button>
       }
     />
