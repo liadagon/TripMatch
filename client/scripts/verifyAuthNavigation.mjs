@@ -198,6 +198,10 @@ assert.match(
   authContextSource,
   /authenticateWithEmailCode[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY,[\s\S]*await getCurrentUser\(\)[\s\S]*user: authoritativeUser/,
 );
+assert.match(
+  authContextSource,
+  /async function updateProfile[\s\S]*await updateCurrentProfile\(payload\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*return authoritativeUser/,
+);
 assert.match(authContextSource, /localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)/);
 assert.match(authContextSource, /authenticateWithEmailCode/);
 assert.match(authContextSource, /await signOutFromFirebase\(\)/);
@@ -211,6 +215,7 @@ for (const blockedPath of ["/discover", "/likes", "/matches", "/chat/"]) {
 }
 assert.match(protectedRouteSource, /getOnboardingRouteRedirect\(/);
 assert.match(protectedRouteSource, /<Navigate to=\{redirect\} replace/);
+assert.match(source, /pathname === "\/profile\/setup"\) return "\/discover"/);
 assert.match(appSource, /allowIncomplete: true/);
 assert.match(appSource, /path="\/profile\/setup"/);
 assert.match(appSource, /path="\/profile" element=\{protectedPage\(<Profile \/>\)\}/);
@@ -227,6 +232,9 @@ assert.match(postLoginWelcomeSource, /navigate\("\/", \{ replace: true \}\)/);
 assert.match(questionnaireSource, /getPreviousOnboardingPath\("\/questionnaire"\)/);
 assert.match(profileSource, /getPreviousOnboardingPath\("\/profile\/setup"\)/);
 assert.match(profileSource, /location\.pathname === "\/profile\/setup"/);
+assert.match(profileSource, /navigate\("\/discover", \{ replace: true \}\)/);
+assert.match(profileSource, /normalizedAge \? \{ age: Number\(normalizedAge\) \} : \{\}/);
+assert.match(profileSource, /יש לבחור יעד או מיקום לטיול לפני סיום ההרשמה\./);
 assert.match(photoUploadSource, /getPersistedPhotos\(user\)/);
 assert.match(photoUploadSource, /Promise\.resolve\(photo\.previewUrl\)/);
 assert.match(questionnaireSource, /persistedAnswers/);

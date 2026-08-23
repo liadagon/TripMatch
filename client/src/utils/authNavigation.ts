@@ -88,6 +88,8 @@ export function getOnboardingRouteRedirect(
     return null;
   }
 
+  if (pathname === "/profile/setup") return "/discover";
+
   return options.onboardingOnly ? "/discover" : null;
 }
 

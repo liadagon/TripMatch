@@ -218,9 +218,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateProfile(payload: ProfileUpdatePayload) {
-    const updatedUser = await updateCurrentProfile(payload);
-    setUser(updatedUser);
-    return updatedUser;
+    await updateCurrentProfile(payload);
+    const currentUserResponse = await getCurrentUser();
+    const authoritativeUser = currentUserResponse.data.data;
+    setUser(authoritativeUser);
+    return authoritativeUser;
   }
 
   async function logout() {

@@ -164,6 +164,7 @@ export default function Profile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [tripLocationError, setTripLocationError] = useState("");
+  const [profileSaveError, setProfileSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
   const [hasPrivateBoostBadge, setHasPrivateBoostBadge] = useState(false);
@@ -250,6 +251,7 @@ export default function Profile() {
     setShowSuccess(false);
     setPhotoError("");
     setTripLocationError("");
+    setProfileSaveError("");
   }
 
   function closeEditModal() {
@@ -258,6 +260,7 @@ export default function Profile() {
     setIsEditing(false);
     setPhotoError("");
     setTripLocationError("");
+    setProfileSaveError("");
   }
 
   function updateDraft(
@@ -321,13 +324,40 @@ export default function Profile() {
     event.preventDefault();
 
     if (!draftProfile.tripLocation) {
-      setTripLocationError("יש לבחור יעד מתוך תוצאות החיפוש");
+      setTripLocationError("יש לבחור יעד או מיקום לטיול לפני סיום ההרשמה.");
+      return;
+    }
+
+    if (!draftProfile.dates.trim()) {
+      setProfileSaveError("יש למלא תאריכי טיול לפני סיום ההרשמה.");
+      return;
+    }
+
+    if (!draftProfile.budget.trim()) {
+      setProfileSaveError("יש למלא תקציב לפני סיום ההרשמה.");
+      return;
+    }
+
+    if (!draftProfile.travelStyle.trim()) {
+      setProfileSaveError("יש למלא סגנון טיול לפני סיום ההרשמה.");
+      return;
+    }
+
+    const normalizedAge = draftProfile.age.trim();
+    if (
+      normalizedAge &&
+      (!Number.isInteger(Number(normalizedAge)) ||
+        Number(normalizedAge) < 18 ||
+        Number(normalizedAge) > 120)
+    ) {
+      setProfileSaveError("יש להזין גיל תקין בין 18 ל-120.");
       return;
     }
 
     setIsSaving(true);
     setPhotoError("");
     setTripLocationError("");
+    setProfileSaveError("");
 
     try {
       const imageUrl = pendingProfileImage
@@ -335,7 +365,7 @@ export default function Profile() {
         : draftProfile.imageUrl;
       const updatedUser = await persistProfile({
         name: draftProfile.name.trim(),
-        age: Number(draftProfile.age),
+        ...(normalizedAge ? { age: Number(normalizedAge) } : {}),
         tripLocation: draftProfile.tripLocation,
         tripDates: draftProfile.dates.trim(),
         budget: draftProfile.budget.trim(),
@@ -353,8 +383,25 @@ export default function Profile() {
       setPendingProfileImage(null);
       setIsEditing(false);
       setShowSuccess(true);
+      if (location.pathname === "/profile/setup") {
+        if (updatedUser.registrationComplete) {
+          navigate("/discover", { replace: true });
+          return;
+        }
+
+        setProfileSaveError(
+          "לא ניתן לסיים את ההרשמה. יש להשלים את כל פרטי הטיול הנדרשים.",
+        );
+        setIsEditing(true);
+      }
     } catch (error) {
-      setPhotoError(getProfilePhotoError(error));
+      if (pendingProfileImage) {
+        setPhotoError(getProfilePhotoError(error));
+      } else {
+        setProfileSaveError(
+          "לא הצלחנו לשמור את הפרופיל. בדקי שכל השדות תקינים ונסי שוב.",
+        );
+      }
     } finally {
       setIsSaving(false);
     }
@@ -646,6 +693,11 @@ export default function Profile() {
             </div>
 
             <form className="profile-edit-form" onSubmit={saveProfile}>
+              {profileSaveError && (
+                <div className="profile-error-message profile-form-wide" role="alert">
+                  {profileSaveError}
+                </div>
+              )}
               <label>
                 <span>שם</span>
                 <input
@@ -688,7 +740,7 @@ export default function Profile() {
               </div>
 
               <label>
-                <span>תאריכי טיול</span>
+                <span>תאריכי טיול *</span>
                 <input
                   value={draftProfile.dates}
                   onChange={(event) => updateDraft("dates", event.target.value)}
@@ -696,7 +748,7 @@ export default function Profile() {
               </label>
 
               <label>
-                <span>תקציב</span>
+                <span>תקציב *</span>
                 <input
                   value={draftProfile.budget}
                   onChange={(event) => updateDraft("budget", event.target.value)}
@@ -704,7 +756,7 @@ export default function Profile() {
               </label>
 
               <label>
-                <span>סגנון טיול</span>
+                <span>סגנון טיול *</span>
                 <input
                   value={draftProfile.travelStyle}
                   onChange={(event) => updateDraft("travelStyle", event.target.value)}
