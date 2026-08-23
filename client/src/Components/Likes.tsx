@@ -1,10 +1,28 @@
 ﻿import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect } from "react";
 import {
   getReceivedLikes,
   type ReceivedLike,
 } from "../services/swipeService";
+import {
+  clearBoostPromoSnooze,
+  isBoostPromoSnoozed,
+  snoozeBoostPromo,
+} from "../utils/boostPromoSnooze";
+import {
+  cancelPayPalSubscription,
+  createPayPalSubscription,
+  getMySubscription,
+  getSubscriptionErrorMessage,
+  type SubscriptionState,
+} from "../services/subscriptionService";
+import {
+  getSandboxApprovalUrl,
+  getSubscriptionStatusLabel,
+  hasActiveBoost,
+  isPendingSubscription,
+} from "../utils/subscriptionUi";
 import {
   Check,
   Heart,
@@ -17,57 +35,168 @@ import "./Likes.css";
 type LikesTab = "received" | "messages";
 
 const boostBenefits = [
-  "הפרופיל שלך יופיע גבוה יותר בתוצאות",
-  "יותר חשיפה למטיילים רלוונטיים",
-  "אפשרות לראות מי אהב אותך",
-  "עדיפות בהתאמות",
-  "תג Boost ליד הפרופיל",
+  "לראות מי אהב אותך",
+  "עדיפות מתונה בדירוג Discover בין מטיילים רלוונטיים",
+  "סטטוס Boost פרטי בפרופיל האישי שלך",
 ];
 
 export default function Likes() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<LikesTab>("received");
-  const [showBoostMessage, setShowBoostMessage] = useState(false);
   const [receivedLikes, setReceivedLikes] = useState<ReceivedLike[]>([]);
+  const [receivedLikesCount, setReceivedLikesCount] = useState(0);
+  const [areReceivedLikesLocked, setAreReceivedLikesLocked] = useState(true);
+  const [usingDemoLikesFallback, setUsingDemoLikesFallback] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
+  const [isSubscriptionActionPending, setIsSubscriptionActionPending] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState("");
+  const [isBoostPromoHidden, setIsBoostPromoHidden] = useState(() =>
+    isBoostPromoSnoozed(),
+  );
+  const isBoostActive = hasActiveBoost(subscription);
+  const isSubscriptionPending = isPendingSubscription(subscription);
 
-  useEffect(() => {
-    let isActive = true;
+  const loadSubscription = useCallback(async () => {
+    setSubscriptionError("");
 
-    async function loadReceivedLikes() {
-      setLoadError("");
-
-      try {
-        const likes = await getReceivedLikes();
-        if (isActive) setReceivedLikes(likes);
-      } catch {
-        if (isActive) {
-          setLoadError("לא הצלחנו לטעון את הלייקים. נסו שוב מאוחר יותר.");
-        }
-      } finally {
-        if (isActive) setIsLoading(false);
-      }
+    try {
+      const nextSubscription = await getMySubscription();
+      setSubscription(nextSubscription);
+      return nextSubscription;
+    } catch (error) {
+      setSubscriptionError(
+        getSubscriptionErrorMessage(
+          error,
+          "לא הצלחנו לטעון את מצב המנוי. נסו שוב.",
+        ),
+      );
+      return null;
+    } finally {
+      setIsSubscriptionLoading(false);
     }
-
-    void loadReceivedLikes();
-    return () => {
-      isActive = false;
-    };
   }, []);
 
-  function handleStartBoost() {
-    setShowBoostMessage(true);
+  const loadReceivedLikes = useCallback(async () => {
+    setIsLoading(true);
+    setUsingDemoLikesFallback(false);
 
-    window.setTimeout(() => {
-      setShowBoostMessage(false);
-    }, 3500);
+    try {
+      const result = await getReceivedLikes();
+      setReceivedLikesCount(result.count);
+      setAreReceivedLikesLocked(result.locked);
+      setReceivedLikes(result.locked ? [] : result.data);
+    } catch {
+      setReceivedLikes([]);
+      setReceivedLikesCount(3);
+      setAreReceivedLikesLocked(true);
+      setUsingDemoLikesFallback(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadReceivedLikes();
+  }, [isBoostActive, loadReceivedLikes]);
+
+  useEffect(() => {
+    void loadSubscription();
+  }, [loadSubscription]);
+
+  useEffect(() => {
+    if (!isBoostActive) return;
+    clearBoostPromoSnooze();
+    setIsBoostPromoHidden(false);
+  }, [isBoostActive]);
+
+  async function handleStartBoost() {
+    if (isSubscriptionActionPending) return;
+
+    setIsSubscriptionActionPending(true);
+    setSubscriptionError("");
+
+    try {
+      const result = await createPayPalSubscription();
+      const approvalUrl = getSandboxApprovalUrl(result.approvalUrl);
+
+      if (approvalUrl) {
+        window.location.assign(approvalUrl);
+        return;
+      }
+
+      const refreshedSubscription = await loadSubscription();
+      if (!hasActiveBoost(refreshedSubscription)) {
+        setSubscriptionError(
+          "PayPal לא החזיר קישור אישור תקין. נסו שוב בעוד רגע.",
+        );
+      }
+    } catch (error) {
+      setSubscriptionError(
+        getSubscriptionErrorMessage(
+          error,
+          "לא הצלחנו להתחיל את תהליך ה-PayPal. בדקו את החיבור ונסו שוב.",
+        ),
+      );
+    } finally {
+      setIsSubscriptionActionPending(false);
+    }
+  }
+
+  async function handleCancelSubscription() {
+    const confirmed = window.confirm(
+      "לבטל את מנוי TripMatch Boost? ההרשאה תוסר לפי מצב המנוי בשרת.",
+    );
+    if (!confirmed) return;
+
+    setIsSubscriptionActionPending(true);
+    setSubscriptionError("");
+
+    try {
+      const cancelledSubscription = await cancelPayPalSubscription();
+      setSubscription(cancelledSubscription);
+      await loadSubscription();
+      await loadReceivedLikes();
+    } catch (error) {
+      setSubscriptionError(
+        getSubscriptionErrorMessage(
+          error,
+          "לא הצלחנו לבטל את המנוי. נסו שוב מאוחר יותר.",
+        ),
+      );
+    } finally {
+      setIsSubscriptionActionPending(false);
+    }
   }
 
   function handleMessagesTabClick() {
     setActiveTab("messages");
     navigate("/matches");
   }
+
+  async function handleRefreshSubscription() {
+    if (isSubscriptionActionPending) return;
+    setIsSubscriptionActionPending(true);
+    await loadSubscription();
+    setIsSubscriptionActionPending(false);
+  }
+
+  function handleSnoozeBoostPromo() {
+    snoozeBoostPromo();
+    setIsBoostPromoHidden(true);
+  }
+
+  function handleShowBoostPromo() {
+    clearBoostPromoSnooze();
+    setIsBoostPromoHidden(false);
+  }
+
+  const needsPayPalApproval = subscription?.status === "approval_pending";
+  const approvalWasCancelled = searchParams.get("paypal") === "cancel";
+  const showBoostCard =
+    isBoostActive || isSubscriptionPending || !isBoostPromoHidden;
 
   return (
     <main className="likes-page" dir="rtl">
@@ -90,7 +219,10 @@ export default function Likes() {
         </button>
       </header>
 
-      <section className="likes-dashboard">
+      <section
+        className={`likes-dashboard${showBoostCard ? "" : " boost-snoozed"}`}
+      >
+        {showBoostCard && (
         <aside className="likes-boost-card" aria-label="TripMatch Boost">
           <div className="likes-boost-header">
             <div>
@@ -118,25 +250,83 @@ export default function Likes() {
             ))}
           </ul>
 
-          <button
-            type="button"
-            className="likes-boost-primary"
-            onClick={handleStartBoost}
-          >
-            התחילי עכשיו
-          </button>
+          {isSubscriptionLoading ? (
+            <button type="button" className="likes-boost-primary" disabled>
+              טוענים את מצב המנוי...
+            </button>
+          ) : isBoostActive && subscription ? (
+            <div className="likes-subscription-state active" role="status">
+              <strong>Boost פעיל</strong>
+              <span>מצב מנוי: {getSubscriptionStatusLabel(subscription.status)}</span>
+              <button
+                type="button"
+                className="likes-boost-secondary likes-cancel-subscription"
+                onClick={handleCancelSubscription}
+                disabled={isSubscriptionActionPending}
+              >
+                {isSubscriptionActionPending ? "מבטלים..." : "ביטול מנוי"}
+              </button>
+            </div>
+          ) : isSubscriptionPending && subscription ? (
+            <div className="likes-subscription-state pending" role="status">
+              <strong>השלמת הרשמה ב-PayPal</strong>
+              <span>{getSubscriptionStatusLabel(subscription.status)}</span>
+              <button
+                type="button"
+                className="likes-boost-primary"
+                onClick={
+                  needsPayPalApproval
+                    ? handleStartBoost
+                    : handleRefreshSubscription
+                }
+                disabled={isSubscriptionActionPending}
+              >
+                {isSubscriptionActionPending
+                  ? "בודקים את מצב המנוי..."
+                  : needsPayPalApproval
+                    ? "המשך לאישור ב-PayPal"
+                    : "בדיקת הפעלה מחדש"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="likes-boost-primary"
+                onClick={handleStartBoost}
+                disabled={isSubscriptionActionPending}
+              >
+                {isSubscriptionActionPending
+                  ? "פותחים את PayPal..."
+                  : "התחילי עכשיו"}
+              </button>
 
-          <button type="button" className="likes-boost-secondary">
-            לא עכשיו
-          </button>
+              <button
+                type="button"
+                className="likes-boost-secondary"
+                onClick={handleSnoozeBoostPromo}
+              >
+                לא עכשיו
+              </button>
+            </>
+          )}
 
           <small>
-            ניתן לבטל בכל רגע דרך החשבון שלך בשלב הבא נחבר תשלום מאובטח
-            באמצעות Stripe
+            התשלום והאישור מתבצעים בצורה מאובטחת ב-PayPal Sandbox. ניתן לבטל
+            בכל רגע.
           </small>
         </aside>
+        )}
 
         <section className="likes-main-area">
+          {!showBoostCard && (
+            <div className="likes-boost-collapsed">
+              <span>הצעת Boost הוסתרה ל-24 שעות.</span>
+              <button type="button" onClick={handleShowBoostPromo}>
+                הצגת Boost
+              </button>
+            </div>
+          )}
           <nav className="likes-tabs" aria-label="לשוניות לייקים">
             <button
               type="button"
@@ -159,14 +349,29 @@ export default function Likes() {
             </button>
           </nav>
 
-          {showBoostMessage && (
-            <div className="likes-success-message">
-              בשלב הבא נחבר את הכפתור לתשלום אמיתי ומאובטח דרך Stripe.
+          {approvalWasCancelled && (
+            <div className="likes-info-message" role="status">
+              <span>תהליך האישור ב-PayPal בוטל ולא הופעל Boost.</span>
+              <button
+                type="button"
+                onClick={() => setSearchParams({}, { replace: true })}
+              >
+                סגירה
+              </button>
+            </div>
+          )}
+
+          {subscriptionError && (
+            <div className="likes-error-message" role="alert">
+              <span>{subscriptionError}</span>
+              <button type="button" onClick={() => void loadSubscription()}>
+                רענון
+              </button>
             </div>
           )}
 
           <article className="likes-main-card">
-            <div className="likes-count">{receivedLikes.length}</div>
+            <div className="likes-count">{receivedLikesCount}</div>
 
             <div className="likes-main-heading">
               <h1>מי סימנו אותך</h1>
@@ -178,10 +383,39 @@ export default function Likes() {
                 <Heart size={34} />
                 <h2>טוענים לייקים...</h2>
               </div>
-            ) : loadError ? (
-              <div className="likes-empty-state">
-                <Heart size={34} />
-                <h2>{loadError}</h2>
+            ) : areReceivedLikesLocked && receivedLikesCount > 0 ? (
+              <div className="likes-locked-state">
+                <div className="likes-locked-heading">
+                  <Heart size={30} fill="currentColor" />
+                  <h2>{receivedLikesCount} אנשים אהבו אותך</h2>
+                  <p>
+                    {usingDemoLikesFallback
+                      ? "השרת אינו זמין כרגע, לכן מוצגת תצוגת הדגמה נעולה ללא פרטי מטיילים."
+                      : "זהויות המטיילים נשארות מוגנות עד להפעלת Boost."}
+                  </p>
+                </div>
+
+                <div className="likes-locked-grid" aria-hidden="true">
+                  {Array.from({
+                    length: Math.min(receivedLikesCount, 3),
+                  }).map((_, index) => (
+                    <div className="likes-locked-card" key={index}>
+                      <div className="likes-locked-avatar" />
+                      <span />
+                      <small />
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="likes-discover-button"
+                  onClick={handleStartBoost}
+                  disabled={isSubscriptionActionPending}
+                >
+                  שדרגי ל-Boost כדי לראות מי אהב אותך
+                  <Zap size={17} />
+                </button>
               </div>
             ) : receivedLikes.length > 0 ? (
               <div className="likes-received-grid">

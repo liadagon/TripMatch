@@ -5,6 +5,7 @@ const Conversation = require("../models/Conversation");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
+const { hasBoostAccess } = require("../utils/subscriptionEntitlement");
 
 const createSwipe = async (req, res, next) => {
   try {
@@ -107,11 +108,23 @@ const getCurrentUserSwipes = async (req, res, next) => {
 const getReceivedLikes = async (req, res, next) => {
   try {
     const blockedUserIds = await getBlockedUserIds(req.user._id);
-    const likes = await Swipe.find({
+    const filter = {
       toUser: req.user._id,
       action: "like",
       ...(blockedUserIds.length ? { fromUser: { $nin: blockedUserIds } } : {}),
-    })
+    };
+
+    if (!hasBoostAccess(req.user)) {
+      const likerIds = await Swipe.distinct("fromUser", filter);
+      const count = await User.countDocuments({ _id: { $in: likerIds } });
+      return res.status(200).json({
+        success: true,
+        locked: true,
+        count,
+      });
+    }
+
+    const likes = await Swipe.find(filter)
       .sort({ updatedAt: -1 })
       .populate("fromUser", PUBLIC_PROFILE_FIELDS);
 
@@ -126,6 +139,7 @@ const getReceivedLikes = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
+      locked: false,
       count: data.length,
       data,
     });

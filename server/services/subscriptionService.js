@@ -96,8 +96,8 @@ function buildSubscriptionPayload(user, planId) {
   if (clientUrl) {
     payload.application_context = {
       user_action: "SUBSCRIBE_NOW",
-      return_url: `${clientUrl}/?paypal=success`,
-      cancel_url: `${clientUrl}/?paypal=cancel`,
+      return_url: `${clientUrl}/boost/return`,
+      cancel_url: `${clientUrl}/likes?paypal=cancel`,
     };
   }
 

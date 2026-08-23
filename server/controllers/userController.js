@@ -4,6 +4,11 @@ const Match = require("../models/Match");
 const Conversation = require("../models/Conversation");
 const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
+const { hasBoostAccess } = require("../utils/subscriptionEntitlement");
+const {
+  compareDiscoverCandidates,
+  getDiscoverRankingScore,
+} = require("../utils/discoverRanking");
 const {
   RELEVANCE_RADIUS_KM,
   calculateDistanceKm,
@@ -13,7 +18,7 @@ const {
 } = require("../utils/matchesMap");
 
 const DISCOVER_INTERNAL_FIELDS =
-  "tripLocation.latitude tripLocation.longitude questionnaire";
+  "tripLocation.latitude tripLocation.longitude questionnaire subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
 
 const PROFILE_FIELDS = [
   "name",
@@ -55,18 +60,39 @@ const getUsers = async (req, res, next) => {
     );
 
     if (search) {
-      usersQuery
-        .select({ score: { $meta: "textScore" } })
-        .sort({ score: { $meta: "textScore" }, _id: 1 });
+      usersQuery.select({ score: { $meta: "textScore" } });
     } else {
       usersQuery.sort({ _id: 1 });
     }
 
     const [users, total] = await Promise.all([
-      usersQuery.skip(skip).limit(limit),
+      usersQuery,
       User.countDocuments(filter),
     ]);
-    const data = users.map((user) => {
+    const rankedUsers = users
+      .map((user) => {
+        const compatibility = calculateProfileCompatibility(req.user, user);
+        const profile = user.toObject();
+        const textScore = Number(profile.score) || 0;
+
+        return {
+          id: user._id,
+          user,
+          compatibility,
+          compatibilityPercentage: compatibility.percentage,
+          rankingScore: getDiscoverRankingScore(
+            compatibility.percentage,
+            hasBoostAccess(user),
+          ),
+          textScore,
+        };
+      })
+      .sort((left, right) =>
+        compareDiscoverCandidates(left, right, Boolean(search)),
+      )
+      .slice(skip, skip + limit);
+
+    const data = rankedUsers.map(({ user, compatibility }) => {
       const profile = user.toObject();
       const candidateLocation = user.tripLocation;
       const destinationLabel = getGeographicDestinationLabel(candidateLocation);
@@ -80,6 +106,10 @@ const getUsers = async (req, res, next) => {
 
       delete profile.questionnaire;
       delete profile.score;
+      delete profile.subscriptionPlan;
+      delete profile.subscriptionStatus;
+      delete profile.paypalSubscriptionId;
+      delete profile.paypalPlanId;
 
       if (profile.tripLocation) {
         profile.tripLocation = {
@@ -100,7 +130,7 @@ const getUsers = async (req, res, next) => {
 
       return {
         ...profile,
-        compatibility: calculateProfileCompatibility(req.user, user),
+        compatibility,
         ...(hasComparableDestinations
           ? {
               destinationInfo: {

@@ -19,6 +19,17 @@ export type ReceivedLike = {
   updatedAt: string;
 };
 
+export type ReceivedLikesResult =
+  | {
+      locked: true;
+      count: number;
+    }
+  | {
+      locked: false;
+      count: number;
+      data: ReceivedLike[];
+    };
+
 type SwipeMutationResponse = {
   success: true;
   message: string;
@@ -54,10 +65,8 @@ export const getSwipes = async () => {
 };
 
 export const getReceivedLikes = async () => {
-  const response = await api.get<{
-    success: true;
-    count: number;
-    data: ReceivedLike[];
-  }>("/api/swipes/received");
-  return response.data.data;
+  const response = await api.get<
+    ({ success: true } & ReceivedLikesResult)
+  >("/api/swipes/received");
+  return response.data;
 };

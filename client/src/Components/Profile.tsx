@@ -14,6 +14,7 @@ import {
   LogOut,
   Ban,
   X,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../services/authService";
@@ -27,6 +28,8 @@ import {
   type ProfileStatistics,
 } from "../services/profileStatsService";
 import "./Profile.css";
+import { getMySubscription } from "../services/subscriptionService";
+import { hasActiveBoost } from "../utils/subscriptionUi";
 
 type ProfileData = {
   name: string;
@@ -157,6 +160,7 @@ export default function Profile() {
   const [tripLocationError, setTripLocationError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
+  const [hasPrivateBoostBadge, setHasPrivateBoostBadge] = useState(false);
 
   useEffect(() => {
     setProfile(profileFromUser(user));
@@ -181,6 +185,24 @@ export default function Profile() {
 
     void loadStatistics();
 
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadPrivateBoostStatus() {
+      try {
+        const subscription = await getMySubscription();
+        if (isActive) setHasPrivateBoostBadge(hasActiveBoost(subscription));
+      } catch {
+        if (isActive) setHasPrivateBoostBadge(false);
+      }
+    }
+
+    void loadPrivateBoostStatus();
     return () => {
       isActive = false;
     };
@@ -383,6 +405,13 @@ export default function Profile() {
                   <MapPin size={16} />
                   {profile.city}
                 </p>
+                {hasPrivateBoostBadge && (
+                  <div className="profile-private-boost-badge" role="status">
+                    <Zap size={16} fill="currentColor" />
+                    TripMatch Boost פעיל
+                    <small>מוצג רק לך</small>
+                  </div>
+                )}
               </div>
 
               <div className="profile-title-actions">

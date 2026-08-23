@@ -14,6 +14,7 @@
     "verify:paypal-oauth": "node scripts/verifyPayPalOAuth.js",
     "verify:paypal-subscriptions": "node scripts/verifyPayPalSubscriptionFlow.js",
     "verify:paypal-webhooks": "node scripts/verifyPayPalWebhookFlow.js",
+    "verify:boost-entitlements": "node scripts/verifyBoostEntitlements.js",
     "verify:subscription-mongo": "node scripts/verifySubscriptionMongo.js",
     "verify:virtual-populate": "node scripts/verifyUserMatchesVirtual.js"
   },

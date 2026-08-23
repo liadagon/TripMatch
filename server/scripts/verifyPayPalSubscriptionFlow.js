@@ -61,6 +61,14 @@ const operations = createSubscriptionOperations({
     assert.equal(payload.plan_id, "P-TEST-BOOST");
     assert.equal(payload.custom_id, userId);
     assert.equal(payload.application_context.user_action, "SUBSCRIBE_NOW");
+    assert.equal(
+      payload.application_context.return_url,
+      "http://localhost:5173/boost/return",
+    );
+    assert.equal(
+      payload.application_context.cancel_url,
+      "http://localhost:5173/likes?paypal=cancel",
+    );
     assert.match(requestId, /^[0-9a-f-]{36}$/);
     return buildPayPalSubscription("APPROVAL_PENDING");
   },

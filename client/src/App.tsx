@@ -20,6 +20,7 @@ import Profile from "./Components/Profile";
 import MyProfilePreview from "./Components/MyProfilePreview";
 import MatchedProfile from "./Components/MatchedProfile";
 import BlockedUsers from "./Components/BlockedUsers";
+import BoostReturn from "./Components/BoostReturn";
 import NotFound from "./Components/NotFound";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import LoadingState from "./Components/LoadingState";
@@ -43,6 +44,7 @@ export default function App() {
     location.pathname === "/matches-map" ||
     location.pathname === "/profile" ||
     location.pathname === "/profile-preview" ||
+    location.pathname === "/boost/return" ||
     location.pathname === "/blocked-users" ||
     location.pathname.startsWith("/matched-profile/") ||
     location.pathname.startsWith("/chat/");
@@ -69,6 +71,10 @@ export default function App() {
         {/* App routes */}
         <Route path="/discover" element={protectedPage(<Discover />)} />
         <Route path="/likes" element={protectedPage(<Likes />)} />
+        <Route
+          path="/boost/return"
+          element={protectedPage(<BoostReturn />)}
+        />
         <Route path="/messages" element={protectedPage(<Matches />)} />
         <Route path="/matches" element={protectedPage(<Matches />)} />
         <Route

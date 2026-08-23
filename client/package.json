@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "verify:auth-navigation": "node scripts/verifyAuthNavigation.mjs"
+    "verify:auth-navigation": "node scripts/verifyAuthNavigation.mjs",
+    "verify:paypal-boost": "node scripts/verifyPayPalBoostFrontend.mjs"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
