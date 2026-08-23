@@ -1,6 +1,6 @@
-const HIDDEN_DEMO_CONVERSATIONS_KEY =
+export const HIDDEN_DEMO_CONVERSATIONS_KEY =
   "tripmatch:hidden-demo-conversations";
-const BLOCKED_DEMO_USERS_KEY = "tripmatch:blocked-demo-users";
+export const BLOCKED_DEMO_USERS_KEY = "tripmatch:blocked-demo-users";
 
 function readStringList(key: string) {
   try {

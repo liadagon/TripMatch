@@ -6,6 +6,8 @@ import {
   type ReactNode,
 } from "react";
 import axios from "axios";
+import { flushSync } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import {
   type AuthUser,
   type AuthenticationResult,
@@ -26,6 +28,8 @@ import {
 } from "../services/profileService";
 import { clearDemoConversationState } from "../services/demoConversationState";
 import { clearBoostPromoSnooze } from "../utils/boostPromoSnooze";
+import { wasDocumentRestoredThroughHistory } from "../utils/browserHistorySession";
+import LoadingState from "../Components/LoadingState";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -48,8 +52,14 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
+  const [requiresInitialHistoryReauthentication] = useState(
+    wasDocumentRestoredThroughHistory,
+  );
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isDocumentTransitionPending, setIsDocumentTransitionPending] =
+    useState(requiresInitialHistoryReauthentication);
 
   function clearLocalAuthenticatedSession() {
     localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
@@ -71,6 +81,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isActive = true;
 
     async function restoreUser() {
+      if (requiresInitialHistoryReauthentication) {
+        await clearAuthenticatedSession();
+
+        if (isActive) {
+          navigate("/", { replace: true });
+          setIsDocumentTransitionPending(false);
+          setIsInitializing(false);
+        }
+        return;
+      }
+
       const token = localStorage.getItem(TRIPMATCH_TOKEN_KEY);
 
       if (!token) {
@@ -102,7 +123,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [navigate, requiresInitialHistoryReauthentication]);
+
+  useEffect(() => {
+    function handlePageHide() {
+      flushSync(() => {
+        setIsDocumentTransitionPending(true);
+      });
+    }
+
+    function handlePageShow(event: PageTransitionEvent) {
+      if (!event.persisted) return;
+
+      void (async () => {
+        await clearAuthenticatedSession();
+        navigate("/", { replace: true });
+        setIsInitializing(false);
+        setIsDocumentTransitionPending(false);
+      })();
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [navigate]);
 
   async function login(email: string, password: string) {
     const response = await emailLogin(email, password);
@@ -209,7 +257,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         deleteAccount,
       }}
     >
-      {children}
+      {isDocumentTransitionPending ? (
+        <LoadingState message="מאבטחים את החיבור שלך..." fullScreen />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
