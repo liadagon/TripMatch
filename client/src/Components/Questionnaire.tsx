@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getProfileCompletionPath } from "../utils/authNavigation";
+import {
+  getPreviousOnboardingPath,
+  getProfileCompletionPath,
+} from "../utils/authNavigation";
 import {
   Globe2,
   CalendarDays,
@@ -65,10 +68,27 @@ const questions = [
 
 export default function Questionnaire() {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Array<number | null>>(
-    new Array(questions.length).fill(null),
+    () => {
+      const persistedAnswers = [
+        user?.preferredDestinations?.[0],
+        user?.tripDates,
+        user?.budget,
+        user?.travelStyle,
+        user?.questionnaire?.planningStyle,
+        user?.questionnaire?.accommodationPreference,
+        user?.questionnaire?.companionScope,
+        user?.questionnaire?.companionPriority,
+        user?.questionnaire?.dealBreaker,
+      ];
+
+      return questions.map((question, index) => {
+        const answerIndex = question.answers.indexOf(persistedAnswers[index] || "");
+        return answerIndex >= 0 ? answerIndex : null;
+      });
+    },
   );
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -125,7 +145,10 @@ export default function Questionnaire() {
   }
 
   function goBack() {
-    if (currentQuestion === 0) return;
+    if (currentQuestion === 0) {
+      navigate(getPreviousOnboardingPath("/questionnaire"), { replace: true });
+      return;
+    }
     setCurrentQuestion((prev) => prev - 1);
   }
 
@@ -184,14 +207,17 @@ export default function Questionnaire() {
         )}
 
         <div className="questionnaire-nav-row">
-          {currentQuestion > 0 && (
-            <button className="questionnaire-back-btn" onClick={goBack}>
-              <span>אחורה</span>
-              <span className="btn-arrow">→</span>
-            </button>
-          )}
+          <button
+            type="button"
+            className="questionnaire-back-btn"
+            onClick={goBack}
+          >
+            <span>אחורה</span>
+            <span className="btn-arrow">→</span>
+          </button>
 
           <button
+            type="button"
             className={
               isLastQuestion
                 ? "questionnaire-next-btn final active"

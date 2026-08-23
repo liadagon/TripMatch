@@ -35,6 +35,7 @@ import {
 } from "../utils/profileNavigation";
 import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
+import { getPreviousOnboardingPath } from "../utils/authNavigation";
 
 type ProfileData = {
   name: string;
@@ -350,6 +351,11 @@ export default function Profile() {
   }
 
   function handleBack() {
+    if (location.pathname === "/profile/setup") {
+      navigate(getPreviousOnboardingPath("/profile/setup"), { replace: true });
+      return;
+    }
+
     navigate(getSafeProfileReturnPath(location.state) || "/discover", {
       replace: true,
     });
@@ -379,7 +385,7 @@ export default function Profile() {
     <div className="profile-page" dir="rtl">
       <main className="profile-layout">
         <header className="profile-header">
-          <button className="profile-back-btn" onClick={handleBack}>
+          <button type="button" className="profile-back-btn" onClick={handleBack}>
             <ArrowRight size={20} />
             חזרה
           </button>

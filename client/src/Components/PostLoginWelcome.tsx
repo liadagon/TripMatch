@@ -5,10 +5,15 @@ import "./PostLoginWelcome.css";
 
 export default function PostLoginWelcome() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   function continueOnboarding() {
     navigate(user ? getProfileCompletionPath(user) : "/", { replace: true });
+  }
+
+  async function exitOnboarding() {
+    await logout();
+    navigate("/", { replace: true });
   }
 
   return (
@@ -22,7 +27,7 @@ export default function PostLoginWelcome() {
         <button
           type="button"
           className="post-login-welcome-back-button"
-          onClick={() => navigate(-1)}
+          onClick={() => void exitOnboarding()}
         >
           חזרה
         </button>
@@ -54,7 +59,7 @@ export default function PostLoginWelcome() {
           </div>
 
           <div className="post-login-welcome-title">
-            <h1>ברוכים הבאים ל־</h1>
+            <h1>האימות הצליח</h1>
 
             <div
               className="post-login-welcome-brand-badge"
@@ -67,9 +72,9 @@ export default function PostLoginWelcome() {
           </div>
 
           <p className="post-login-welcome-subtitle">
-            המקום שבו מטיילים נפגשים
+            נשארו עוד כמה שלבים להשלמת הפרופיל
             <br />
-            מתחברים ויוצרים חוויות בלתי נשכחות
+            לאחר מכן תוכלו להתחיל למצוא שותפים לטיול
           </p>
 
           <button

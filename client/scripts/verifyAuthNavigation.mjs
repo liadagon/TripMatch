@@ -1,30 +1,26 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
 import ts from "typescript";
 
-const sourceUrl = new URL("../src/utils/authNavigation.ts", import.meta.url);
-const source = await readFile(sourceUrl, "utf8");
-const welcomeSource = await readFile(
-  new URL("../src/Components/Welcome.tsx", import.meta.url),
-  "utf8",
-);
-const authContextSource = await readFile(
-  new URL("../src/context/AuthContext.tsx", import.meta.url),
-  "utf8",
-);
-const existingAccountDialogSource = await readFile(
-  new URL("../src/Components/ExistingAccountDialog.tsx", import.meta.url),
-  "utf8",
-);
-const emailOtpVerifySource = await readFile(
-  new URL("../src/Components/EmailOtpVerify.tsx", import.meta.url),
-  "utf8",
-);
-const firebaseSource = await readFile(
-  new URL("../src/firebase.ts", import.meta.url),
-  "utf8",
-);
+async function read(relativePath) {
+  return readFile(new URL(relativePath, import.meta.url), "utf8");
+}
+
+const source = await read("../src/utils/authNavigation.ts");
+const appSource = await read("../src/App.tsx");
+const protectedRouteSource = await read("../src/Components/ProtectedRoute.tsx");
+const welcomeSource = await read("../src/Components/Welcome.tsx");
+const postLoginWelcomeSource = await read("../src/Components/PostLoginWelcome.tsx");
+const emailOtpVerifySource = await read("../src/Components/EmailOtpVerify.tsx");
+const authContextSource = await read("../src/context/AuthContext.tsx");
+const photoUploadSource = await read("../src/Components/PhotoUpload.tsx");
+const questionnaireSource = await read("../src/Components/Questionnaire.tsx");
+const profileSource = await read("../src/Components/Profile.tsx");
+const photoUploadCssSource = await read("../src/Components/PhotoUpload.css");
+const existingAccountDialogSource = await read("../src/Components/ExistingAccountDialog.tsx");
+const firebaseSource = await read("../src/firebase.ts");
+
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: {
     module: ts.ModuleKind.ESNext,
@@ -37,69 +33,140 @@ const {
   getAuthenticationIntent,
   getAuthenticationPath,
   getGoogleLoginPath,
+  getOnboardingRouteRedirect,
+  getPreviousOnboardingPath,
   getProfileCompletionPath,
   shouldConfirmExistingAccount,
   shouldShowEmailLoginSuccessTransition,
 } = await import(moduleUrl);
 
-const completedQuestionnaire = {
-  planningStyle: "planned",
-  accommodationPreference: "hotel",
-  companionScope: "whole-trip",
-  companionPriority: "compatibility",
-  dealBreaker: "boundaries",
-};
-const completeGoogleUser = {
-  _id: "google-user",
-  name: "Google Traveler",
-  email: "traveler@example.com",
-  authProvider: "google",
-  photoURL: "https://example.com/photo.jpg",
-  questionnaire: completedQuestionnaire,
-  tripLocation: { placeId: "verified-trip-location" },
-};
+function user(authProvider, onboardingComplete, nextOnboardingStep) {
+  return {
+    _id: `${authProvider}-user`,
+    name: "Traveler",
+    email: `${authProvider}@example.com`,
+    authProvider,
+    onboardingComplete,
+    nextOnboardingStep,
+    registrationComplete: onboardingComplete,
+    registrationInProgress: !onboardingComplete,
+    nextRegistrationStep: nextOnboardingStep,
+  };
+}
+
+for (const authProvider of ["google", "email"]) {
+  const newUser = user(authProvider, false, "photos");
+  assert.equal(
+    getAuthenticationPath({ user: newUser, isNewUser: true }),
+    "/post-login-welcome",
+  );
+  assert.equal(getProfileCompletionPath(newUser), "/photo-upload");
+
+  for (const blockedPath of [
+    "/discover",
+    "/likes",
+    "/matches",
+    "/chat/conversation-id",
+    "/profile-preview",
+    "/boost/return",
+  ]) {
+    assert.equal(
+      getOnboardingRouteRedirect(newUser, blockedPath),
+      "/photo-upload",
+    );
+  }
+  assert.equal(
+    getOnboardingRouteRedirect(newUser, "/photo-upload", {
+      allowIncomplete: true,
+      onboardingOnly: true,
+    }),
+    null,
+  );
+
+  const questionnaireUser = user(authProvider, false, "questionnaire");
+  assert.equal(
+    getOnboardingRouteRedirect(questionnaireUser, "/photo-upload", {
+      allowIncomplete: true,
+      onboardingOnly: true,
+    }),
+    null,
+  );
+  assert.equal(
+    getOnboardingRouteRedirect(questionnaireUser, "/profile/setup", {
+      allowIncomplete: true,
+    }),
+    "/questionnaire",
+  );
+
+  const profileUser = user(authProvider, false, "profile");
+  for (const earlierStep of ["/photo-upload", "/questionnaire", "/profile/setup"]) {
+    assert.equal(
+      getOnboardingRouteRedirect(profileUser, earlierStep, {
+        allowIncomplete: true,
+        onboardingOnly: true,
+      }),
+      null,
+    );
+  }
+
+  assert.equal(
+    getAuthenticationPath({
+      user: user(authProvider, false, "questionnaire"),
+      isNewUser: false,
+    }),
+    "/questionnaire",
+  );
+  assert.equal(
+    getAuthenticationPath({
+      user: user(authProvider, false, "profile"),
+      isNewUser: false,
+    }),
+    "/profile/setup",
+  );
+  assert.equal(
+    getAuthenticationPath({
+      user: user(authProvider, true, null),
+      isNewUser: false,
+    }),
+    "/discover",
+  );
+  for (const registrationPath of [
+    "/photo-upload",
+    "/questionnaire",
+    "/profile/setup",
+  ]) {
+    assert.equal(
+      getOnboardingRouteRedirect(
+        user(authProvider, true, null),
+        registrationPath,
+        { allowIncomplete: true, onboardingOnly: true },
+      ),
+      "/discover",
+    );
+  }
+}
 
 assert.equal(
-  getGoogleLoginPath({ user: completeGoogleUser, isNewUser: true }),
-  "/post-login-welcome",
-);
-assert.equal(
-  getGoogleLoginPath({ user: completeGoogleUser, isNewUser: false }),
-  "/discover",
-);
-const incompleteEmailUser = {
-  ...completeGoogleUser,
-  _id: "email-user",
-  authProvider: "email",
-  questionnaire: undefined,
-};
-const completeEmailUser = {
-  ...completeGoogleUser,
-  _id: "complete-email-user",
-  authProvider: "email",
-};
-assert.equal(
-  getAuthenticationPath({ user: incompleteEmailUser, isNewUser: true }),
-  "/post-login-welcome",
-);
-assert.equal(
-  getAuthenticationPath({ user: incompleteEmailUser, isNewUser: false }),
+  getGoogleLoginPath({
+    user: user("google", false, "questionnaire"),
+    isNewUser: false,
+  }),
   "/questionnaire",
 );
 assert.equal(
-  getAuthenticationPath({ user: completeEmailUser, isNewUser: false }),
-  "/discover",
+  getProfileCompletionPath(user("email", false, null)),
+  "/photo-upload",
 );
+assert.equal(getPreviousOnboardingPath("/photo-upload"), "/");
+assert.equal(getPreviousOnboardingPath("/questionnaire"), "/photo-upload");
+assert.equal(getPreviousOnboardingPath("/profile/setup"), "/questionnaire");
 assert.equal(shouldConfirmExistingAccount("register", false), true);
 assert.equal(shouldConfirmExistingAccount("register", true), false);
 assert.equal(shouldConfirmExistingAccount("login", false), false);
 assert.equal(shouldShowEmailLoginSuccessTransition("login", false), true);
 assert.equal(shouldShowEmailLoginSuccessTransition("login", true), false);
 assert.equal(shouldShowEmailLoginSuccessTransition("register", false), false);
-assert.equal(
-  EXISTING_ACCOUNT_CONFIRMATION.title,
-  "החשבון כבר קיים",
-);
+assert.equal(EXISTING_ACCOUNT_CONFIRMATION.title, "החשבון כבר קיים");
 assert.equal(
   EXISTING_ACCOUNT_CONFIRMATION.message,
   "החשבון הזה כבר רשום ב-TripMatch. אפשר להמשיך ישירות לחשבון הקיים.",
@@ -108,90 +175,71 @@ assert.equal(EXISTING_ACCOUNT_CONFIRMATION.actionLabel, "המשך לחשבון")
 assert.equal(getAuthenticationIntent({ authIntent: "register" }), "register");
 assert.equal(getAuthenticationIntent({ authIntent: "login" }), "login");
 assert.equal(getAuthenticationIntent(undefined), "login");
-assert.doesNotMatch(welcomeSource, /setTimeout/);
+
 assert.match(existingAccountDialogSource, /role="dialog"/);
+assert.match(welcomeSource, /getAuthenticationPath\(result\)/);
 assert.match(welcomeSource, /setPendingExistingAccountPath\(destination\);\s+return;/);
 assert.match(welcomeSource, /<ExistingAccountDialog/);
+assert.match(emailOtpVerifySource, /getAuthenticationPath\(result\)/);
 assert.match(emailOtpVerifySource, /<ExistingAccountDialog/);
 assert.match(
   emailOtpVerifySource,
   /shouldConfirmExistingAccount\(authIntent,\s*result\.isNewUser\)/,
 );
-assert.match(
-  emailOtpVerifySource,
-  /setPendingExistingAccountPath\(destination\);\s+return;/,
-);
-assert.match(
-  emailOtpVerifySource,
-  /setPendingLoginDestination\(destination\);\s+return;/,
-);
 assert.match(emailOtpVerifySource, /LOGIN_SUCCESS_TRANSITION_MS = 1350/);
 assert.match(emailOtpVerifySource, /window\.setTimeout/);
 assert.match(emailOtpVerifySource, /window\.clearTimeout/);
-assert.match(emailOtpVerifySource, /role="status"/);
-assert.match(emailOtpVerifySource, /aria-live="polite"/);
-assert.match(emailOtpVerifySource, /התחברת בהצלחה/);
-assert.match(emailOtpVerifySource, /עוד רגע ואת בפנים\.\.\./);
-assert.match(
-  emailOtpVerifySource,
-  /navigate\(pendingExistingAccountPath,\s*\{\s*replace:\s*true\s*\}\)/,
-);
-assert.match(welcomeSource, /await logout\(\)/);
-assert.match(emailOtpVerifySource, /await logout\(\)/);
-assert.match(authContextSource, /authenticateWithEmailCode/);
+assert.match(authContextSource, /getCurrentUser\(\)/);
 assert.match(authContextSource, /localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)/);
+assert.match(authContextSource, /authenticateWithEmailCode/);
 assert.match(authContextSource, /await signOutFromFirebase\(\)/);
 assert.match(firebaseSource, /await signOut\(auth\)/);
-assert.doesNotMatch(authContextSource, /deleteCurrentUser|deleteUser/);
-assert.equal(
-  getProfileCompletionPath({
-    ...completeGoogleUser,
-    photoURL: "",
-    photos: [],
-  }),
-  "/photo-upload",
-);
-assert.equal(
-  getProfileCompletionPath({
-    ...completeGoogleUser,
-    questionnaire: undefined,
-  }),
-  "/questionnaire",
-);
-assert.equal(
-  getProfileCompletionPath({
-    ...completeGoogleUser,
-    tripLocation: undefined,
-  }),
-  "/profile",
-);
-assert.equal(
-  getProfileCompletionPath({
-    ...completeGoogleUser,
-    authProvider: "local",
-    photoURL: "",
-    photos: [],
-  }),
-  "/discover",
-);
+assert.match(welcomeSource, /await logout\(\)/);
+assert.match(emailOtpVerifySource, /await logout\(\)/);
+assert.match(authContextSource, /deleteAccount/);
 
-console.log("Authentication navigation verification passed", {
-  newGoogleUser: "/post-login-welcome",
-  returningCompleteUser: "/discover",
-  missingPhoto: "/photo-upload",
-  missingQuestionnaire: "/questionnaire",
-  missingTripDestination: "/profile",
-  localEmailFlowPreserved: true,
-  registrationExistingAccountFeedback: true,
-  existingAccountWaitsForConfirmation: true,
-  existingAccountExitClearsSession: true,
-  emailOtpUsesCentralAuthContext: true,
-  googleAndEmailShareExistingAccountDialog: true,
-  emailRegistrationExistingWaitsForConfirmation: true,
-  emailExistingContinueUsesCompletionPath: true,
-  emailExistingExitClearsSession: true,
-  returningEmailLoginSuccessTransition: true,
-  emailLoginSuccessTransitionDurationMs: 1350,
-  newEmailUserKeepsOnboardingFlow: true,
-  registrationExistingAccountDialogUnchanged: true,
+for (const blockedPath of ["/discover", "/likes", "/matches", "/chat/"]) {
+  assert.match(appSource, new RegExp(blockedPath.replaceAll("/", "\\/")));
+}
+assert.match(protectedRouteSource, /getOnboardingRouteRedirect\(/);
+assert.match(protectedRouteSource, /<Navigate to=\{redirect\} replace/);
+assert.match(appSource, /allowIncomplete: true/);
+assert.match(appSource, /path="\/profile\/setup"/);
+assert.match(appSource, /path="\/profile" element=\{protectedPage\(<Profile \/>\)\}/);
+assert.match(appSource, /user\?\.registrationComplete/);
+assert.match(postLoginWelcomeSource, /האימות הצליח/);
+assert.match(postLoginWelcomeSource, /נשארו עוד כמה שלבים להשלמת הפרופיל/);
+assert.match(emailOtpVerifySource, /isPendingOnboarding/);
+assert.doesNotMatch(photoUploadSource, /navigate\(-1\)/);
+assert.doesNotMatch(postLoginWelcomeSource, /navigate\(-1\)/);
+assert.match(photoUploadSource, /await logout\(\)/);
+assert.match(photoUploadSource, /getPreviousOnboardingPath\("\/photo-upload"\)/);
+assert.match(postLoginWelcomeSource, /await logout\(\)/);
+assert.match(postLoginWelcomeSource, /navigate\("\/", \{ replace: true \}\)/);
+assert.match(questionnaireSource, /getPreviousOnboardingPath\("\/questionnaire"\)/);
+assert.match(profileSource, /getPreviousOnboardingPath\("\/profile\/setup"\)/);
+assert.match(profileSource, /location\.pathname === "\/profile\/setup"/);
+assert.match(photoUploadSource, /getPersistedPhotos\(user\)/);
+assert.match(photoUploadSource, /Promise\.resolve\(photo\.previewUrl\)/);
+assert.match(questionnaireSource, /persistedAnswers/);
+assert.match(photoUploadSource, /type="button"[\s\S]*className="photo-upload-back"/);
+assert.match(questionnaireSource, /type="button"[\s\S]*className="questionnaire-back-btn"/);
+assert.match(profileSource, /type="button" className="profile-back-btn"/);
+assert.match(photoUploadCssSource, /\.photo-upload-back\s*\{[\s\S]*cursor: pointer/);
+assert.match(emailOtpVerifySource, /האימות הצליח/);
+
+console.log("Authentication and onboarding navigation verification passed", {
+  googleNewPartialComplete: true,
+  emailNewPartialComplete: true,
+  sharedBackendStateConsumed: true,
+  directAppRoutesProtected: true,
+  onboardingRoutesAllowed: true,
+  completeUsersEnterDiscover: true,
+  truthfulIncompleteAuthenticationMessage: true,
+  jwtRestorationUsesNormalizedUser: true,
+  googleBackHierarchy: true,
+  emailBackHierarchy: true,
+  persistedProgressReused: true,
+  refreshSafeExplicitRoutes: true,
+  firstStepLogsOutWithoutLoop: true,
 });

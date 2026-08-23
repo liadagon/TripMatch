@@ -29,6 +29,13 @@ export const ONBOARDING_PATHS: readonly OnboardingPath[] = [
   "/profile/setup",
 ];
 
+export function getPreviousOnboardingPath(
+  pathname: OnboardingPath,
+): "/" | OnboardingPath {
+  const currentIndex = ONBOARDING_PATHS.indexOf(pathname);
+  return currentIndex <= 0 ? "/" : ONBOARDING_PATHS[currentIndex - 1];
+}
+
 export function getProfileCompletionPath(
   user: AuthUser,
 ): ProfileCompletionPath {

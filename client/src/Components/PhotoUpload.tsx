@@ -7,8 +7,12 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { AuthUser } from "../services/authService";
 import { uploadProfileImage } from "../services/profileService";
-import { getProfileCompletionPath } from "../utils/authNavigation";
+import {
+  getPreviousOnboardingPath,
+  getProfileCompletionPath,
+} from "../utils/authNavigation";
 
 import "./PhotoUpload.css";
 
@@ -23,16 +27,35 @@ const ALLOWED_IMAGE_TYPES = new Set([
 
 type PhotoItem = {
   id: string;
-  file: File;
+  file?: File;
   previewUrl: string;
 };
 
+function getPersistedPhotos(user: AuthUser | null) {
+  const urls = [
+    ...(user?.photos || []),
+    user?.photoURL,
+    user?.photo,
+  ].filter((url, index, all): url is string =>
+    Boolean(url?.trim()) && all.indexOf(url) === index,
+  );
+
+  const persistedPhotos: Array<PhotoItem | null> = Array(MAX_PHOTOS).fill(null);
+  urls.slice(0, MAX_PHOTOS).forEach((previewUrl, index) => {
+    persistedPhotos[index] = {
+      id: `persisted-${index}-${previewUrl}`,
+      previewUrl,
+    };
+  });
+  return persistedPhotos;
+}
+
 const PhotoUpload = () => {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
 
   const [photos, setPhotos] = useState<Array<PhotoItem | null>>(
-    Array(MAX_PHOTOS).fill(null)
+    () => getPersistedPhotos(user),
   );
 
   const [error, setError] = useState("");
@@ -146,7 +169,11 @@ const PhotoUpload = () => {
 
     try {
       const uploadedUrls = await Promise.all(
-        selectedPhotos.map((photo) => uploadProfileImage(photo.file)),
+        selectedPhotos.map((photo) =>
+          photo.file
+            ? uploadProfileImage(photo.file)
+            : Promise.resolve(photo.previewUrl),
+        ),
       );
 
       const updatedUser = await updateProfile({
@@ -161,14 +188,15 @@ const PhotoUpload = () => {
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
+  const handleBack = async () => {
+    await logout();
+    navigate(getPreviousOnboardingPath("/photo-upload"), { replace: true });
   };
 
   useEffect(() => {
     return () => {
       photos.forEach((photo) => {
-        if (photo) {
+        if (photo?.file) {
           URL.revokeObjectURL(photo.previewUrl);
         }
       });
@@ -188,7 +216,7 @@ const PhotoUpload = () => {
         <button
           type="button"
           className="photo-upload-back"
-          onClick={handleBack}
+          onClick={() => void handleBack()}
         >
           חזרה
         </button>
