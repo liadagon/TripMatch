@@ -167,6 +167,13 @@
   gap: 6px;
 }
 
+.profile-avatar-empty {
+  display: grid;
+  place-items: center;
+  color: #60758b;
+  background: #eef4f8;
+}
+
 .profile-private-boost-badge {
   width: fit-content;
   display: flex;

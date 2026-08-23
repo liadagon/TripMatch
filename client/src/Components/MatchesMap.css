@@ -280,6 +280,17 @@
   object-fit: cover;
 }
 
+.matches-map-photo-marker.photo-unavailable::before {
+  content: "👤";
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #60758b;
+  background: #eef4f8;
+  font-size: 1.5rem;
+}
+
 .matches-map-photo-marker.current-user {
   position: relative;
   width: 62px;

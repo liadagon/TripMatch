@@ -8,6 +8,7 @@
     "start": "node server.js",
     "audit:registration-state": "node scripts/auditRegistrationState.js",
     "diagnose:returning-google": "node scripts/diagnoseReturningGoogleUser.js",
+    "diagnose:authenticated-identity": "node scripts/diagnoseAuthenticatedIdentity.js",
     "cleanup:google-avatars": "node scripts/removeImportedGoogleAvatars.js",
     "setup:paypal-boost": "node scripts/setupPayPalBoostPlan.js",
     "verify:brevo-email": "node scripts/verifyBrevoEmail.js",

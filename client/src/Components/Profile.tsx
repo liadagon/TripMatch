@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Camera,
+  CircleUserRound,
   MapPin,
   CalendarDays,
   Wallet,
@@ -36,6 +37,7 @@ import {
 import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
 import { getPreviousOnboardingPath } from "../utils/authNavigation";
+import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 
 type ProfileData = {
   name: string;
@@ -59,41 +61,38 @@ const ALLOWED_PROFILE_IMAGE_TYPES = new Set([
   "image/gif",
 ]);
 
-const defaultProfile: ProfileData = {
-  name: "נועה",
-  age: "23",
-  city: "תל אביב",
+const emptyProfile: ProfileData = {
+  name: "",
+  age: "",
+  city: "",
   tripLocation: null,
-  dates: "ספטמבר עד דצמבר",
-  budget: "בינוני",
-  travelStyle: "טרקים ותרמילאות",
-  interests: ["אמינות", "ראש פתוח", "תקציב דומה", "אהבה לטבע", "תקשורת טובה"],
-  companionPriority: "אמינות ואחריות",
-  aboutMe:
-    "מחפשת שותפה או שותף לטיול בדרום אמריקה. אוהבת טבע, טרקים, אוכל מקומי וחוויות ספונטניות, אבל כן חשוב לי לתכנן מסגרת בסיסית מראש.",
-  imageUrl:
-    "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=90",
+  dates: "",
+  budget: "",
+  travelStyle: "",
+  interests: [],
+  companionPriority: "",
+  aboutMe: "",
+  imageUrl: "",
 };
 
 function profileFromUser(user: AuthUser | null): ProfileData {
+  const identity = getAuthenticatedIdentity(user);
+
   return {
-    ...defaultProfile,
-    name: user?.name || defaultProfile.name,
-    age: String(user?.age ?? defaultProfile.age),
+    ...emptyProfile,
+    name: identity.name,
+    age: user?.age === undefined ? "" : String(user.age),
     city: user?.tripLocation
       ? getTripLocationLabel(user.tripLocation)
-      : user?.location || defaultProfile.city,
+      : user?.location || "",
     tripLocation: user?.tripLocation || null,
-    dates: user?.tripDates || defaultProfile.dates,
-    budget: user?.budget || defaultProfile.budget,
-    travelStyle: user?.travelStyle || defaultProfile.travelStyle,
-    interests: user?.interests?.length
-      ? user.interests.filter(Boolean)
-      : defaultProfile.interests,
-    companionPriority:
-      user?.questionnaire?.companionPriority || defaultProfile.companionPriority,
-    aboutMe: user?.bio || defaultProfile.aboutMe,
-    imageUrl: user?.photoURL || user?.photo || defaultProfile.imageUrl,
+    dates: user?.tripDates || "",
+    budget: user?.budget || "",
+    travelStyle: user?.travelStyle || "",
+    interests: user?.interests?.filter(Boolean) || [],
+    companionPriority: user?.questionnaire?.companionPriority || "",
+    aboutMe: user?.bio || "",
+    imageUrl: identity.photoURL,
   };
 }
 
@@ -173,10 +172,21 @@ export default function Profile() {
   const [deleteAccountError, setDeleteAccountError] = useState("");
 
   useEffect(() => {
-    setProfile(profileFromUser(user));
+    const nextProfile = profileFromUser(user);
+    setProfile(nextProfile);
+    setDraftProfile(nextProfile);
+    setPendingProfileImage(null);
+    setIsEditing(false);
+    setStatistics(null);
+    setHasPrivateBoostBadge(false);
   }, [user]);
 
   useEffect(() => {
+    if (!user?.registrationComplete) {
+      setStatistics(null);
+      return;
+    }
+
     let isActive = true;
 
     async function loadStatistics() {
@@ -198,9 +208,14 @@ export default function Profile() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [user?._id, user?.registrationComplete]);
 
   useEffect(() => {
+    if (!user?.registrationComplete) {
+      setHasPrivateBoostBadge(false);
+      return;
+    }
+
     let isActive = true;
 
     async function loadPrivateBoostStatus() {
@@ -216,7 +231,7 @@ export default function Profile() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [user?._id, user?.registrationComplete]);
 
   useEffect(() => {
     if (!showSuccess) return;
@@ -429,23 +444,32 @@ export default function Profile() {
           </div>
 
           <div className="profile-avatar-wrap">
-            <img
-              className="profile-avatar"
-              src={profile.imageUrl}
-              alt="תמונת פרופיל"
-            />
+            {profile.imageUrl ? (
+              <img
+                className="profile-avatar"
+                src={profile.imageUrl}
+                alt={`תמונת הפרופיל של ${profile.name}`}
+              />
+            ) : (
+              <div className="profile-avatar profile-avatar-empty" aria-hidden="true">
+                <CircleUserRound size={82} />
+              </div>
+            )}
           </div>
 
           <div className="profile-content">
             <div className="profile-title-row">
               <div>
                 <h2>
-                  {profile.name}, {profile.age}
+                  {profile.name || "הפרופיל שלי"}
+                  {profile.age ? `, ${profile.age}` : ""}
                 </h2>
-                <p>
-                  <MapPin size={16} />
-                  {profile.city}
-                </p>
+                {profile.city && (
+                  <p>
+                    <MapPin size={16} />
+                    {profile.city}
+                  </p>
+                )}
                 {hasPrivateBoostBadge && (
                   <div className="profile-private-boost-badge" role="status">
                     <Zap size={16} fill="currentColor" />
@@ -456,21 +480,23 @@ export default function Profile() {
               </div>
 
               <div className="profile-title-actions">
-                <button
-                  type="button"
-                  className="profile-preview-btn"
-                  onClick={() =>
-                    navigate("/profile-preview", {
-                      state: createInnerProfileNavigationState(
-                        "/profile",
-                        location.state,
-                      ),
-                    })
-                  }
-                >
-                  <Eye size={18} />
-                  איך הפרופיל שלי נראה
-                </button>
+                {user?.registrationComplete && (
+                  <button
+                    type="button"
+                    className="profile-preview-btn"
+                    onClick={() =>
+                      navigate("/profile-preview", {
+                        state: createInnerProfileNavigationState(
+                          "/profile",
+                          location.state,
+                        ),
+                      })
+                    }
+                  >
+                    <Eye size={18} />
+                    איך הפרופיל שלי נראה
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -562,14 +588,18 @@ export default function Profile() {
               </div>
             </section>
 
-            <button
-              type="button"
-              className="profile-blocked-users-btn"
-              onClick={() => navigate("/blocked-users", { state: location.state })}
-            >
-              <Ban size={18} />
-              משתמשים חסומים
-            </button>
+            {user?.registrationComplete && (
+              <button
+                type="button"
+                className="profile-blocked-users-btn"
+                onClick={() =>
+                  navigate("/blocked-users", { state: location.state })
+                }
+              >
+                <Ban size={18} />
+                משתמשים חסומים
+              </button>
+            )}
 
             <button type="button" className="profile-logout-btn" onClick={handleLogout}>
               <LogOut size={18} />

@@ -51,6 +51,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  function clearLocalAuthenticatedSession() {
+    localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+    clearDemoConversationState();
+    setUser(null);
+  }
+
+  async function clearAuthenticatedSession() {
+    clearLocalAuthenticatedSession();
+
+    try {
+      await signOutFromFirebase();
+    } catch (error) {
+      console.error("[Logout] Firebase session cleanup failed", error);
+    }
+  }
+
   useEffect(() => {
     let isActive = true;
 
@@ -130,9 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    setUser(response.data.data);
+    const currentUserResponse = await getCurrentUser();
+    const authoritativeUser = currentUserResponse.data.data;
+    setUser(authoritativeUser);
     return {
-      user: response.data.data,
+      user: authoritativeUser,
       isNewUser: response.data.isNewUser,
     };
   }
@@ -141,10 +159,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await verifyEmailOtp(email, code);
 
     localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    setUser(response.data.data);
+    const currentUserResponse = await getCurrentUser();
+    const authoritativeUser = currentUserResponse.data.data;
+    setUser(authoritativeUser);
 
     return {
-      user: response.data.data,
+      user: authoritativeUser,
       isNewUser: response.data.isNewUser,
     };
   }
@@ -156,14 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-    setUser(null);
-
-    try {
-      await signOutFromFirebase();
-    } catch (error) {
-      console.error("[Logout] Firebase session cleanup failed", error);
-    }
+    await clearAuthenticatedSession();
   }
 
   async function deleteAccount() {

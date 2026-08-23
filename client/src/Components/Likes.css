@@ -56,7 +56,8 @@
   box-shadow: 0 16px 34px rgba(15, 23, 42, 0.13);
 }
 
-.likes-profile-button img {
+.likes-profile-button img,
+.likes-profile-placeholder {
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -64,18 +65,25 @@
   border: 3px solid rgba(255, 255, 255, 0.78);
 }
 
-.likes-profile-button span {
+.likes-profile-placeholder {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.likes-profile-copy {
   display: grid;
   gap: 2px;
   text-align: right;
 }
 
-.likes-profile-button strong {
+.likes-profile-copy strong {
   font-size: 1rem;
   font-weight: 900;
 }
 
-.likes-profile-button small {
+.likes-profile-copy small {
   font-size: 0.8rem;
   font-weight: 750;
   opacity: 0.9;
@@ -808,7 +816,7 @@
     font-size: 1.55rem;
   }
 
-  .likes-profile-button span {
+  .likes-profile-copy {
     display: none;
   }
 

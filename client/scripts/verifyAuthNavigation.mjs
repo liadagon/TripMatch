@@ -190,6 +190,14 @@ assert.match(emailOtpVerifySource, /LOGIN_SUCCESS_TRANSITION_MS = 1350/);
 assert.match(emailOtpVerifySource, /window\.setTimeout/);
 assert.match(emailOtpVerifySource, /window\.clearTimeout/);
 assert.match(authContextSource, /getCurrentUser\(\)/);
+assert.match(
+  authContextSource,
+  /authenticateWithGoogle[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY,[\s\S]*await getCurrentUser\(\)[\s\S]*user: authoritativeUser/,
+);
+assert.match(
+  authContextSource,
+  /authenticateWithEmailCode[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY,[\s\S]*await getCurrentUser\(\)[\s\S]*user: authoritativeUser/,
+);
 assert.match(authContextSource, /localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)/);
 assert.match(authContextSource, /authenticateWithEmailCode/);
 assert.match(authContextSource, /await signOutFromFirebase\(\)/);
@@ -237,6 +245,7 @@ console.log("Authentication and onboarding navigation verification passed", {
   completeUsersEnterDiscover: true,
   truthfulIncompleteAuthenticationMessage: true,
   jwtRestorationUsesNormalizedUser: true,
+  postAuthenticationUsesFreshAuthMeState: true,
   googleBackHierarchy: true,
   emailBackHierarchy: true,
   persistedProgressReused: true,

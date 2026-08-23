@@ -12,6 +12,7 @@ import {
 } from "../services/matchesMapService";
 import { conversations as demoConversations } from "../data/conversations";
 import { isDemoUserBlocked } from "../services/demoConversationState";
+import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 import "leaflet/dist/leaflet.css";
 import "./MatchesMap.css";
 
@@ -110,13 +111,18 @@ function createPhotoIcon(photoURL: string, isCurrentUser = false) {
     ? "matches-map-photo-marker current-user"
     : "matches-map-photo-marker";
 
-  const image = document.createElement("img");
-  image.src = photoURL || FALLBACK_PHOTO;
-  image.alt = "";
-  image.addEventListener("error", () => {
-    if (!image.src.endsWith(FALLBACK_PHOTO)) image.src = FALLBACK_PHOTO;
-  });
-  marker.appendChild(image);
+  if (photoURL) {
+    const image = document.createElement("img");
+    image.src = photoURL;
+    image.alt = "";
+    image.addEventListener("error", () => {
+      image.remove();
+      marker.classList.add("photo-unavailable");
+    });
+    marker.appendChild(image);
+  } else {
+    marker.classList.add("photo-unavailable");
+  }
 
   if (isCurrentUser) {
     const badge = document.createElement("span");
@@ -205,6 +211,7 @@ export default function MatchesMap() {
   const [mapKey, setMapKey] = useState(0);
   const [openingChatUserId, setOpeningChatUserId] = useState("");
   const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY?.trim();
+  const identity = getAuthenticatedIdentity(user);
 
   async function loadMapData() {
     setIsLoading(true);
@@ -224,8 +231,8 @@ export default function MatchesMap() {
   }, []);
 
   const currentUserIcon = useMemo(
-    () => createPhotoIcon(user?.photoURL || user?.photo || FALLBACK_PHOTO, true),
-    [user?.photo, user?.photoURL],
+    () => createPhotoIcon(identity.photoURL, true),
+    [identity.photoURL],
   );
 
   const destinationLabel = useMemo(

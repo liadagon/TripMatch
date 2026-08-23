@@ -25,11 +25,14 @@ import {
 } from "../utils/subscriptionUi";
 import {
   Check,
+  CircleUserRound,
   Heart,
   MessageCircle,
   Search,
   Zap,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 import "./Likes.css";
 
 type LikesTab = "received" | "messages";
@@ -42,6 +45,8 @@ const boostBenefits = [
 
 export default function Likes() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const identity = getAuthenticatedIdentity(user);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<LikesTab>("received");
   const [receivedLikes, setReceivedLikes] = useState<ReceivedLike[]>([]);
@@ -211,11 +216,17 @@ export default function Likes() {
           className="likes-profile-button"
           onClick={() => navigate("/profile", { state: { from: "/likes" } })}
         >
-          <span>
-            <strong>נועה רגב</strong>
+          <span className="likes-profile-copy">
+            <strong>{identity.name || "הפרופיל שלי"}</strong>
             <small>צפה בפרופיל</small>
           </span>
-          <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90" alt="נועה רגב" />
+          {identity.photoURL ? (
+            <img src={identity.photoURL} alt={`תמונת הפרופיל של ${identity.name}`} />
+          ) : (
+            <span className="likes-profile-placeholder" aria-hidden="true">
+              <CircleUserRound size={40} />
+            </span>
+          )}
         </button>
       </header>
 

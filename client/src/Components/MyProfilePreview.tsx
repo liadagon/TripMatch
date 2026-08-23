@@ -25,6 +25,10 @@ import {
 } from "../utils/profileNavigation";
 import type { ProfilePreviewUser } from "../services/authService";
 import { getTripLocationLabel } from "./TripLocationPicker";
+import {
+  getAuthenticatedIdentity,
+  getAuthenticatedProfilePhotos,
+} from "../utils/authenticatedIdentity";
 import "./MyProfilePreview.css";
 
 type DetailItem = {
@@ -355,9 +359,18 @@ export default function MyProfilePreview() {
 
   if (!user) return null;
 
+  const identity = getAuthenticatedIdentity(user);
+  const authenticatedProfile = {
+    ...user,
+    name: identity.name,
+    photo: "",
+    photoURL: identity.photoURL,
+    photos: getAuthenticatedProfilePhotos(user),
+  };
+
   return (
     <ProfilePreviewView
-      profile={user}
+      profile={authenticatedProfile}
       backLabel="חזרה לפרופיל"
       onBack={() =>
         navigate(parentProfile, { replace: true, state: parentState })
