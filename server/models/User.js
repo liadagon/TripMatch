@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const { sanitizeUserPhotoFields } = require("../utils/profilePhotos");
 
 const hideNonDefaultUserVirtuals = (_doc, ret) => {
   delete ret.password;
   delete ret.matches;
+  delete ret.registrationFlowVersion;
+  sanitizeUserPhotoFields(ret);
   return ret;
 };
 
@@ -205,7 +208,10 @@ const userSchema = new mongoose.Schema(
       virtuals: true,
       transform: hideNonDefaultUserVirtuals,
     },
-    toObject: { virtuals: true },
+    toObject: {
+      virtuals: true,
+      transform: hideNonDefaultUserVirtuals,
+    },
   }
 );
 

@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "audit:registration-state": "node scripts/auditRegistrationState.js",
+    "diagnose:returning-google": "node scripts/diagnoseReturningGoogleUser.js",
+    "cleanup:google-avatars": "node scripts/removeImportedGoogleAvatars.js",
     "setup:paypal-boost": "node scripts/setupPayPalBoostPlan.js",
     "verify:brevo-email": "node scripts/verifyBrevoEmail.js",
     "verify:email-otp": "node scripts/verifyEmailOtpFlow.js",
@@ -13,6 +16,7 @@
     "verify:google-auth": "node scripts/verifyGoogleAuthFlow.js",
     "verify:onboarding": "node scripts/verifyOnboardingFlow.js",
     "verify:onboarding-mongo": "node scripts/verifyOnboardingMongo.js",
+    "verify:registration-architecture": "node scripts/verifyRegistrationArchitecture.js",
     "verify:registration-mongo": "node scripts/verifyRegistrationMongo.js",
     "verify:account-deletion": "node scripts/verifyAccountDeletionFlow.js",
     "verify:account-deletion-mongo": "node scripts/verifyAccountDeletionMongo.js",

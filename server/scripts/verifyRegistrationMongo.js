@@ -66,6 +66,7 @@ async function run() {
     });
     userIds.push(currentUser._id);
     assert.equal(getRegistrationState(currentUser).nextRegistrationStep, "photos");
+    assert.equal(normalizeAuthenticatedUser(currentUser).photoURL, "");
 
     const storedImage = await storeProfileImage({
       buffer: Buffer.from("registration-owned-profile-image"),
@@ -119,11 +120,13 @@ async function run() {
     const legacyState = normalizeAuthenticatedUser(legacyUser);
     assert.equal(legacyState.registrationComplete, true);
     assert.equal(legacyState.nextRegistrationStep, null);
+    assert.equal(legacyState.photoURL, "");
 
     console.log("Registration MongoDB verification passed", {
       durableMarkerPersisted: true,
       jwtRestorationRegistered: true,
       historicalAccountCompatible: true,
+      providerAvatarFiltered: true,
       appOwnedPhotoPreserved: true,
     });
   } finally {

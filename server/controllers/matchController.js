@@ -4,6 +4,7 @@ const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 const ensureConversation = require("../utils/ensureConversation");
+const { getAppOwnedPhotoUrls } = require("../utils/profilePhotos");
 const {
   RELEVANCE_RADIUS_KM,
   approximateCoordinates,
@@ -104,12 +105,13 @@ const getMatchesMap = async (req, res, next) => {
         matchedUser.tripLocation,
         matchedUser._id
       );
+      const [photoURL = ""] = getAppOwnedPhotoUrls(matchedUser);
 
       return [
         {
           userId: matchedUser._id,
           name: matchedUser.name,
-          photoURL: matchedUser.photoURL || matchedUser.photo || "",
+          photoURL,
           destinationLabel: getDestinationLabel(matchedUser.tripLocation),
           latitude: approximatePosition.latitude,
           longitude: approximatePosition.longitude,

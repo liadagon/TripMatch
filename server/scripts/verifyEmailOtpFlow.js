@@ -443,6 +443,7 @@ async function run() {
   assert.equal(existingVerification.response.body.data._id, googleUser._id);
   assert.equal(existingVerification.response.body.nextOnboardingStep, null);
   assert.equal(existingVerification.response.body.registrationComplete, true);
+  assert.equal(existingVerification.response.body.data.photoURL, "");
   assert.equal(googleUser.emailVerified, true);
   assert.equal(googleUser.firebaseUid, "existing-google-uid");
   assert.equal(googleUser.questionnaire.planningStyle, "planned");

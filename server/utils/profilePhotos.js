@@ -23,7 +23,19 @@ function getAppOwnedPhotoUrls(user) {
   return [...new Set(candidates.filter(isAppOwnedPhotoUrl))];
 }
 
+function sanitizeUserPhotoFields(user) {
+  if (!user || typeof user !== "object") return user;
+  const appPhotos = getAppOwnedPhotoUrls(user);
+  user.photoURL = isAppOwnedPhotoUrl(user.photoURL)
+    ? user.photoURL
+    : appPhotos[0] || "";
+  user.photo = isAppOwnedPhotoUrl(user.photo) ? user.photo : "";
+  user.photos = appPhotos;
+  return user;
+}
+
 module.exports = {
   getAppOwnedPhotoUrls,
   isAppOwnedPhotoUrl,
+  sanitizeUserPhotoFields,
 };

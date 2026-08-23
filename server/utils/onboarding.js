@@ -5,7 +5,10 @@ const QUESTIONNAIRE_FIELDS = [
   "companionPriority",
   "dealBreaker",
 ];
-const { getAppOwnedPhotoUrls } = require("./profilePhotos");
+const {
+  getAppOwnedPhotoUrls,
+  sanitizeUserPhotoFields,
+} = require("./profilePhotos");
 
 const CURRENT_REGISTRATION_FLOW_VERSION = 2;
 
@@ -115,6 +118,7 @@ function normalizeAuthenticatedUser(user) {
     typeof user?.toJSON === "function" ? user.toJSON() : { ...user };
   delete serialized.password;
   delete serialized.registrationFlowVersion;
+  sanitizeUserPhotoFields(serialized);
 
   return {
     ...serialized,

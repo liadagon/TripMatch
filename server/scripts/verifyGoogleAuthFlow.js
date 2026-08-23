@@ -363,6 +363,7 @@ async function verifyGoogleAuthFlow() {
   assert.equal(linkedEmailUser.response.body.data._id, emailFirstUser._id);
   assert.equal(linkedEmailUser.response.body.nextOnboardingStep, null);
   assert.equal(linkedEmailUser.response.body.registrationComplete, true);
+  assert.equal(linkedEmailUser.response.body.data.photoURL, "");
   assert.equal(emailFirstUser.firebaseUid, verifiedToken.uid);
   assert.equal(emailFirstUser.questionnaire.planningStyle, "planned");
   assert.equal(
