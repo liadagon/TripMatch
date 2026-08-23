@@ -293,8 +293,22 @@ async function run() {
   assert.equal(newVerification.response.body.isNewUser, true);
   assert.equal(newVerification.response.body.data.authProvider, "email");
   assert.equal(newVerification.response.body.data.emailVerified, true);
+  assert.equal(newVerification.response.body.onboardingComplete, false);
+  assert.equal(newVerification.response.body.nextOnboardingStep, "photos");
   assert.equal(userCreateCount, 1);
   assert.equal(users.length, 1);
+
+  const initialProtectedRequest = await invoke(protect, {
+    headers: {
+      authorization: `Bearer ${newVerification.response.body.token}`,
+    },
+  });
+  const initialRestoredUser = await invoke(
+    getCurrentUser,
+    initialProtectedRequest.request,
+  );
+  assert.equal(initialRestoredUser.response.body.onboardingComplete, false);
+  assert.equal(initialRestoredUser.response.body.nextOnboardingStep, "photos");
 
   const reusedCode = await verifyCode(newEmail, newCode);
   assert.equal(reusedCode.response.statusCode, 400);
@@ -302,6 +316,8 @@ async function run() {
 
   const usersAfterNewRegistration = users.length;
   const createsAfterNewRegistration = userCreateCount;
+  users[0].photoURL = "http://localhost:5000/api/file/64b000000000000000000002";
+  users[0].photos = ["http://localhost:5000/api/file/64b000000000000000000002"];
   await requestCode(newEmail);
   const repeatedAuthentication = await verifyCode(
     newEmail,
@@ -315,6 +331,36 @@ async function run() {
   );
   assert.equal(users.length, usersAfterNewRegistration);
   assert.equal(userCreateCount, createsAfterNewRegistration);
+  assert.equal(repeatedAuthentication.response.body.onboardingComplete, false);
+  assert.equal(
+    repeatedAuthentication.response.body.nextOnboardingStep,
+    "questionnaire",
+  );
+
+  Object.assign(users[0], {
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
+    questionnaire: {
+      planningStyle: "planned",
+      accommodationPreference: "hotel",
+      companionScope: "whole-trip",
+      companionPriority: "compatibility",
+      dealBreaker: "boundaries",
+    },
+    tripLocation: { city: "Barcelona", country: "Spain" },
+    registrationCompletedAt: new Date(),
+  });
+  await requestCode(newEmail);
+  const completedAuthentication = await verifyCode(
+    newEmail,
+    sentCodes.get(newEmail),
+  );
+  assert.equal(completedAuthentication.response.body.onboardingComplete, true);
+  assert.equal(completedAuthentication.response.body.nextOnboardingStep, null);
+  assert.equal(completedAuthentication.response.body.registrationComplete, true);
+  assert.equal(completedAuthentication.response.body.accountState, "registered");
 
   const existingEmailUser = createUser({
     _id: "existing-email-user",
@@ -372,6 +418,18 @@ async function run() {
     authProvider: "google",
     firebaseUid: "existing-google-uid",
     emailVerified: false,
+    photoURL: "https://example.com/google-photo.jpg",
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
+    questionnaire: {
+      planningStyle: "planned",
+      accommodationPreference: "hotel",
+      companionScope: "whole-trip",
+      companionPriority: "compatibility",
+      dealBreaker: "boundaries",
+    },
   });
   const usersBeforeExistingLogin = users.length;
   const createsBeforeExistingLogin = userCreateCount;
@@ -383,7 +441,11 @@ async function run() {
   assert.equal(existingVerification.response.statusCode, 200);
   assert.equal(existingVerification.response.body.isNewUser, false);
   assert.equal(existingVerification.response.body.data._id, googleUser._id);
+  assert.equal(existingVerification.response.body.nextOnboardingStep, null);
+  assert.equal(existingVerification.response.body.registrationComplete, true);
   assert.equal(googleUser.emailVerified, true);
+  assert.equal(googleUser.firebaseUid, "existing-google-uid");
+  assert.equal(googleUser.questionnaire.planningStyle, "planned");
   assert.equal(users.length, usersBeforeExistingLogin);
   assert.equal(userCreateCount, createsBeforeExistingLogin);
 
@@ -426,13 +488,18 @@ async function run() {
     maxAttempts: 5,
     resendCooldownSeconds: 60,
     newUserCreatedOnce: true,
+    newUserOnboardingIncomplete: true,
+    partialUserResumesAtQuestionnaire: true,
+    completeUserEntersApp: true,
     existingEmailUserReusedAndVerified: true,
     existingGoogleUserReused: true,
+    googleThenEmailPreservesProgress: true,
     duplicateKeyRaceUserReusedAndVerified: true,
     duplicateKeyRaceIdentityPreserved: true,
     duplicateUsersCreated: false,
     wrongExpiredAndReusedCodesRejected: true,
     jwtRestorationPassed: true,
+    durableRegistrationState: true,
     nonGmailValidationPassed: true,
     endpointRateLimitPassed: true,
   });

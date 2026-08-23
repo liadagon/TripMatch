@@ -145,10 +145,40 @@ async function verifyGoogleAuthFlow() {
   assert.equal(createCount, 1);
   assert.equal(users[0].email, "traveler@example.com");
   assert.equal(users[0].firebaseUid, verifiedToken.uid);
+  assert.equal(users[0].emailVerified, true);
+  assert.equal(users[0].photoURL, "");
+  assert.deepEqual(users[0].photos, []);
+  assert.equal(firstLogin.response.body.data.photoURL, "");
+  assert.equal(firstLogin.response.body.registrationComplete, false);
+  assert.equal(firstLogin.response.body.registrationInProgress, true);
+  assert.equal(firstLogin.response.body.nextRegistrationStep, "photos");
+  assert.equal(firstLogin.response.body.accountState, "new_registration");
+  assert.equal(firstLogin.response.body.onboardingComplete, false);
+  assert.equal(firstLogin.response.body.nextOnboardingStep, "photos");
+
+  const initialProtectedRequest = await invoke(protect, {
+    headers: {
+      authorization: `Bearer ${firstLogin.response.body.token}`,
+    },
+  });
+  const initialRestoredUser = await invoke(
+    getCurrentUser,
+    initialProtectedRequest.request,
+  );
+  assert.equal(initialRestoredUser.response.body.onboardingComplete, false);
+  assert.equal(
+    initialRestoredUser.response.body.nextOnboardingStep,
+    "photos",
+  );
 
   Object.assign(users[0], {
+    photoURL: "http://localhost:5000/api/file/64b000000000000000000001",
+    photos: ["http://localhost:5000/api/file/64b000000000000000000001"],
     bio: "Persisted Google profile",
-    tripLocation: { city: "Barcelona", country: "Spain" },
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
     questionnaire: {
       planningStyle: "planned",
       accommodationPreference: "hotel",
@@ -158,6 +188,17 @@ async function verifyGoogleAuthFlow() {
     },
   });
 
+  const partialLogin = await invoke(googleLogin, {
+    body: { idToken: "mock-firebase-id-token" },
+  });
+  assert.equal(partialLogin.response.body.onboardingComplete, false);
+  assert.equal(partialLogin.response.body.nextOnboardingStep, "profile");
+
+  users[0].tripLocation = { city: "Barcelona", country: "Spain" };
+  users[0].registrationCompletedAt = new Date();
+  verifiedToken.picture = "https://lh3.googleusercontent.com/replacement-avatar";
+  verifiedToken.name = "Provider Replacement Name";
+
   const returningLogin = await invoke(googleLogin, {
     body: { idToken: "mock-firebase-id-token" },
   });
@@ -166,6 +207,16 @@ async function verifyGoogleAuthFlow() {
   assert.equal(returningLogin.response.body.isNewUser, false);
   assert.equal(returningLogin.response.body.data._id, users[0]._id);
   assert.equal(returningLogin.response.body.data.bio, "Persisted Google profile");
+  assert.equal(returningLogin.response.body.data.name, "Trip Traveler");
+  assert.equal(users[0].name, "Trip Traveler");
+  assert.equal(returningLogin.response.body.onboardingComplete, true);
+  assert.equal(returningLogin.response.body.nextOnboardingStep, null);
+  assert.equal(returningLogin.response.body.registrationComplete, true);
+  assert.equal(returningLogin.response.body.accountState, "registered");
+  assert.equal(
+    returningLogin.response.body.data.photoURL,
+    "http://localhost:5000/api/file/64b000000000000000000001",
+  );
   assert.equal(users.length, 1);
   assert.equal(createCount, 1);
 
@@ -193,11 +244,26 @@ async function verifyGoogleAuthFlow() {
   assert.equal(restoredUser.response.statusCode, 200);
   assert.equal(restoredUser.response.body.data._id, users[0]._id);
   assert.equal(restoredUser.response.body.data.bio, "Persisted Google profile");
+  assert.equal(restoredUser.response.body.registrationComplete, true);
 
   const legacyGoogleUser = createUserDocument({
     name: "Legacy Traveler",
     email: "legacy@example.com",
     authProvider: "google",
+    photoURL: "http://localhost:5000/api/file/64b000000000000000000006",
+    photos: ["http://localhost:5000/api/file/64b000000000000000000006"],
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
+    questionnaire: {
+      planningStyle: "planned",
+      accommodationPreference: "hotel",
+      companionScope: "whole-trip",
+      companionPriority: "compatibility",
+      dealBreaker: "boundaries",
+    },
+    tripLocation: { city: "Barcelona", country: "Spain" },
   });
   const createdBeforeLegacyLogin = createCount;
   verifiedToken = {
@@ -213,24 +279,96 @@ async function verifyGoogleAuthFlow() {
   assert.equal(legacyLogin.response.body.isNewUser, false);
   assert.equal(legacyLogin.response.body.data._id, legacyGoogleUser._id);
   assert.equal(legacyGoogleUser.firebaseUid, verifiedToken.uid);
+  assert.equal(legacyLogin.response.body.registrationComplete, true);
+  assert.equal(legacyLogin.response.body.registrationInProgress, false);
+  assert.equal(legacyLogin.response.body.nextRegistrationStep, null);
+  assert.equal(legacyLogin.response.body.accountState, "registered");
   assert.equal(createCount, createdBeforeLegacyLogin);
 
-  createUserDocument({
-    name: "Local User",
-    email: "local@example.com",
-    authProvider: "local",
+  const partialLegacyGoogleUser = createUserDocument({
+    name: "Partial Legacy Traveler",
+    email: "partial-legacy@example.com",
+    authProvider: "google",
+    photoURL: "http://localhost:5000/api/file/64b000000000000000000007",
+    photos: ["http://localhost:5000/api/file/64b000000000000000000007"],
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
+    questionnaire: {
+      planningStyle: "planned",
+      accommodationPreference: "hotel",
+      companionScope: "whole-trip",
+      companionPriority: "compatibility",
+      dealBreaker: "",
+    },
+    tripLocation: { city: "Barcelona", country: "Spain" },
   });
   verifiedToken = {
-    uid: "local-email-google-uid",
-    email: "local@example.com",
+    uid: "partial-legacy-firebase-user",
+    email: "partial-legacy@example.com",
     email_verified: true,
   };
 
-  const providerConflict = await invoke(googleLogin, {
+  const partialLegacyLogin = await invoke(googleLogin, {
     body: { idToken: "mock-firebase-id-token" },
   });
-  assert.equal(providerConflict.response.statusCode, 400);
-  assert.equal(providerConflict.response.body.success, false);
+  assert.equal(partialLegacyLogin.response.body.isNewUser, false);
+  assert.equal(partialLegacyLogin.response.body.data._id, partialLegacyGoogleUser._id);
+  assert.equal(partialLegacyLogin.response.body.registrationComplete, false);
+  assert.equal(partialLegacyLogin.response.body.nextRegistrationStep, "questionnaire");
+
+  verifiedToken = {
+    uid: "google-without-photo-uid",
+    email: "google-without-photo@example.com",
+    email_verified: true,
+    name: "No Photo Traveler",
+  };
+  const googleWithoutPhoto = await invoke(googleLogin, {
+    body: { idToken: "mock-firebase-id-token" },
+  });
+  assert.equal(googleWithoutPhoto.response.body.isNewUser, true);
+  assert.equal(googleWithoutPhoto.response.body.onboardingComplete, false);
+  assert.equal(googleWithoutPhoto.response.body.nextOnboardingStep, "photos");
+
+  const emailFirstUser = createUserDocument({
+    name: "Email First User",
+    email: "email-first@example.com",
+    authProvider: "email",
+    emailVerified: true,
+    photoURL: "https://lh3.googleusercontent.com/imported-avatar",
+    preferredDestinations: ["Europe"],
+    tripDates: "summer",
+    budget: "medium",
+    travelStyle: "cities",
+    questionnaire: {
+      planningStyle: "planned",
+      accommodationPreference: "hotel",
+      companionScope: "whole-trip",
+      companionPriority: "compatibility",
+      dealBreaker: "boundaries",
+    },
+  });
+  verifiedToken = {
+    uid: "email-first-google-uid",
+    email: "email-first@example.com",
+    email_verified: true,
+  };
+
+  const linkedEmailUser = await invoke(googleLogin, {
+    body: { idToken: "mock-firebase-id-token" },
+  });
+  assert.equal(linkedEmailUser.response.statusCode, 200);
+  assert.equal(linkedEmailUser.response.body.isNewUser, false);
+  assert.equal(linkedEmailUser.response.body.data._id, emailFirstUser._id);
+  assert.equal(linkedEmailUser.response.body.nextOnboardingStep, null);
+  assert.equal(linkedEmailUser.response.body.registrationComplete, true);
+  assert.equal(emailFirstUser.firebaseUid, verifiedToken.uid);
+  assert.equal(emailFirstUser.questionnaire.planningStyle, "planned");
+  assert.equal(
+    users.filter((user) => user.email === emailFirstUser.email).length,
+    1,
+  );
 
   assert.equal(
     googleLoginSchema.validate({ idToken: "mock-firebase-id-token" }).error,
@@ -249,7 +387,18 @@ async function verifyGoogleAuthFlow() {
     returningUserReused: true,
     repeatedLoginDuplicates: false,
     legacyGoogleEmailLinked: true,
+    legacyCompleteGoogleUserEntersApp: true,
+    genuinelyIncompleteLegacyGoogleUserRemainsPartial: true,
+    emailThenGoogleReusesUserAndProgress: true,
+    newUserOnboardingIncomplete: true,
+    missingGooglePhotoRequiresPhotoStep: true,
+    partialUserResumesAtProfile: true,
+    completeUserEntersApp: true,
     currentUserRestoredFromJwt: true,
+    providerAvatarNeverPersisted: true,
+    providerNameDoesNotOverwriteAppName: true,
+    existingAppPhotoPreserved: true,
+    durableRegistrationState: true,
     validationPassed: true,
   });
 }

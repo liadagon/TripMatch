@@ -7,6 +7,7 @@ const {
   clearConversationForCurrentUser,
 } = require("../controllers/conversationController");
 const protect = require("../middleware/auth");
+const requireOnboardingComplete = require("../middleware/requireOnboardingComplete");
 const validate = require("../middleware/validate");
 const validateParams = require("../middleware/validateParams");
 const {
@@ -20,7 +21,7 @@ const {
 
 const router = express.Router();
 
-router.use(protect);
+router.use(protect, requireOnboardingComplete);
 router.get("/", listConversations);
 router.get(
   "/with/:userId",

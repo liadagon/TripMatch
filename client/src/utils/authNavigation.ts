@@ -15,53 +15,73 @@ export const EXISTING_ACCOUNT_CONFIRMATION = {
 type ProfileCompletionPath =
   | "/photo-upload"
   | "/questionnaire"
-  | "/profile"
+  | "/profile/setup"
   | "/discover";
 
-const questionnaireFields: Array<keyof NonNullable<AuthUser["questionnaire"]>> = [
-  "planningStyle",
-  "accommodationPreference",
-  "companionScope",
-  "companionPriority",
-  "dealBreaker",
+export type OnboardingPath =
+  | "/photo-upload"
+  | "/questionnaire"
+  | "/profile/setup";
+
+export const ONBOARDING_PATHS: readonly OnboardingPath[] = [
+  "/photo-upload",
+  "/questionnaire",
+  "/profile/setup",
 ];
-
-function hasProfilePhoto(user: AuthUser) {
-  return Boolean(
-    user.photoURL?.trim() ||
-      user.photo?.trim() ||
-      user.photos?.some((photo) => photo.trim()),
-  );
-}
-
-function hasCompletedQuestionnaire(user: AuthUser) {
-  return questionnaireFields.every((field) =>
-    Boolean(user.questionnaire?.[field]?.trim()),
-  );
-}
 
 export function getProfileCompletionPath(
   user: AuthUser,
 ): ProfileCompletionPath {
-  if (user.authProvider === "google" && !hasProfilePhoto(user)) {
-    return "/photo-upload";
-  }
+  if (user.registrationComplete) return "/discover";
 
-  if (!hasCompletedQuestionnaire(user)) {
-    return "/questionnaire";
-  }
+  const stepRoutes = {
+    photos: "/photo-upload",
+    questionnaire: "/questionnaire",
+    profile: "/profile/setup",
+  } as const;
 
-  if (!user.tripLocation) {
-    return "/profile";
-  }
-
-  return "/discover";
+  return user.nextRegistrationStep
+    ? stepRoutes[user.nextRegistrationStep]
+    : "/photo-upload";
 }
 
 export function getAuthenticationPath(result: AuthenticationResult) {
-  return result.isNewUser
+  const completionPath = getProfileCompletionPath(result.user);
+  return result.isNewUser && completionPath !== "/discover"
     ? "/post-login-welcome"
-    : getProfileCompletionPath(result.user);
+    : completionPath;
+}
+
+export function getOnboardingRouteRedirect(
+  user: AuthUser,
+  pathname: string,
+  options: { allowIncomplete?: boolean; onboardingOnly?: boolean } = {},
+) {
+  if (!user.registrationComplete) {
+    const nextOnboardingPath = getProfileCompletionPath(user);
+    const isWelcome = pathname === "/post-login-welcome";
+    const requestedStepIndex = ONBOARDING_PATHS.indexOf(
+      pathname as OnboardingPath,
+    );
+    const requiredStepIndex = ONBOARDING_PATHS.indexOf(
+      nextOnboardingPath as OnboardingPath,
+    );
+    const isAccessibleOnboardingStep =
+      options.allowIncomplete &&
+      requestedStepIndex >= 0 &&
+      requestedStepIndex <= requiredStepIndex;
+
+    if (
+      !options.allowIncomplete ||
+      (!isWelcome && !isAccessibleOnboardingStep)
+    ) {
+      return nextOnboardingPath;
+    }
+
+    return null;
+  }
+
+  return options.onboardingOnly ? "/discover" : null;
 }
 
 export const getGoogleLoginPath = getAuthenticationPath;

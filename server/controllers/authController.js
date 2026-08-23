@@ -6,11 +6,34 @@ const {
   consumeEmailOtp,
   requestEmailOtp,
 } = require("../services/emailOtpService");
+const {
+  CURRENT_REGISTRATION_FLOW_VERSION,
+  normalizeAuthenticatedUser,
+} = require("../utils/onboarding");
 
 const createToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
+
+const getAuthenticatedUserPayload = (user, { isNewUser = false } = {}) => {
+  const data = normalizeAuthenticatedUser(user);
+
+  return {
+    data,
+    authenticated: true,
+    registrationComplete: data.registrationComplete,
+    registrationInProgress: data.registrationInProgress,
+    nextRegistrationStep: data.nextRegistrationStep,
+    accountState: isNewUser
+      ? "new_registration"
+      : data.registrationComplete
+        ? "registered"
+        : "registration_in_progress",
+    onboardingComplete: data.onboardingComplete,
+    nextOnboardingStep: data.nextOnboardingStep,
+  };
+};
 
 const register = async (req, res, next) => {
   try {
@@ -23,14 +46,17 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await User.create(req.body);
+    const user = await User.create({
+      ...req.body,
+      registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
+    });
     const token = createToken(user._id);
 
     return res.status(201).json({
       success: true,
       message: "Registration completed successfully",
       token,
-      data: user,
+      ...getAuthenticatedUserPayload(user, { isNewUser: true }),
     });
   } catch (error) {
     return next(error);
@@ -61,7 +87,7 @@ const login = async (req, res, next) => {
       success: true,
       message: "Login completed successfully",
       token,
-      data: user,
+      ...getAuthenticatedUserPayload(user),
     });
   } catch (error) {
     return next(error);
@@ -142,24 +168,8 @@ const googleLogin = async (req, res, next) => {
     let user = await User.findOne({ firebaseUid });
     let isNewUser = false;
 
-    if (user && user.authProvider !== "google") {
-      return res.status(400).json({
-        success: false,
-        message:
-          "This email is already registered with another login method",
-      });
-    }
-
     if (!user) {
       const existingUser = await User.findOne({ email });
-
-      if (existingUser && existingUser.authProvider !== "google") {
-        return res.status(400).json({
-          success: false,
-          message:
-            "This email is already registered with another login method",
-        });
-      }
 
       if (existingUser) {
         if (
@@ -174,26 +184,26 @@ const googleLogin = async (req, res, next) => {
         }
 
         existingUser.firebaseUid = firebaseUid;
+        existingUser.emailVerified = true;
         user = await existingUser.save();
       } else {
         const verifiedName =
           typeof verifiedToken.name === "string"
             ? verifiedToken.name.trim()
             : "";
-        const verifiedPhoto =
-          typeof verifiedToken.picture === "string"
-            ? verifiedToken.picture.trim()
-            : "";
-
         user = await User.create({
           name: verifiedName || email.split("@")[0],
           email,
-          photoURL: verifiedPhoto,
           authProvider: "google",
+          emailVerified: true,
           firebaseUid,
+          registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
         });
         isNewUser = true;
       }
+    } else if (!user.emailVerified) {
+      user.emailVerified = true;
+      user = await user.save();
     }
 
     let token;
@@ -212,10 +222,10 @@ const googleLogin = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: isNewUser
-        ? "Google registration completed successfully"
-        : "Google login completed successfully",
+        ? "Google authentication succeeded; complete onboarding to finish registration"
+        : "Google authentication completed successfully",
       token,
-      data: user,
+      ...getAuthenticatedUserPayload(user, { isNewUser }),
       isNewUser,
     });
   } catch (error) {
@@ -290,6 +300,7 @@ async function findOrCreateVerifiedEmailUser(email) {
       email,
       authProvider: "email",
       emailVerified: true,
+      registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
     });
     isNewUser = true;
   } catch (error) {
@@ -326,10 +337,10 @@ const verifyEmailCode = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: isNewUser
-        ? "Email registration completed successfully"
-        : "Email login completed successfully",
+        ? "Email authentication succeeded; complete onboarding to finish registration"
+        : "Email authentication completed successfully",
       token,
-      data: user,
+      ...getAuthenticatedUserPayload(user, { isNewUser }),
       isNewUser,
     });
   } catch (error) {
@@ -348,7 +359,7 @@ const verifyEmailCode = async (req, res, next) => {
 const getCurrentUser = (req, res) =>
   res.status(200).json({
     success: true,
-    data: req.user,
+    ...getAuthenticatedUserPayload(req.user),
   });
 
 module.exports = {

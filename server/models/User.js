@@ -75,6 +75,13 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       trim: true,
     },
+    registrationFlowVersion: {
+      type: Number,
+      min: 1,
+    },
+    registrationCompletedAt: {
+      type: Date,
+    },
     password: {
       type: String,
       required: function requirePasswordForLocalUser() {

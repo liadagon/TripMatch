@@ -28,13 +28,16 @@ import { useAuth } from "./context/AuthContext";
 
 const MatchesMap = lazy(() => import("./Components/MatchesMap"));
 
-const protectedPage = (page: ReactNode) => (
-  <ProtectedRoute>{page}</ProtectedRoute>
+const protectedPage = (
+  page: ReactNode,
+  options: { allowIncomplete?: boolean; onboardingOnly?: boolean } = {},
+) => (
+  <ProtectedRoute {...options}>{page}</ProtectedRoute>
 );
 
 export default function App() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const isApplicationScreen =
     location.pathname === "/discover" ||
@@ -58,14 +61,26 @@ export default function App() {
         <Route path="/email-otp" element={<EmailOtpRequest />} />
         <Route path="/email-otp/verify" element={<EmailOtpVerify />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/post-login-welcome" element={<PostLoginWelcome />} />
+        <Route
+          path="/post-login-welcome"
+          element={protectedPage(<PostLoginWelcome />, {
+            allowIncomplete: true,
+            onboardingOnly: true,
+          })}
+        />
         <Route
           path="/photo-upload"
-          element={protectedPage(<PhotoUpload />)}
+          element={protectedPage(<PhotoUpload />, {
+            allowIncomplete: true,
+            onboardingOnly: true,
+          })}
         />
         <Route
           path="/questionnaire"
-          element={protectedPage(<Questionnaire />)}
+          element={protectedPage(<Questionnaire />, {
+            allowIncomplete: true,
+            onboardingOnly: true,
+          })}
         />
 
         {/* App routes */}
@@ -91,6 +106,13 @@ export default function App() {
         />
         <Route path="/chat" element={<Navigate to="/matches" replace />} />
         <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
+        <Route
+          path="/profile/setup"
+          element={protectedPage(<Profile />, {
+            allowIncomplete: true,
+            onboardingOnly: true,
+          })}
+        />
         <Route path="/profile" element={protectedPage(<Profile />)} />
         <Route path="/blocked-users" element={protectedPage(<BlockedUsers />)} />
         <Route
@@ -106,7 +128,9 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      {isAuthenticated && isApplicationScreen && <NavigationBar />}
+      {isAuthenticated && user?.registrationComplete && isApplicationScreen && (
+        <NavigationBar />
+      )}
     </>
   );
 }

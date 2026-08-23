@@ -28,6 +28,11 @@ export type AuthUser = {
     companionPriority: string;
     dealBreaker: string;
   };
+  onboardingComplete: boolean;
+  nextOnboardingStep: "photos" | "questionnaire" | "profile" | null;
+  registrationComplete: boolean;
+  registrationInProgress: boolean;
+  nextRegistrationStep: "photos" | "questionnaire" | "profile" | null;
 };
 
 export type PublicUser = Pick<
@@ -77,6 +82,13 @@ export type GoogleLoginResponse = {
   token: string;
   data: AuthUser;
   isNewUser: boolean;
+  onboardingComplete: boolean;
+  nextOnboardingStep: AuthUser["nextOnboardingStep"];
+  authenticated: true;
+  registrationComplete: boolean;
+  registrationInProgress: boolean;
+  nextRegistrationStep: AuthUser["nextRegistrationStep"];
+  accountState: "new_registration" | "registration_in_progress" | "registered";
 };
 
 export type AuthenticationResult = {
@@ -100,6 +112,13 @@ export type EmailLoginResponse = {
   message: string;
   token: string;
   data: AuthUser;
+  onboardingComplete: boolean;
+  nextOnboardingStep: AuthUser["nextOnboardingStep"];
+  authenticated: true;
+  registrationComplete: boolean;
+  registrationInProgress: boolean;
+  nextRegistrationStep: AuthUser["nextRegistrationStep"];
+  accountState: "new_registration" | "registration_in_progress" | "registered";
 };
 
 export type RegisterPayload = {
@@ -120,6 +139,13 @@ export type RegisterPayload = {
 type CurrentUserResponse = {
   success: true;
   data: AuthUser;
+  onboardingComplete: boolean;
+  nextOnboardingStep: AuthUser["nextOnboardingStep"];
+  authenticated: true;
+  registrationComplete: boolean;
+  registrationInProgress: boolean;
+  nextRegistrationStep: AuthUser["nextRegistrationStep"];
+  accountState: "registration_in_progress" | "registered";
 };
 
 export const googleLogin = (idToken: string) =>

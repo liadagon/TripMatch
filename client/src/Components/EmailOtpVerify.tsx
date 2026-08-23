@@ -82,6 +82,9 @@ export default function EmailOtpVerify() {
   >(null);
   const codeValue = useMemo(() => code.join(""), [code]);
   const isCodeComplete = /^\d{6}$/.test(codeValue);
+  const isPendingOnboarding =
+    pendingLoginDestination !== null &&
+    pendingLoginDestination !== "/discover";
 
   useEffect(() => {
     if (!email) {
@@ -276,8 +279,14 @@ export default function EmailOtpVerify() {
               <div className="email-otp-success-icon" aria-hidden="true">
                 ✓
               </div>
-              <h1>התחברת בהצלחה</h1>
-              <p className="email-otp-subtitle">עוד רגע ואת בפנים...</p>
+              <h1>
+                {isPendingOnboarding ? "האימות הצליח" : "התחברת בהצלחה"}
+              </h1>
+              <p className="email-otp-subtitle">
+                {isPendingOnboarding
+                  ? "נשארו עוד כמה שלבים להשלמת הפרופיל"
+                  : "עוד רגע ואת בפנים..."}
+              </p>
               <div className="email-otp-success-loader" aria-hidden="true">
                 <span />
                 <span />

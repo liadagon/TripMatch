@@ -6,6 +6,10 @@ const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 const { hasBoostAccess } = require("../utils/subscriptionEntitlement");
 const {
+  markRegistrationCompleteIfEligible,
+  normalizeAuthenticatedUser,
+} = require("../utils/onboarding");
+const {
   compareDiscoverCandidates,
   getDiscoverRankingScore,
 } = require("../utils/discoverRanking");
@@ -254,12 +258,19 @@ const updateCurrentUser = async (req, res, next) => {
       }
     });
 
+    markRegistrationCompleteIfEligible(user);
     await user.save();
+    const data = normalizeAuthenticatedUser(user);
 
     return res.status(200).json({
       success: true,
       message: "User updated successfully",
-      data: user,
+      data,
+      registrationComplete: data.registrationComplete,
+      registrationInProgress: data.registrationInProgress,
+      nextRegistrationStep: data.nextRegistrationStep,
+      onboardingComplete: data.onboardingComplete,
+      nextOnboardingStep: data.nextOnboardingStep,
     });
   } catch (error) {
     return next(error);
