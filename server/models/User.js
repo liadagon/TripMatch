@@ -158,6 +158,38 @@ const userSchema = new mongoose.Schema(
       companionPriority: { type: String, default: "" },
       dealBreaker: { type: String, default: "" },
     },
+    subscriptionPlan: {
+      type: String,
+      enum: ["free", "boost"],
+      default: "free",
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: [
+        "none",
+        "approval_pending",
+        "approved",
+        "active",
+        "suspended",
+        "cancelled",
+        "expired",
+        "payment_failed",
+      ],
+      default: "none",
+    },
+    paypalSubscriptionId: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
+    },
+    paypalPlanId: {
+      type: String,
+      trim: true,
+    },
+    subscriptionCurrentPeriodEnd: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

@@ -14,12 +14,17 @@ const swipeRoutes = require("./routes/swipeRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const conversationRoutes = require("./routes/conversationRoutes");
 const blockRoutes = require("./routes/blockRoutes");
+const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const apiLimiter = require("./middleware/rateLimiter");
 const requestLogger = require("./middleware/requestLogger");
 const notFound = require("./middleware/notFound");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+
+// TripMatch runs behind exactly one application-facing reverse proxy
+// (cloudflared locally, or the hosting platform proxy in deployment).
+app.set("trust proxy", 1);
 
 app.use(helmet());
 
@@ -53,6 +58,7 @@ app.use("/api/swipes", swipeRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/blocks", blockRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -323,18 +323,85 @@ function activatePayPalPlan(accessToken, planId) {
   });
 }
 
+function createPayPalSubscription(accessToken, subscription, requestId) {
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: "/v1/billing/subscriptions",
+    body: subscription,
+    requestId,
+  });
+}
+
+function getPayPalSubscription(accessToken, subscriptionId) {
+  return requestPayPalApi({
+    accessToken,
+    path: `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`,
+  });
+}
+
+function cancelPayPalSubscription(accessToken, subscriptionId, reason) {
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: `/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`,
+    body: { reason },
+  });
+}
+
+function verifyPayPalWebhookSignature(
+  accessToken,
+  { headers, webhookEvent, webhookId },
+) {
+  const requiredHeaders = {
+    auth_algo: headers?.["paypal-auth-algo"],
+    cert_url: headers?.["paypal-cert-url"],
+    transmission_id: headers?.["paypal-transmission-id"],
+    transmission_sig: headers?.["paypal-transmission-sig"],
+    transmission_time: headers?.["paypal-transmission-time"],
+  };
+  const missingHeader = Object.entries(requiredHeaders).find(
+    ([, value]) => typeof value !== "string" || !value.trim(),
+  );
+
+  if (missingHeader) {
+    throw new PayPalConfigurationError(
+      `PayPal webhook signature header is missing: ${missingHeader[0]}`,
+    );
+  }
+
+  if (!webhookId?.trim()) {
+    throw new PayPalConfigurationError("PAYPAL_WEBHOOK_ID is required");
+  }
+
+  return requestPayPalApi({
+    accessToken,
+    method: "POST",
+    path: "/v1/notifications/verify-webhook-signature",
+    body: {
+      ...requiredHeaders,
+      webhook_id: webhookId.trim(),
+      webhook_event: webhookEvent,
+    },
+  });
+}
+
 module.exports = {
   PAYPAL_SANDBOX_BASE_URL,
   PayPalApiError,
   PayPalConfigurationError,
   PayPalOAuthError,
   activatePayPalPlan,
+  cancelPayPalSubscription,
   createPayPalPlan,
   createPayPalProduct,
+  createPayPalSubscription,
   getPayPalPlan,
   getPayPalProduct,
+  getPayPalSubscription,
   getPayPalConfigurationStatus,
   listPayPalPlans,
   listPayPalProducts,
   requestPayPalAccessToken,
+  verifyPayPalWebhookSignature,
 };

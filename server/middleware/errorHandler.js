@@ -2,8 +2,13 @@ const errorHandler = (err, req, res, next) => {
   let message = err.message || "Internal server error";
 
   if (err.code === 11000) {
-    err.statusCode = 400;
-    message = "A user with this email already exists";
+    if (err.keyPattern?.paypalSubscriptionId) {
+      err.statusCode = 409;
+      message = "This PayPal subscription is already linked to another user";
+    } else {
+      err.statusCode = 400;
+      message = "A user with this email already exists";
+    }
   } else if (err instanceof SyntaxError && err.status === 400) {
     err.statusCode = 400;
     message = "Invalid JSON request";
