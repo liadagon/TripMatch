@@ -39,10 +39,8 @@ import {
 } from "../utils/profileNavigation";
 import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
-import { getPreviousOnboardingPath } from "../utils/authNavigation";
 import {
   getAuthenticatedIdentity,
-  getAuthenticatedProfilePhotos,
 } from "../utils/authenticatedIdentity";
 import {
   PROFILE_OPTIONS,
@@ -421,9 +419,8 @@ export default function Profile() {
 
   function validateProfileDraft() {
     const errors: ProfileFieldErrors = {};
-    const isRegistrationSetup = location.pathname === "/profile/setup";
     const requireExistingValue = (currentValue: string, nextValue: string) =>
-      isRegistrationSetup || Boolean(currentValue.trim()) || Boolean(nextValue.trim());
+      Boolean(currentValue.trim()) || Boolean(nextValue.trim());
 
     if (draftProfile.name.trim().length < 2) {
       errors.name = "יש להזין שם באורך של לפחות 2 תווים.";
@@ -431,7 +428,7 @@ export default function Profile() {
 
     const normalizedAge = draftProfile.age.trim();
     if (
-      (isRegistrationSetup || Boolean(profile.age.trim()) || Boolean(normalizedAge)) &&
+      (Boolean(profile.age.trim()) || Boolean(normalizedAge)) &&
       (!Number.isInteger(Number(normalizedAge)) ||
         Number(normalizedAge) < 18 ||
         Number(normalizedAge) > 120)
@@ -440,15 +437,7 @@ export default function Profile() {
     }
 
     if (
-      isRegistrationSetup &&
-      !pendingProfileImage &&
-      getAuthenticatedProfilePhotos(user).length === 0
-    ) {
-      errors.photo = "יש להעלות לפחות תמונת פרופיל אחת.";
-    }
-
-    if (
-      (isRegistrationSetup || Boolean(profile.tripLocation) || Boolean(draftProfile.tripLocation)) &&
+      (Boolean(profile.tripLocation) || Boolean(draftProfile.tripLocation)) &&
       !hasValidTripLocation(draftProfile.tripLocation)
     ) {
       errors.tripLocation = "יש לבחור יעד לטיול.";
@@ -482,7 +471,7 @@ export default function Profile() {
     const hasDraftInterests = draftProfile.interests.some(
       (interest) => interest.trim().length > 0,
     );
-    if ((isRegistrationSetup || hasCurrentInterests) && !hasDraftInterests) {
+    if (hasCurrentInterests && !hasDraftInterests) {
       errors.interests = "יש לבחור לפחות תחום עניין אחד.";
     }
 
@@ -613,7 +602,6 @@ export default function Profile() {
         payload.age = Number(normalizedAge);
       }
       if (
-        location.pathname === "/profile/setup" ||
         JSON.stringify(draftProfile.tripLocation) !==
         JSON.stringify(profile.tripLocation)
       ) {
@@ -666,15 +654,6 @@ export default function Profile() {
       setPendingProfileImage(null);
       setIsEditing(false);
       setShowSuccess(true);
-      if (location.pathname === "/profile/setup") {
-        if (updatedUser.registrationComplete) {
-          navigate("/discover", { replace: true });
-          return;
-        }
-
-        setProfileSaveError(REQUIRED_FIELDS_MESSAGE);
-        setIsEditing(true);
-      }
     } catch (error) {
       const backendErrors = getBackendProfileFieldErrors(error);
       if (Object.keys(backendErrors).length > 0) {
@@ -696,11 +675,6 @@ export default function Profile() {
   }
 
   function handleBack() {
-    if (location.pathname === "/profile/setup") {
-      navigate(getPreviousOnboardingPath("/profile/setup"), { replace: true });
-      return;
-    }
-
     navigate(getSafeProfileReturnPath(location.state) || "/discover", {
       replace: true,
     });
@@ -1048,7 +1022,7 @@ export default function Profile() {
                 data-profile-field="age"
                 className={fieldErrors.age ? "profile-field-invalid" : ""}
               >
-                <span>גיל {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <span>גיל</span>
                 <input
                   type="number"
                   min="18"
@@ -1102,7 +1076,7 @@ export default function Profile() {
               </label>
 
               <label data-profile-field="duration" className={fieldErrors.duration ? "profile-field-invalid" : ""}>
-                <span>משך הטיול {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <span>משך הטיול</span>
                 <select
                   value={draftProfile.duration}
                   aria-invalid={Boolean(fieldErrors.duration)}
@@ -1175,7 +1149,7 @@ export default function Profile() {
                     data-profile-field={field}
                     className={fieldErrors[key as ProfileField] ? "profile-field-invalid" : ""}
                   >
-                    <span>{label} {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                    <span>{label}</span>
                     <select
                       value={value}
                       aria-invalid={Boolean(fieldErrors[key as ProfileField])}
@@ -1199,7 +1173,7 @@ export default function Profile() {
                 data-profile-field="photo"
                 className={`profile-photo-picker profile-form-wide ${fieldErrors.photo ? "profile-field-invalid" : ""}`}
               >
-                <span>תמונת פרופיל {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <span>תמונת פרופיל</span>
                 <div className="profile-photo-picker-content">
                   <img
                     src={draftProfile.imageUrl}
@@ -1231,7 +1205,7 @@ export default function Profile() {
                 data-profile-field="interests"
                 className={`profile-interest-picker profile-form-wide ${fieldErrors.interests ? "profile-field-invalid" : ""}`}
               >
-                <legend>תחומי עניין {location.pathname === "/profile/setup" ? "*" : ""}</legend>
+                <legend>תחומי עניין</legend>
                 <div>
                   {PROFILE_OPTIONS.interests.map((interest) => (
                     <button
@@ -1252,7 +1226,7 @@ export default function Profile() {
                 data-profile-field="aboutMe"
                 className={`profile-form-wide ${fieldErrors.aboutMe ? "profile-field-invalid" : ""}`}
               >
-                <span>קצת עליי {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <span>קצת עליי</span>
                 <small className="profile-field-help">ספרו בקצרה על עצמכם – לפחות 20 ועד 300 תווים.</small>
                 <textarea
                   rows={5}

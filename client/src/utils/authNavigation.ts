@@ -19,8 +19,7 @@ type ProfileCompletionPath =
 
 export type OnboardingPath =
   | "/photo-upload"
-  | "/questionnaire"
-  | "/profile/setup";
+  | "/questionnaire";
 
 export const ONBOARDING_PATHS: readonly OnboardingPath[] = [
   "/photo-upload",

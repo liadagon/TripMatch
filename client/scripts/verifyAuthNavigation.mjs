@@ -22,6 +22,10 @@ const existingAccountDialogSource = await read("../src/Components/ExistingAccoun
 const firebaseSource = await read("../src/firebase.ts");
 const authServiceSource = await read("../src/services/authService.ts");
 const emailOtpRequestSource = await read("../src/Components/EmailOtpRequest.tsx");
+const tripLocationPickerSource = await read("../src/Components/TripLocationPicker.tsx");
+const tripLocationPickerCssSource = await read("../src/Components/TripLocationPicker.css");
+const questionnaireCssSource = await read("../src/Components/Questionnaire.css");
+const envExampleSource = await read("../.env.example");
 
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: {
@@ -248,9 +252,41 @@ assert.match(photoUploadSource, /getPreviousOnboardingPath\("\/photo-upload"\)/)
 assert.match(postLoginWelcomeSource, /await logout\(\)/);
 assert.match(postLoginWelcomeSource, /navigate\("\/", \{ replace: true \}\)/);
 assert.match(questionnaireSource, /getPreviousOnboardingPath\("\/questionnaire"\)/);
-assert.match(profileSource, /getPreviousOnboardingPath\("\/profile\/setup"\)/);
-assert.match(profileSource, /location\.pathname === "\/profile\/setup"/);
-assert.match(profileSource, /navigate\("\/discover", \{ replace: true \}\)/);
+assert.match(questionnaireSource, /completeRegistration: true/);
+assert.match(questionnaireSource, /name: form\.name\.trim\(\)/);
+assert.match(questionnaireSource, /age: Number\(form\.age\.trim\(\)\)/);
+assert.match(questionnaireSource, /tripLocation: form\.tripLocation!/);
+assert.match(questionnaireSource, /interests: filterCanonicalInterests\(form\.interests\)/);
+assert.match(questionnaireSource, /bio: form\.bio\.trim\(\)/);
+assert.match(questionnaireSource, /preferredDestinations: \[form\.preferredDestination\]/);
+assert.match(questionnaireSource, /tripDuration: form\.tripDuration/);
+assert.match(questionnaireSource, /dealBreaker: form\.dealBreaker/);
+assert.doesNotMatch(questionnaireSource, /planningStyle/);
+assert.doesNotMatch(profileSource, /planningStyle|profile\/setup/);
+assert.match(questionnaireSource, /<TripLocationPicker/);
+assert.match(tripLocationPickerSource, /import\.meta\.env\.VITE_GEOAPIFY_API_KEY/);
+assert.match(tripLocationPickerSource, /api\.geoapify\.com\/v1\/geocode\/autocomplete/);
+assert.match(tripLocationPickerSource, /onChange\(null\)/);
+assert.match(tripLocationPickerSource, /onChange\(suggestion\)/);
+assert.match(tripLocationPickerSource, /role="listbox"/);
+assert.match(tripLocationPickerSource, /placeId: properties\.place_id/);
+assert.doesNotMatch(tripLocationPickerSource, /apiKey\s*=\s*["'][A-Za-z0-9_-]{20,}["']/);
+assert.match(envExampleSource, /^VITE_GEOAPIFY_API_KEY=$/m);
+assert.match(tripLocationPickerCssSource, /\.trip-location-suggestions\s*\{[\s\S]*position: absolute;[\s\S]*z-index: 30;/);
+assert.match(questionnaireCssSource, /\.questionnaire-section-card,[\s\S]*overflow: visible;/);
+for (const persistedField of [
+  "tripDates",
+  "tripDuration",
+  "preferredDestinations",
+  "budget",
+  "travelStyle",
+  "interests",
+  "questionnaire",
+  "bio",
+]) {
+  assert.match(profileSource, new RegExp(`user\\?\\.${persistedField}`));
+}
+assert.match(profileSource, /payload\.interests = normalizedInterests/);
 assert.match(profileSource, /if \(normalizedAge && normalizedAge !== profile\.age\.trim\(\)\)/);
 assert.match(profileSource, /payload\.age = Number\(normalizedAge\)/);
 assert.match(profileSource, /יש לבחור יעד לטיול\./);
