@@ -14,6 +14,7 @@
     "verify:account-deletion": "node scripts/verifyAccountDeletion.mjs",
     "verify:demo-lifecycle": "node scripts/verifyDemoLifecycle.mjs",
     "verify:matching-consistency": "node scripts/verifyMatchingConsistency.mjs",
+    "verify:matches-map-self": "node scripts/verifyMatchesMapSelfMarker.mjs",
     "verify:gender-copy": "node scripts/verifyGenderedOnboardingCopy.mjs",
     "verify:paypal-boost": "node scripts/verifyPayPalBoostFrontend.mjs",
     "verify:profile-photos": "node scripts/verifyProfilePhotoManagement.mjs",

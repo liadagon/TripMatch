@@ -296,6 +296,8 @@
   width: 62px;
   height: 62px;
   border-width: 4px;
+  outline: 3px solid #0e9fae;
+  outline-offset: 2px;
   background: linear-gradient(135deg, #00b8c7, #20d9ae);
   box-shadow: 0 10px 26px rgba(0, 184, 199, 0.42);
 }

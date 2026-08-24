@@ -16,6 +16,7 @@ import {
   isDemoUserBlocked,
 } from "../services/demoConversationState";
 import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
+import type { TripLocation } from "../types/tripLocation";
 import "leaflet/dist/leaflet.css";
 import "./MatchesMap.css";
 
@@ -23,6 +24,8 @@ import "./MatchesMap.css";
 type DisplayMapMarker = MatchesMapMarker & {
   isDemo: boolean;
 };
+
+type CurrentUserMapMarker = MatchesMapData["me"];
 
 function createDemoMarkers(
   me: NonNullable<MatchesMapData["me"]>,
@@ -80,29 +83,63 @@ function getGeographicDestinationLabel(
   return fallbackParts.slice(-2).join(", ") || fallbackLabel;
 }
 
+function createCurrentUserMapMarker(
+  tripLocation: TripLocation | undefined,
+): CurrentUserMapMarker {
+  if (
+    !tripLocation ||
+    !Number.isFinite(tripLocation.latitude) ||
+    tripLocation.latitude < -90 ||
+    tripLocation.latitude > 90 ||
+    !Number.isFinite(tripLocation.longitude) ||
+    tripLocation.longitude < -180 ||
+    tripLocation.longitude > 180
+  ) {
+    return null;
+  }
+
+  return {
+    latitude: tripLocation.latitude,
+    longitude: tripLocation.longitude,
+    destinationLabel: getGeographicDestinationLabel(
+      tripLocation,
+      tripLocation.formattedAddress || tripLocation.name,
+    ),
+  };
+}
+
 function FitMapBounds({
-  me,
+  currentUser,
   matches,
 }: {
-  me: NonNullable<MatchesMapData["me"]>;
+  currentUser: CurrentUserMapMarker;
   matches: DisplayMapMarker[];
 }) {
   const map = useMap();
 
   useEffect(() => {
-    const bounds = L.latLngBounds([
-      [me.latitude, me.longitude],
+    const positions: [number, number][] = [
+      ...(currentUser
+        ? [[currentUser.latitude, currentUser.longitude] as [number, number]]
+        : []),
       ...matches.map(
         (match) => [match.latitude, match.longitude] as [number, number],
       ),
-    ]);
+    ];
 
-    map.fitBounds(bounds, {
+    if (positions.length === 0) return;
+
+    if (positions.length === 1) {
+      map.setView(positions[0], 11, { animate: false });
+      return;
+    }
+
+    map.fitBounds(L.latLngBounds(positions), {
       padding: [54, 54],
       maxZoom: 13,
       animate: false,
     });
-  }, [map, matches, me.latitude, me.longitude]);
+  }, [currentUser, map, matches]);
 
   return null;
 }
@@ -241,26 +278,20 @@ export default function MatchesMap() {
     [identity.photoURL],
   );
 
-  const destinationLabel = useMemo(
-    () =>
-      data?.me
-        ? getGeographicDestinationLabel(
-            user?.tripLocation,
-            data.me.destinationLabel,
-          )
-        : "",
-    [data?.me, user?.tripLocation],
+  const currentUserMarker = useMemo(
+    () => createCurrentUserMapMarker(user?.tripLocation),
+    [user?.tripLocation],
   );
 
   const demoMatches = useMemo(
     () =>
-      data?.me
-        ? createDemoMarkers(data.me, user?._id)
+      currentUserMarker
+        ? createDemoMarkers(currentUserMarker, user?._id)
         : [],
-    [data?.me, user?._id],
+    [currentUserMarker, user?._id],
   );
   const isDemoMode = Boolean(
-    data?.me && data.matches.length === 0 && demoMatches.length > 0,
+    currentUserMarker && data?.matches.length === 0 && demoMatches.length > 0,
   );
   const realMatches = useMemo<DisplayMapMarker[]>(
     () =>
@@ -268,6 +299,7 @@ export default function MatchesMap() {
     [data?.matches],
   );
   const displayMatches = realMatches.length ? realMatches : demoMatches;
+  const mapCenter = currentUserMarker || displayMatches[0] || null;
 
   const openConversation = useCallback(
     async (match: DisplayMapMarker) => {
@@ -331,7 +363,7 @@ export default function MatchesMap() {
               ניסיון נוסף
             </button>
           </section>
-        ) : !data?.me ? (
+        ) : !data || !mapCenter ? (
           <section className="matches-map-state">
             <MapPin size={42} />
             <h2>עוד לא בחרת יעד לטיול</h2>
@@ -346,40 +378,24 @@ export default function MatchesMap() {
             <h2>שירות המפה עדיין לא הוגדר</h2>
             <p>חסר מפתח Geoapify מקומי. אפשר להמשיך להשתמש בשאר TripMatch.</p>
           </section>
-        ) : displayMatches.length === 0 && data.eligibleMatchCount === 0 ? (
-          <section className="matches-map-state">
-            <UserRound size={42} />
-            <h2>עדיין אין התאמות להצגה</h2>
-            <p>כשיהיו לכם Matches אמיתיים, הם יופיעו כאן בהתאם ליעד.</p>
-            <button type="button" onClick={() => navigate("/discover")}>
-              חזרה ל-Discover
-            </button>
-          </section>
-        ) : displayMatches.length === 0 ? (
-          <section className="matches-map-state">
-            <MapPin size={42} />
-            <h2>אין כרגע חפיפה ביעדים</h2>
-            <p>
-              יש לכם התאמות, אבל אף אחת מהן לא נוסעת לאותה עיר או לאזור של עד {data.radiusKm} ק״מ.
-            </p>
-            <button type="button" onClick={() => navigate("/matches")}>
-              לכל ההתאמות
-            </button>
-          </section>
         ) : (
           <section className="matches-map-card">
             <div className="matches-map-summary">
-              <div className="matches-map-summary-chip destination">
-                <MapPin size={18} />
-                <span>{destinationLabel}</span>
-              </div>
+              {currentUserMarker && (
+                <div className="matches-map-summary-chip destination">
+                  <MapPin size={18} />
+                  <span>{currentUserMarker.destinationLabel}</span>
+                </div>
+              )}
               <div className="matches-map-summary-chip">
                 <UserRound size={17} />
                 <strong>{displayMatches.length} התאמות באזור</strong>
               </div>
-              <div className="matches-map-summary-chip">
-                עד {data.radiusKm} ק״מ מהיעד שלך
-              </div>
+              {currentUserMarker && (
+                <div className="matches-map-summary-chip">
+                  עד {data.radiusKm} ק״מ מהיעד שלך
+                </div>
+              )}
               {isDemoMode && (
                 <span className="matches-map-demo-badge">מצב הדגמה</span>
               )}
@@ -390,13 +406,16 @@ export default function MatchesMap() {
             <div className="matches-map-canvas-wrap">
               <MapContainer
                 key={mapKey}
-                center={[data.me.latitude, data.me.longitude]}
+                center={[mapCenter.latitude, mapCenter.longitude]}
                 zoom={11}
                 minZoom={3}
                 scrollWheelZoom
                 className="matches-map-canvas"
               >
-                <FitMapBounds me={data.me} matches={displayMatches} />
+                <FitMapBounds
+                  currentUser={currentUserMarker}
+                  matches={displayMatches}
+                />
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | <a href="https://www.geoapify.com/">Geoapify</a>'
                   url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(apiKey)}`}
@@ -410,17 +429,23 @@ export default function MatchesMap() {
                   }}
                 />
 
-                <Marker
-                  position={[data.me.latitude, data.me.longitude]}
-                  icon={currentUserIcon}
-                >
-                  <Popup>
-                    <div className="matches-map-me-popup" dir="rtl">
-                      <strong>היעד שלי</strong>
-                      <span>{destinationLabel}</span>
-                    </div>
-                  </Popup>
-                </Marker>
+                {currentUserMarker && (
+                  <Marker
+                    position={[
+                      currentUserMarker.latitude,
+                      currentUserMarker.longitude,
+                    ]}
+                    icon={currentUserIcon}
+                    zIndexOffset={1000}
+                  >
+                    <Popup>
+                      <div className="matches-map-me-popup" dir="rtl">
+                        <strong>המיקום שלי</strong>
+                        <span>{currentUserMarker.destinationLabel}</span>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
 
                 {displayMatches.map((match) => (
                   <MatchPhotoMarker
