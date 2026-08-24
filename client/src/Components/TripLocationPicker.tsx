@@ -190,7 +190,7 @@ export default function TripLocationPicker({
           aria-autocomplete="list"
           aria-expanded={suggestions.length > 0}
         />
-        {isLoading && <span className="trip-location-spinner" aria-label="מחפשת יעדים" />}
+        {isLoading && <span className="trip-location-spinner" aria-label="חיפוש יעדים" />}
       </div>
 
       {suggestions.length > 0 && (
