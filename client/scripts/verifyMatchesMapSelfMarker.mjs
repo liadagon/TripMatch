@@ -23,7 +23,11 @@ assert.match(mapSource, /if \(positions\.length === 1\)[\s\S]*map\.setView\(posi
 assert.match(mapSource, /map\.fitBounds\(L\.latLngBounds\(positions\)/);
 assert.match(mapSource, /currentUserMarker \|\| displayMatches\[0\] \|\| null/);
 assert.match(mapSource, /currentUser=\{currentUserMarker\}/);
-assert.match(mapSource, /zIndexOffset=\{1000\}/);
+assert.match(mapSource, /iconSize: isCurrentUser \? \[74, 96\] : \[56, 56\]/);
+assert.match(mapSource, /zIndexOffset=\{2000\}/);
+assert.match(mapSource, /aria-label", "המיקום שלי במפת ההתאמות"/);
+assert.match(mapSource, /title="המיקום שלי במפת ההתאמות"/);
+assert.match(mapSource, /alt="המיקום שלי במפת ההתאמות"/);
 assert.match(mapSource, /<strong>המיקום שלי<\/strong>/);
 assert.match(mapSource, /currentUserMarker\.destinationLabel/);
 assert.match(mapSource, /<strong>\{displayMatches\.length\} התאמות באזור<\/strong>/);
@@ -33,8 +37,13 @@ assert.match(mapSource, /profile\.tripLocation\.latitude/);
 assert.match(mapSource, /profile\.tripLocation\.longitude/);
 assert.match(mapSource, /data\?\.matches\.map/);
 assert.doesNotMatch(mapSource, /navigator\.geolocation|Tel Aviv|תל אביב/);
-assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user[\s\S]*outline: 3px solid/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user[\s\S]*width: 74px/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user[\s\S]*border-width: 5px/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user[\s\S]*outline: 4px solid/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user::after[\s\S]*inset: -14px/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user::after[\s\S]*pointer-events: none/);
 assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user span/);
+assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user span[\s\S]*top: -28px/);
 assert.match(identitySource, /getAuthenticatedProfilePhotos\(user\)\[0\] \|\| ""/);
 assert.match(identitySource, /isAppOwnedProfilePhoto/);
 

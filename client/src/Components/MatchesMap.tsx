@@ -164,6 +164,8 @@ function createPhotoIcon(photoURL: string, isCurrentUser = false) {
   }
 
   if (isCurrentUser) {
+    marker.setAttribute("role", "img");
+    marker.setAttribute("aria-label", "המיקום שלי במפת ההתאמות");
     const badge = document.createElement("span");
     badge.textContent = "אני";
     marker.appendChild(badge);
@@ -172,9 +174,9 @@ function createPhotoIcon(photoURL: string, isCurrentUser = false) {
   return L.divIcon({
     html: marker,
     className: "matches-map-leaflet-icon",
-    iconSize: isCurrentUser ? [62, 72] : [56, 56],
-    iconAnchor: isCurrentUser ? [31, 66] : [28, 28],
-    popupAnchor: [0, isCurrentUser ? -64 : -30],
+    iconSize: isCurrentUser ? [74, 96] : [56, 56],
+    iconAnchor: isCurrentUser ? [37, 82] : [28, 28],
+    popupAnchor: [0, isCurrentUser ? -84 : -30],
   });
 }
 
@@ -436,7 +438,9 @@ export default function MatchesMap() {
                       currentUserMarker.longitude,
                     ]}
                     icon={currentUserIcon}
-                    zIndexOffset={1000}
+                    zIndexOffset={2000}
+                    title="המיקום שלי במפת ההתאמות"
+                    alt="המיקום שלי במפת ההתאמות"
                   >
                     <Popup>
                       <div className="matches-map-me-popup" dir="rtl">
