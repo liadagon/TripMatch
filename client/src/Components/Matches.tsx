@@ -10,7 +10,8 @@ import {
   newMatches as demoMatches,
 } from "../data/conversations";
 import {
-  isDemoConversationHidden,
+  getDemoConversationUserIds,
+  getDemoMatchedUserIds,
   isDemoUserBlocked,
 } from "../services/demoConversationState";
 import LoadingState from "./LoadingState";
@@ -41,32 +42,45 @@ type DisplayConversation = {
   blocked: boolean;
 };
 
-const getFallbackMatches = (): DisplayMatch[] =>
+const getDemoMatches = (userId: string | undefined): DisplayMatch[] => {
+  const matchedIds = new Set(getDemoMatchedUserIds(userId));
+  return (
   demoMatches
-    .filter((match) => !isDemoUserBlocked(match.id))
+    .filter(
+      (match) =>
+        matchedIds.has(match.id) && !isDemoUserBlocked(userId, match.id),
+    )
     .map((match) => ({
       id: `demo-match-${match.id}`,
       userId: match.id,
       name: match.name,
       image: match.images[0],
       isDemo: true,
-    }));
+    }))
+  );
+};
 
-const getFallbackConversations = (): DisplayConversation[] =>
+const getDemoConversations = (
+  userId: string | undefined,
+): DisplayConversation[] => {
+  const availableIds = new Set(getDemoConversationUserIds(userId));
+  return (
   demoConversations
-    .filter((conversation) => !isDemoConversationHidden(conversation.id))
+    .filter((conversation) => availableIds.has(conversation.id))
     .map((conversation) => ({
     id: conversation.id,
     userId: conversation.id,
     name: conversation.name,
     age: conversation.age,
     destination: conversation.destination,
-    preview: conversation.preview,
+    preview: "התחילו שיחה חדשה",
     image: conversation.images[0],
     time: conversation.time || "",
     isDemo: true,
-    blocked: isDemoUserBlocked(conversation.id),
-    }));
+    blocked: isDemoUserBlocked(userId, conversation.id),
+    }))
+  );
+};
 
 function mapRealConversations(
   conversations: ConversationSummary[],
@@ -117,9 +131,10 @@ export default function Matches() {
     conversationSummaries,
     user?._id,
   );
-  const conversations = realConversations.length
-    ? realConversations
-    : getFallbackConversations();
+  const conversations = [
+    ...realConversations,
+    ...getDemoConversations(user?._id),
+  ];
 
   useEffect(() => {
     let isActive = true;
@@ -152,13 +167,13 @@ export default function Matches() {
               ]
             : [];
         });
-        setMatches(realMatches.length ? realMatches : getFallbackMatches());
+        setMatches([...realMatches, ...getDemoMatches(user?._id)]);
       } else {
         console.warn(
           "[Matches] Backend matches unavailable; using demo fallback.",
           getErrorMessage(matchesResult.reason),
         );
-        setMatches(getFallbackMatches());
+        setMatches(getDemoMatches(user?._id));
       }
 
       if (conversationsResult.status === "rejected") {

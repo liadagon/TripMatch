@@ -86,7 +86,15 @@ assert.match(
 
 assert.match(
   authContextSource,
-  /function clearLocalAuthenticatedSession\(\)[\s\S]*localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)[\s\S]*clearDemoConversationState\(\)[\s\S]*setUser\(null\)/,
+  /function clearLocalAuthenticatedSession\(\)[\s\S]*localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)[\s\S]*setUser\(null\)/,
+);
+assert.doesNotMatch(
+  authContextSource,
+  /function clearLocalAuthenticatedSession\(\)\s*\{[^}]*clearDemoConversationState/,
+);
+assert.match(
+  authContextSource,
+  /async function deleteAccount\(\)[\s\S]*const deletedUserId = user\?\._id[\s\S]*clearDemoConversationState\(deletedUserId\)/,
 );
 assert.match(
   authContextSource,
@@ -106,7 +114,8 @@ console.log("Authenticated identity verification passed", {
   navigationAndProfileShareAuthenticatedUser: true,
   googleToEmailSwitchIsolated: true,
   emailToGoogleSwitchIsolated: true,
-  logoutClearsSessionSpecificClientState: true,
+  logoutPreservesUserScopedDemoState: true,
+  deletionClearsOnlyDeletedUserDemoState: true,
   refreshUsesAuthoritativeCurrentUser: true,
   providerAvatarIgnored: true,
   hardcodedNoaRegevRemovedFromAuthenticatedPath: true,

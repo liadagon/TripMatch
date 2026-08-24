@@ -7,6 +7,11 @@ import { getUsers } from "../services/userService";
 import type { DestinationInfo, DiscoverUser } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
 import { filterCanonicalInterests } from "../data/profileOptions";
+import { getDemoDiscoverProfiles } from "../data/demoProfiles";
+import {
+  getEligibleDemoUserIds,
+  recordDemoSwipe,
+} from "../services/demoConversationState";
 import {
   MapPin,
   Plane,
@@ -111,6 +116,19 @@ function getDestinationTitle(destinationInfo: DestinationInfo) {
   return destinationInfo.label;
 }
 
+function getFreshDemoProfiles(userId: string | undefined) {
+  const allDemoProfiles = getDemoDiscoverProfiles();
+  const eligibleDemoIds = new Set(
+    getEligibleDemoUserIds(
+      userId,
+      allDemoProfiles.map((candidate) => candidate.userId),
+    ),
+  );
+  return allDemoProfiles.filter((candidate) =>
+    eligibleDemoIds.has(candidate.userId),
+  );
+}
+
 export default function Discover() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -143,11 +161,12 @@ export default function Discover() {
         )
         .filter(isUsableDiscoverProfile)
         .map(mapUserToProfile);
+      const demoProfiles = getFreshDemoProfiles(user?._id);
 
-      setProfiles(realProfiles);
+      setProfiles([...realProfiles, ...demoProfiles]);
     } catch (error) {
       console.warn("[Discover] Backend profiles unavailable.", error);
-      setProfiles([]);
+      setProfiles(getFreshDemoProfiles(user?._id));
       setSwipeError("לא הצלחנו לטעון התאמות מהשרת. נסי שוב בעוד רגע");
     } finally {
       setIsLoading(false);
@@ -197,6 +216,8 @@ export default function Discover() {
 
     try {
       if (profile.isDemo) {
+        if (!user?._id) throw new Error("Missing authenticated user scope");
+        recordDemoSwipe(user._id, profile.userId, type);
         await new Promise((resolve) => window.setTimeout(resolve, 280));
       } else {
         await Promise.all([
@@ -297,7 +318,7 @@ export default function Discover() {
     setSwipeError("");
 
     if (profile.isDemo) {
-      navigate(`/chat/${profile.userId}`);
+      setSwipeError("אפשר לשלוח הודעה רק אחרי שנוצרה התאמה הדדית");
       return;
     }
 

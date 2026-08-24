@@ -15,14 +15,16 @@ assert.match(authService, /api\.delete<\{ success: true \}>\("\/api\/users\/me"\
 assert.doesNotMatch(authService, /deleteCurrentAccount\s*=\s*\([^)]*(?:id|email|subscription)/i);
 assert.match(authContext, /await deleteCurrentAccount\(\)/);
 assert.match(authContext, /removeItem\(TRIPMATCH_TOKEN_KEY\)/);
-assert.match(authContext, /clearDemoConversationState\(\)/);
+assert.match(authContext, /const deletedUserId = user\?\._id/);
+assert.match(authContext, /clearDemoConversationState\(deletedUserId\)/);
 assert.match(authContext, /clearBoostPromoSnooze\(\)/);
 assert.match(authContext, /setUser\(null\)/);
+assert.match(demoState, /removeItem\(getDemoInteractionStorageKey\(userId\)\)/);
 assert.match(demoState, /removeItem\(HIDDEN_DEMO_CONVERSATIONS_KEY\)/);
 assert.match(demoState, /removeItem\(BLOCKED_DEMO_USERS_KEY\)/);
 assert.match(profile, /מחיקת חשבון/);
 assert.match(profile, /לא ניתן לבטל פעולה זו/);
-assert.match(profile, /מחקי את החשבון לצמיתות/);
+assert.match(profile, /מחיקת החשבון לצמיתות/);
 assert.match(profile, /מנוי TripMatch Boost הפעיל יבוטל/);
 assert.match(profile, /await deleteAccount\(\)[\s\S]*navigate\("\/", \{ replace: true \}\)/);
 

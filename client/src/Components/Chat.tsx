@@ -9,12 +9,12 @@ import {
   unblockMatchedUser,
 } from "../services/blockService";
 import {
-  demoChatMessages,
   demoChatReplies,
   getConversationById,
 } from "../data/conversations";
 import {
   hideDemoConversation,
+  isDemoConversationAvailable,
   isDemoUserBlocked,
   setDemoUserBlocked,
 } from "../services/demoConversationState";
@@ -49,6 +49,11 @@ export default function Chat() {
     useConversations();
   const demoConversation = getConversationById(conversationId);
   const isDemo = Boolean(demoConversation);
+  const hasDemoConversationAccess = Boolean(
+    !isDemo ||
+      (conversationId &&
+        isDemoConversationAvailable(user?._id, conversationId)),
+  );
   const [demoMessages, setDemoMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -98,8 +103,14 @@ export default function Chat() {
       setIsMenuOpen(false);
 
       if (getConversationById(conversationId)) {
-        setDemoMessages(demoChatMessages.map((message) => ({ ...message })));
-        setIsDemoBlocked(isDemoUserBlocked(conversationId));
+        if (!isDemoConversationAvailable(user?._id, conversationId)) {
+          setDemoMessages([]);
+          setErrorMessage("השיחה תהיה זמינה רק לאחר התאמה הדדית");
+          setIsLoading(false);
+          return;
+        }
+        setDemoMessages([]);
+        setIsDemoBlocked(isDemoUserBlocked(user?._id, conversationId));
         setBlockStatus({ blocked: false, blockedByMe: false });
         setIsLoading(false);
         return;
@@ -159,7 +170,9 @@ export default function Chat() {
   async function sendMessage() {
     const cleanText = text.trim();
 
-    const relationshipBlocked = isDemo ? isDemoBlocked : blockStatus.blocked;
+    const relationshipBlocked = isDemo
+      ? isDemoBlocked || !hasDemoConversationAccess
+      : blockStatus.blocked;
     if (!cleanText || !conversationId || isSending || relationshipBlocked) return;
 
     setIsSending(true);
@@ -230,8 +243,11 @@ export default function Chat() {
 
     try {
       if (isDemo) {
+        if (!user?._id || !conversationId || !hasDemoConversationAccess) {
+          throw new Error("Demo conversation is not available");
+        }
         const nextBlocked = !isDemoBlocked;
-        setDemoUserBlocked(conversationId || "", nextBlocked);
+        setDemoUserBlocked(user._id, conversationId, nextBlocked);
         setIsDemoBlocked(nextBlocked);
         setFeedbackMessage(
           isDemoBlocked ? "החסימה בוטלה" : "המשתמש נחסם בשיחת ההדגמה",
@@ -283,7 +299,8 @@ export default function Chat() {
 
     try {
       if (isDemo && conversationId) {
-        hideDemoConversation(conversationId);
+        if (!user?._id) throw new Error("Missing authenticated user scope");
+        hideDemoConversation(user._id, conversationId);
         setDemoMessages([]);
       } else if (conversationId) {
         await dispatch(
@@ -334,7 +351,9 @@ export default function Chat() {
     "/pic2.png";
   const displayDestination =
     demoConversation?.destination || destination || "שיחה חדשה";
-  const relationshipBlocked = isDemo ? isDemoBlocked : blockStatus.blocked;
+  const relationshipBlocked = isDemo
+    ? isDemoBlocked || !hasDemoConversationAccess
+    : blockStatus.blocked;
   const blockedByCurrentUser = isDemo ? isDemoBlocked : blockStatus.blockedByMe;
 
   return (

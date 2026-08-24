@@ -20,6 +20,7 @@ import {
   setDemoUserBlocked,
 } from "../services/demoConversationState";
 import { isAppOwnedProfilePhoto } from "../utils/authenticatedIdentity";
+import { useAuth } from "../context/AuthContext";
 import "./BlockedUsers.css";
 
 function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
@@ -69,6 +70,7 @@ function DemoBlockedUserAvatar({ user }: { user: Conversation }) {
 export default function BlockedUsers() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: currentUser } = useAuth();
   const [blocks, setBlocks] = useState<BlockedUserRecord[]>([]);
   const [demoBlocks, setDemoBlocks] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +85,7 @@ export default function BlockedUsers() {
 
   useEffect(() => {
     let isActive = true;
-    const blockedDemoIds = new Set(getBlockedDemoUserIds());
+    const blockedDemoIds = new Set(getBlockedDemoUserIds(currentUser?._id));
     setDemoBlocks(
       conversations.filter((conversation) => blockedDemoIds.has(conversation.id)),
     );
@@ -104,7 +106,7 @@ export default function BlockedUsers() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [currentUser?._id]);
 
   async function unblock(record: BlockedUserRecord) {
     const userId = record.blocked._id;
@@ -140,7 +142,8 @@ export default function BlockedUsers() {
     setSuccessMessage("");
 
     try {
-      setDemoUserBlocked(user.id, false);
+      if (!currentUser?._id) throw new Error("Missing authenticated user scope");
+      setDemoUserBlocked(currentUser._id, user.id, false);
       setDemoBlocks((current) =>
         current.filter((blockedUser) => blockedUser.id !== user.id),
       );

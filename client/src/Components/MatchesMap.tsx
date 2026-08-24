@@ -11,7 +11,10 @@ import {
   type MatchesMapMarker,
 } from "../services/matchesMapService";
 import { conversations as demoConversations } from "../data/conversations";
-import { isDemoUserBlocked } from "../services/demoConversationState";
+import {
+  getDemoMatchedUserIds,
+  isDemoUserBlocked,
+} from "../services/demoConversationState";
 import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 import "leaflet/dist/leaflet.css";
 import "./MatchesMap.css";
@@ -27,12 +30,19 @@ type DisplayMapMarker = MatchesMapMarker & {
 function createDemoMarkers(
   me: NonNullable<MatchesMapData["me"]>,
   destinationLabel: string,
+  currentUserId: string | undefined,
 ): DisplayMapMarker[] {
   const latitudeRadians = me.latitude * Math.PI / 180;
   const longitudeScale = Math.max(Math.cos(latitudeRadians), 0.2);
 
+  const matchedIds = new Set(getDemoMatchedUserIds(currentUserId));
+
   return demoConversations
-    .filter((conversation) => !isDemoUserBlocked(conversation.id))
+    .filter(
+      (conversation) =>
+        matchedIds.has(conversation.id) &&
+        !isDemoUserBlocked(currentUserId, conversation.id),
+    )
     .slice(0, DEMO_DISTANCES_KM.length)
     .map((conversation, index) => {
       const distanceKm = DEMO_DISTANCES_KM[index];
@@ -248,8 +258,10 @@ export default function MatchesMap() {
 
   const demoMatches = useMemo(
     () =>
-      data?.me ? createDemoMarkers(data.me, destinationLabel) : [],
-    [data?.me, destinationLabel],
+      data?.me
+        ? createDemoMarkers(data.me, destinationLabel, user?._id)
+        : [],
+    [data?.me, destinationLabel, user?._id],
   );
   const isDemoMode = Boolean(
     data?.me && data.matches.length === 0 && demoMatches.length > 0,

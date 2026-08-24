@@ -66,7 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function clearLocalAuthenticatedSession() {
     localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-    clearDemoConversationState();
     setUser(null);
   }
 
@@ -240,10 +239,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function deleteAccount() {
+    const deletedUserId = user?._id;
     await deleteCurrentAccount();
 
     localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-    clearDemoConversationState();
+    clearDemoConversationState(deletedUserId);
     clearBoostPromoSnooze();
     setUser(null);
 
