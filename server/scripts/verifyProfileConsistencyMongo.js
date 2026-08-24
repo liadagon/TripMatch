@@ -81,12 +81,44 @@ async function run() {
   await assert.doesNotReject(() =>
     updateProfileSchema.validateAsync({ bio: "x".repeat(300) }),
   );
+  const trimmedBio = await updateProfileSchema.validateAsync({
+    bio: `  ${"x".repeat(20)}  `,
+  });
+  assert.equal(trimmedBio.bio, "x".repeat(20));
+  await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ bio: "" }),
+  );
+  await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ bio: " ".repeat(20) }),
+  );
   await assert.rejects(() =>
     updateProfileSchema.validateAsync({ bio: "x".repeat(10) }),
   );
   await assert.rejects(() =>
     updateProfileSchema.validateAsync({ bio: "x".repeat(301) }),
   );
+  await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ interests: [] }),
+  );
+  await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ interests: ["   "] }),
+  );
+  await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ preferredDestinations: [] }),
+  );
+  for (const payload of [
+    { tripDates: "   " },
+    { tripDuration: "   " },
+    { budget: "   " },
+    { travelStyle: "   " },
+    { questionnaire: { planningStyle: "   " } },
+    { questionnaire: { accommodationPreference: "   " } },
+    { questionnaire: { companionScope: "   " } },
+    { questionnaire: { companionPriority: "   " } },
+    { questionnaire: { dealBreaker: "   " } },
+  ]) {
+    await assert.rejects(() => updateProfileSchema.validateAsync(payload));
+  }
   await mongoose.connect(process.env.DATABASE_URL);
   const marker = `${Date.now()}-${crypto.randomUUID()}`;
   const createdUserIds = [];

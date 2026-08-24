@@ -262,6 +262,19 @@ function optionsWithCurrent(
     : options;
 }
 
+function hasValidTripLocation(location: TripLocation | null) {
+  return Boolean(
+    location &&
+      location.placeId.trim() &&
+      location.name.trim() &&
+      location.formattedAddress.trim() &&
+      Number.isFinite(location.latitude) &&
+      Number.isFinite(location.longitude) &&
+      location.country.trim() &&
+      location.countryCode.trim(),
+  );
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -438,7 +451,7 @@ export default function Profile() {
 
     if (
       (isRegistrationSetup || Boolean(profile.tripLocation) || Boolean(draftProfile.tripLocation)) &&
-      !draftProfile.tripLocation
+      !hasValidTripLocation(draftProfile.tripLocation)
     ) {
       errors.tripLocation = "יש לבחור יעד לטיול.";
     }
@@ -466,20 +479,20 @@ export default function Profile() {
       }
     });
 
-    if (
-      (isRegistrationSetup || profile.interests.length > 0) &&
-      draftProfile.interests.length === 0
-    ) {
+    const hasCurrentInterests = profile.interests.some(
+      (interest) => interest.trim().length > 0,
+    );
+    const hasDraftInterests = draftProfile.interests.some(
+      (interest) => interest.trim().length > 0,
+    );
+    if ((isRegistrationSetup || hasCurrentInterests) && !hasDraftInterests) {
       errors.interests = "יש לבחור לפחות תחום עניין אחד.";
     }
 
     const normalizedBio = draftProfile.aboutMe.trim();
-    const bioChanged = normalizedBio !== profile.aboutMe.trim();
-    if (isRegistrationSetup && normalizedBio.length < 20) {
+    if (normalizedBio.length < 20) {
       errors.aboutMe = "יש לכתוב לפחות 20 תווים.";
-    } else if (!isRegistrationSetup && bioChanged && normalizedBio && normalizedBio.length < 20) {
-      errors.aboutMe = "יש לכתוב לפחות 20 תווים.";
-    } else if (bioChanged && normalizedBio.length > 300) {
+    } else if (normalizedBio.length > 300) {
       errors.aboutMe = "ניתן לכתוב עד 300 תווים.";
     }
 
@@ -592,6 +605,11 @@ export default function Profile() {
       const normalizedDuration = draftProfile.duration.trim();
       const normalizedBudget = draftProfile.budget.trim();
       const normalizedTravelStyle = draftProfile.travelStyle.trim();
+      const normalizedPreferredDestination =
+        draftProfile.preferredDestination.trim();
+      const normalizedInterests = draftProfile.interests
+        .map((interest) => interest.trim())
+        .filter(Boolean);
 
       if (normalizedName !== profile.name.trim()) payload.name = normalizedName;
       if (normalizedAge && normalizedAge !== profile.age.trim()) {
@@ -614,13 +632,16 @@ export default function Profile() {
       if (normalizedTravelStyle !== profile.travelStyle.trim()) {
         payload.travelStyle = normalizedTravelStyle;
       }
-      if (draftProfile.preferredDestination !== profile.preferredDestination) {
-        payload.preferredDestinations = draftProfile.preferredDestination
-          ? [draftProfile.preferredDestination]
+      if (normalizedPreferredDestination !== profile.preferredDestination.trim()) {
+        payload.preferredDestinations = normalizedPreferredDestination
+          ? [normalizedPreferredDestination]
           : [];
       }
-      if (JSON.stringify(draftProfile.interests) !== JSON.stringify(profile.interests)) {
-        payload.interests = draftProfile.interests;
+      if (
+        JSON.stringify(normalizedInterests) !==
+        JSON.stringify(profile.interests.map((interest) => interest.trim()).filter(Boolean))
+      ) {
+        payload.interests = normalizedInterests;
       }
       if (normalizedBio !== profile.aboutMe.trim()) payload.bio = normalizedBio;
 
