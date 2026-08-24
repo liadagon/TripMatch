@@ -47,10 +47,6 @@ const updateProfileSchema = Joi.object({
     .valid(...QUESTIONNAIRE_OPTIONS.tripDurations)
     .optional(),
   questionnaire: Joi.object({
-    planningStyle: Joi.string()
-      .trim()
-      .valid(...QUESTIONNAIRE_OPTIONS.planningStyles)
-      .optional(),
     accommodationPreference: Joi.string()
       .trim()
       .valid(...QUESTIONNAIRE_OPTIONS.accommodationPreferences)

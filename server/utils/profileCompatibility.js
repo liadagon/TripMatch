@@ -35,10 +35,6 @@ const calculateProfileCompatibility = (firstUser, secondUser) => {
     compareValue(firstUser.tripDates, secondUser.tripDates),
     compareValue(firstUser.tripDuration, secondUser.tripDuration),
     compareValue(
-      firstUser.questionnaire?.planningStyle,
-      secondUser.questionnaire?.planningStyle
-    ),
-    compareValue(
       firstUser.questionnaire?.accommodationPreference,
       secondUser.questionnaire?.accommodationPreference
     ),

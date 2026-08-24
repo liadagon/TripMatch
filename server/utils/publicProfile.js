@@ -14,7 +14,6 @@ const PUBLIC_PROFILE_FIELDS = [
   "budget",
   "tripDates",
   "tripDuration",
-  "questionnaire.planningStyle",
   "questionnaire.accommodationPreference",
   "questionnaire.companionScope",
   "questionnaire.companionPriority",

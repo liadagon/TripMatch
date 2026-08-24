@@ -28,7 +28,6 @@ const preferences = {
   budget: "בינוני",
   travelStyle: "טרקים והרפתקאות טבע",
   questionnaire: {
-    planningStyle: "אוהבת מסגרת בסיסית",
     accommodationPreference: "הוסטל",
     companionScope: "לכל הטיול",
     companionPriority: "אמינות ואחריות",
@@ -121,7 +120,6 @@ async function run() {
     { tripDuration: "   " },
     { budget: "   " },
     { travelStyle: "   " },
-    { questionnaire: { planningStyle: "   " } },
     { questionnaire: { accommodationPreference: "   " } },
     { questionnaire: { companionScope: "   " } },
     { questionnaire: { companionPriority: "   " } },
@@ -146,26 +144,36 @@ async function run() {
     });
     createdUserIds.push(newUser._id);
 
-    const questionnaireResult = await updateUser(newUser, preferences);
-    assert.equal(questionnaireResult.nextRegistrationStep, "profile");
-
-    const rejectedCompletion = await updateUser(newUser, {
-      age: 28,
-      interests: ["טבע", "צילום"],
-      tripLocation: destination,
-    });
-    assert.equal(rejectedCompletion.__statusCode, 400);
-    assert.equal(rejectedCompletion.code, "REGISTRATION_VALIDATION_FAILED");
-    assert.deepEqual(Object.keys(rejectedCompletion.fields), ["bio"]);
-    const unchangedAfterRejection = await User.findById(newUser._id).lean();
-    assert.equal(unchangedAfterRejection.age, undefined);
-    assert.equal(unchangedAfterRejection.tripLocation, undefined);
-
-    const completedResult = await updateUser(newUser, {
+    assert.equal(getRegistrationState(newUser).nextRegistrationStep, "questionnaire");
+    const personalProfile = {
       age: 28,
       interests: ["טבע", "צילום"],
       bio: "Bio saved by the isolated consistency test",
       tripLocation: destination,
+    };
+
+    const rejectedCompletion = await updateUser(newUser, {
+      ...personalProfile,
+      ...preferences,
+      questionnaire: {
+        ...preferences.questionnaire,
+        dealBreaker: undefined,
+      },
+      completeRegistration: true,
+    });
+    assert.equal(rejectedCompletion.__statusCode, 400);
+    assert.equal(rejectedCompletion.code, "REGISTRATION_VALIDATION_FAILED");
+    assert.deepEqual(Object.keys(rejectedCompletion.fields), ["dealBreaker"]);
+    const unchangedAfterRejection = await User.findById(newUser._id).lean();
+    assert.equal(unchangedAfterRejection.age, undefined);
+    assert.equal(unchangedAfterRejection.tripLocation, undefined);
+    assert.deepEqual(unchangedAfterRejection.preferredDestinations, []);
+    assert.equal(unchangedAfterRejection.registrationCompletedAt, undefined);
+
+    const completedResult = await updateUser(newUser, {
+      ...personalProfile,
+      ...preferences,
+      completeRegistration: true,
     });
     assert.equal(completedResult.registrationComplete, true);
     assert.equal(completedResult.nextRegistrationStep, null);
@@ -173,6 +181,12 @@ async function run() {
     const refreshedUser = await User.findById(newUser._id);
     assert(refreshedUser.registrationCompletedAt);
     assert.equal(getRegistrationState(refreshedUser).registrationComplete, true);
+
+    const unchangedSave = await updateUser(refreshedUser, {
+      interests: [...refreshedUser.interests],
+    });
+    assert.equal(unchangedSave.registrationComplete, true);
+    assert.equal(unchangedSave.nextRegistrationStep, null);
 
     refreshedUser.interests = ["טבע", "cfcf"];
     await refreshedUser.save();
@@ -207,8 +221,16 @@ async function run() {
     );
     assert.deepEqual(initialCompatibility, {
       percentage: 100,
-      matchedCriteria: 10,
-      comparedCriteria: 10,
+      matchedCriteria: 9,
+      comparedCriteria: 9,
+    });
+
+    refreshedUser.questionnaire.planningStyle = "legacy-current-value";
+    candidate.questionnaire.planningStyle = "different-legacy-value";
+    assert.deepEqual(calculateProfileCompatibility(refreshedUser, candidate), {
+      percentage: 100,
+      matchedCriteria: 9,
+      comparedCriteria: 9,
     });
 
     const editedResult = await updateUser(refreshedUser, {
@@ -216,7 +238,6 @@ async function run() {
       travelStyle: "סיורים תרבותיים וערים",
       interests: ["אוכל מקומי"],
       bio: "Updated bio from the isolated consistency test",
-      questionnaire: { planningStyle: "ממש ספונטנית" },
     });
     assert.equal(editedResult.data.budget, "נוח");
     assert.equal(
@@ -231,9 +252,9 @@ async function run() {
       "Updated bio from the isolated consistency test",
     );
     assert.deepEqual(calculateProfileCompatibility(editedUser, candidate), {
-      percentage: 70,
+      percentage: 78,
       matchedCriteria: 7,
-      comparedCriteria: 10,
+      comparedCriteria: 9,
     });
 
     const publicProfile = await User.findById(newUser._id)
@@ -241,6 +262,7 @@ async function run() {
       .lean();
     assert.equal(publicProfile.tripDuration, preferences.tripDuration);
     assert.equal(publicProfile.questionnaire.dealBreaker, preferences.questionnaire.dealBreaker);
+    assert.equal(publicProfile.questionnaire.planningStyle, undefined);
     assert.equal(publicProfile.tripLocation.latitude, undefined);
     assert.equal(publicProfile.tripLocation.longitude, undefined);
     assert.equal(publicProfile.email, undefined);
@@ -255,6 +277,7 @@ async function run() {
     assert.equal(getRegistrationState(existingCompleted).registrationComplete, true);
     const missingBioErrors = getCurrentRegistrationValidationErrors({
       ...preferences,
+      name: "Missing Bio Test",
       registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
       photoURL: "http://localhost:5000/api/file/64b000000000000000000096",
       photos: ["http://localhost:5000/api/file/64b000000000000000000096"],
@@ -268,7 +291,8 @@ async function run() {
     console.log("Profile consistency MongoDB verification passed", {
       disposableRegistrationCompleted: true,
       refreshPersistenceVerified: true,
-      allDiscoverCriteriaCompared: 10,
+      saveWithoutChangesVerified: true,
+      allDiscoverCriteriaCompared: 9,
       editsChangedCompatibility: true,
       previewPublicFieldsVerified: true,
       privateFieldsExcluded: true,

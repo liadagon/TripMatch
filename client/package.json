@@ -12,6 +12,7 @@
     "verify:authenticated-identity": "node scripts/verifyAuthenticatedIdentity.mjs",
     "verify:browser-history": "node scripts/verifyBrowserHistorySession.mjs",
     "verify:account-deletion": "node scripts/verifyAccountDeletion.mjs",
+    "verify:gender-copy": "node scripts/verifyGenderedOnboardingCopy.mjs",
     "verify:paypal-boost": "node scripts/verifyPayPalBoostFrontend.mjs",
     "verify:profile-navigation": "node scripts/verifyProfileNavigation.mjs"
   },

@@ -48,6 +48,7 @@ import {
   PROFILE_OPTIONS,
   filterCanonicalInterests,
 } from "../data/profileOptions";
+import { getGenderedQuestionnaireOptionLabel } from "../utils/genderedHebrew";
 
 type ProfileData = {
   name: string;
@@ -60,7 +61,6 @@ type ProfileData = {
   budget: string;
   travelStyle: string;
   interests: string[];
-  planningStyle: string;
   accommodationPreference: string;
   companionScope: string;
   companionPriority: string;
@@ -79,7 +79,6 @@ type ProfileField =
   | "preferredDestination"
   | "budget"
   | "travelStyle"
-  | "planningStyle"
   | "accommodationPreference"
   | "companionScope"
   | "companionPriority"
@@ -111,7 +110,6 @@ const emptyProfile: ProfileData = {
   budget: "",
   travelStyle: "",
   interests: [],
-  planningStyle: "",
   accommodationPreference: "",
   companionScope: "",
   companionPriority: "",
@@ -137,7 +135,6 @@ function profileFromUser(user: AuthUser | null): ProfileData {
     budget: user?.budget || "",
     travelStyle: user?.travelStyle || "",
     interests: filterCanonicalInterests(user?.interests),
-    planningStyle: user?.questionnaire?.planningStyle || "",
     accommodationPreference:
       user?.questionnaire?.accommodationPreference || "",
     companionScope: user?.questionnaire?.companionScope || "",
@@ -174,7 +171,7 @@ function getProfilePhotoError(error: unknown) {
     }
 
     if (!error.response) {
-      return "לא הצלחנו להתחבר לשרת. בדקי את החיבור ונסי שוב";
+      return "לא הצלחנו להתחבר לשרת. יש לבדוק את החיבור ולנסות שוב";
     }
 
     if (error.response.status === 400) {
@@ -182,7 +179,7 @@ function getProfilePhotoError(error: unknown) {
     }
   }
 
-  return "לא הצלחנו להעלות ולשמור את התמונה. נסי שוב";
+  return "לא הצלחנו להעלות ולשמור את התמונה. יש לנסות שוב";
 }
 
 function readImagePreview(file: File) {
@@ -216,7 +213,6 @@ function getBackendProfileFieldErrors(error: unknown): ProfileFieldErrors {
       tripDuration: "duration",
       budget: "budget",
       travelStyle: "travelStyle",
-      planningStyle: "planningStyle",
       accommodationPreference: "accommodationPreference",
       companionScope: "companionScope",
       companionPriority: "companionPriority",
@@ -240,10 +236,9 @@ function getBackendProfileFieldErrors(error: unknown): ProfileFieldErrors {
     ["tripDuration", "duration", "יש לבחור משך טיול."],
     ["budget", "budget", "יש לבחור תקציב."],
     ["travelStyle", "travelStyle", "יש לבחור סגנון טיול."],
-    ["planningStyle", "planningStyle", "יש לבחור סגנון תכנון."],
     ["accommodationPreference", "accommodationPreference", "יש לבחור העדפת לינה."],
     ["companionScope", "companionScope", "יש לבחור עם מי תרצו לטייל."],
-    ["companionPriority", "companionPriority", "יש לבחור מה חשוב לכם בשותף לטיול."],
+    ["companionPriority", "companionPriority", "יש לבחור מה חשוב בהתאמה לטיול."],
     ["dealBreaker", "dealBreaker", "יש לבחור מה מהווה מבחינתכם Deal Breaker."],
     ["interests", "interests", "יש לבחור לפחות תחום עניין אחד."],
     ["bio", "aboutMe", "יש לכתוב בין 20 ל-300 תווים."],
@@ -470,10 +465,9 @@ export default function Profile() {
       ["duration", profile.duration, draftProfile.duration, "יש לבחור משך טיול."],
       ["budget", profile.budget, draftProfile.budget, "יש לבחור תקציב."],
       ["travelStyle", profile.travelStyle, draftProfile.travelStyle, "יש לבחור סגנון טיול."],
-      ["planningStyle", profile.planningStyle, draftProfile.planningStyle, "יש לבחור סגנון תכנון."],
       ["accommodationPreference", profile.accommodationPreference, draftProfile.accommodationPreference, "יש לבחור העדפת לינה."],
       ["companionScope", profile.companionScope, draftProfile.companionScope, "יש לבחור עם מי תרצו לטייל."],
-      ["companionPriority", profile.companionPriority, draftProfile.companionPriority, "יש לבחור מה חשוב לכם בשותף לטיול."],
+      ["companionPriority", profile.companionPriority, draftProfile.companionPriority, "יש לבחור מה חשוב בהתאמה לטיול."],
       ["dealBreaker", profile.dealBreaker, draftProfile.dealBreaker, "יש לבחור מה מהווה מבחינתכם Deal Breaker."],
     ];
     requiredTextFields.forEach(([field, currentValue, nextValue, message]) => {
@@ -645,7 +639,6 @@ export default function Profile() {
 
       const questionnaireChanges: NonNullable<ProfileUpdatePayload["questionnaire"]> = {};
       const questionnaireFields = [
-        "planningStyle",
         "accommodationPreference",
         "companionScope",
         "companionPriority",
@@ -725,7 +718,7 @@ export default function Profile() {
         setDeleteAccountError("החיבור לחשבון פג. יש להתחבר מחדש ולנסות שוב.");
       } else {
         setDeleteAccountError(
-          "לא הצלחנו למחוק את החשבון בבטחה. החשבון נשמר ולא נמחק. נסי שוב.",
+          "לא הצלחנו למחוק את החשבון בבטחה. החשבון נשמר ולא נמחק. יש לנסות שוב.",
         );
       }
     } finally {
@@ -934,16 +927,17 @@ export default function Profile() {
 
               <div className="profile-preferences-grid">
                 {[
-                  ["סגנון תכנון", profile.planningStyle],
                   ["לינה מועדפת", profile.accommodationPreference],
                   ["שותפות לטיול", profile.companionScope],
-                  ["מה חשוב לי בשותפ/ה", profile.companionPriority],
+                  ["מה חשוב לי בהתאמה", profile.companionPriority],
                   ["קו אדום מבחינתי", profile.dealBreaker],
                 ].map(([label, value]) =>
                   value ? (
                     <div key={label}>
                       <span>{label}</span>
-                      <strong>{value}</strong>
+                      <strong>
+                        {getGenderedQuestionnaireOptionLabel(value, user?.gender)}
+                      </strong>
                     </div>
                   ) : null,
                 )}
@@ -951,7 +945,6 @@ export default function Profile() {
               {[
                 profile.duration,
                 profile.preferredDestination,
-                profile.planningStyle,
                 profile.accommodationPreference,
                 profile.companionScope,
                 profile.companionPriority,
@@ -1169,10 +1162,9 @@ export default function Profile() {
               </label>
 
               {([
-                ["סגנון תכנון", "planningStyle", PROFILE_OPTIONS.planningStyles],
                 ["לינה מועדפת", "accommodationPreference", PROFILE_OPTIONS.accommodationPreferences],
                 ["שותפות לטיול", "companionScope", PROFILE_OPTIONS.companionScopes],
-                ["מה חשוב לי בשותפ/ה", "companionPriority", PROFILE_OPTIONS.companionPriorities],
+                ["מה חשוב לי בהתאמה", "companionPriority", PROFILE_OPTIONS.companionPriorities],
                 ["קו אדום מבחינתי", "dealBreaker", PROFILE_OPTIONS.dealBreakers],
               ] as Array<[string, ProfileField, readonly string[]]>).map(([label, field, options]) => {
                 const key = field as Exclude<keyof ProfileData, "tripLocation">;
@@ -1191,7 +1183,9 @@ export default function Profile() {
                     >
                       <option value="">לא נבחר</option>
                       {optionsWithCurrent(options as readonly string[], value).map((option) => (
-                        <option key={option} value={option}>{option}</option>
+                        <option key={option} value={option}>
+                          {getGenderedQuestionnaireOptionLabel(option, user?.gender)}
+                        </option>
                       ))}
                     </select>
                     {fieldErrors[key as ProfileField] && (
@@ -1282,7 +1276,7 @@ export default function Profile() {
                 </button>
 
                 <button type="submit" className="profile-save-btn" disabled={isSaving}>
-                  {isSaving ? "שומרת..." : "שמירה"}
+                  {isSaving ? "שומרים..." : "שמירה"}
                 </button>
               </div>
             </form>
@@ -1329,7 +1323,7 @@ export default function Profile() {
                 disabled={isDeletingAccount}
                 onClick={handleDeleteAccount}
               >
-                {isDeletingAccount ? "מוחקת..." : "מחקי את החשבון לצמיתות"}
+                {isDeletingAccount ? "מוחקים..." : "מחיקת החשבון לצמיתות"}
               </button>
             </div>
           </section>

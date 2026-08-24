@@ -24,7 +24,6 @@ export type AuthUser = {
   tripDates?: string;
   tripDuration?: string;
   questionnaire?: {
-    planningStyle: string;
     accommodationPreference: string;
     companionScope: string;
     companionPriority: string;
@@ -64,6 +63,7 @@ export type ProfilePreviewUser = Pick<
   AuthUser,
   | "_id"
   | "name"
+  | "gender"
   | "age"
   | "location"
   | "tripLocation"

@@ -30,6 +30,7 @@ import {
   getAuthenticatedProfilePhotos,
 } from "../utils/authenticatedIdentity";
 import { filterCanonicalInterests } from "../data/profileOptions";
+import { getGenderedQuestionnaireOptionLabel } from "../utils/genderedHebrew";
 import "./MyProfilePreview.css";
 
 type DetailItem = {
@@ -120,38 +121,43 @@ export function ProfilePreviewView({
       : null,
   ].filter((item): item is DetailItem => item !== null);
   const questionnaireDetails: DetailItem[] = [
-    meaningful(user.questionnaire?.planningStyle)
-      ? {
-          label: "איך אני מתכננ/ת",
-          value: meaningful(user.questionnaire?.planningStyle),
-          icon: Sparkles,
-        }
-      : null,
     meaningful(user.questionnaire?.accommodationPreference)
       ? {
           label: "העדפת לינה",
-          value: meaningful(user.questionnaire?.accommodationPreference),
+          value: getGenderedQuestionnaireOptionLabel(
+            meaningful(user.questionnaire?.accommodationPreference),
+            user.gender,
+          ),
           icon: BedDouble,
         }
       : null,
     meaningful(user.questionnaire?.companionScope)
       ? {
           label: "שותפות לטיול",
-          value: meaningful(user.questionnaire?.companionScope),
+          value: getGenderedQuestionnaireOptionLabel(
+            meaningful(user.questionnaire?.companionScope),
+            user.gender,
+          ),
           icon: UsersRound,
         }
       : null,
     meaningful(user.questionnaire?.companionPriority)
       ? {
           label: "מה חשוב לי בשותפ/ה",
-          value: meaningful(user.questionnaire?.companionPriority),
+          value: getGenderedQuestionnaireOptionLabel(
+            meaningful(user.questionnaire?.companionPriority),
+            user.gender,
+          ),
           icon: Sparkles,
         }
       : null,
     meaningful(user.questionnaire?.dealBreaker)
       ? {
           label: "קו אדום מבחינתי",
-          value: meaningful(user.questionnaire?.dealBreaker),
+          value: getGenderedQuestionnaireOptionLabel(
+            meaningful(user.questionnaire?.dealBreaker),
+            user.gender,
+          ),
           icon: ShieldAlert,
         }
       : null,
