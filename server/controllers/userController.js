@@ -36,6 +36,7 @@ const {
   getOwnedProfileImageIds,
   getProfileImageIdFromUrl,
 } = require("../services/profileImageStorage");
+const { getBlockedUserIds } = require("../utils/blockRelationship");
 
 const DISCOVER_INTERNAL_FIELDS =
   "tripLocation.latitude tripLocation.longitude registrationCompletedAt registrationFlowVersion subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
@@ -59,7 +60,13 @@ const PROFILE_FIELDS = [
 
 const getUsers = async (req, res, next) => {
   try {
-    const filter = { _id: { $ne: req.user._id } };
+    const blockedUserIds = await getBlockedUserIds(req.user._id);
+    const filter = {
+      _id: {
+        $ne: req.user._id,
+        ...(blockedUserIds.length ? { $nin: blockedUserIds } : {}),
+      },
+    };
     const { page, limit, search } = req.query;
     const skip = (page - 1) * limit;
 

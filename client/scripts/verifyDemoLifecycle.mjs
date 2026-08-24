@@ -55,7 +55,7 @@ const storage = new MemoryStorage();
 const accountA = "local-user-a-private-id";
 const accountB = "local-user-b-private-id";
 const reRegisteredAccount = "local-user-c-new-id";
-const demoIds = ["noa", "maya", "ido"];
+const demoIds = ["noa", "maya", "ido", "daniel"];
 
 assert.deepEqual(
   state.getEligibleDemoUserIds(accountA, demoIds, storage),
@@ -65,24 +65,34 @@ assert.deepEqual(state.getDemoMatchedUserIds(accountA, storage), []);
 assert.deepEqual(state.getDemoConversationUserIds(accountA, storage), []);
 assert.deepEqual(state.getBlockedDemoUserIds(accountA, storage), []);
 
-assert.equal(state.recordDemoSwipe(accountA, "noa", "like", storage), true);
+assert.equal(state.recordDemoSwipe(accountA, "noa", "like", true, storage), true);
 assert.deepEqual(state.getDemoMatchedUserIds(accountA, storage), ["noa"]);
 assert.deepEqual(state.getDemoConversationUserIds(accountA, storage), ["noa"]);
 
-assert.equal(state.recordDemoSwipe(accountA, "maya", "skip", storage), false);
+state.appendDemoMessage(accountA, "noa", {
+  id: "message-1",
+  from: "me",
+  text: "hello",
+  time: "10:00",
+}, storage);
+assert.equal(state.getDemoMessages(accountA, "noa", storage)[0].text, "hello");
+
+assert.equal(state.recordDemoSwipe(accountA, "maya", "like", false, storage), false);
 assert.equal(
   state.getDemoConversationUserIds(accountA, storage).includes("maya"),
   false,
 );
-state.setDemoUserBlocked(accountA, "ido", true, storage);
+assert.equal(state.recordDemoSwipe(accountA, "ido", "skip", true, storage), false);
+assert.equal(state.getDemoMatchedUserIds(accountA, storage).includes("ido"), false);
+state.setDemoUserBlocked(accountA, "daniel", true, storage);
 assert.deepEqual(state.getEligibleDemoUserIds(accountA, demoIds, storage), []);
-assert.deepEqual(state.getBlockedDemoUserIds(accountA, storage), ["ido"]);
-state.setDemoUserBlocked(accountA, "ido", false, storage);
+assert.deepEqual(state.getBlockedDemoUserIds(accountA, storage), ["daniel"]);
+state.setDemoUserBlocked(accountA, "daniel", false, storage);
 assert.deepEqual(state.getBlockedDemoUserIds(accountA, storage), []);
-assert.deepEqual(state.getEligibleDemoUserIds(accountA, demoIds, storage), ["ido"]);
-state.setDemoUserBlocked(accountA, "ido", true, storage);
+assert.deepEqual(state.getEligibleDemoUserIds(accountA, demoIds, storage), ["daniel"]);
+state.setDemoUserBlocked(accountA, "daniel", true, storage);
 
-state.recordDemoSwipe(accountB, "maya", "like", storage);
+state.recordDemoSwipe(accountB, "maya", "like", true, storage);
 state.clearDemoConversationState(accountA, storage);
 assert.deepEqual(state.getDemoInteractionState(accountA, storage), {
   swipes: {},
@@ -91,6 +101,7 @@ assert.deepEqual(state.getDemoInteractionState(accountA, storage), {
   blocked: [],
   hiddenConversations: [],
   dismissed: [],
+  messages: {},
 });
 assert.deepEqual(state.getDemoMatchedUserIds(accountB, storage), ["maya"]);
 
@@ -109,11 +120,12 @@ assert.equal(accountKey.includes(accountB), false);
 assert.match(accountKey, /^tripmatch:demo-interactions:[a-z0-9]+$/);
 
 assert.match(discoverSource, /getFreshDemoProfiles/);
-assert.match(discoverSource, /recordDemoSwipe\(user\._id, profile\.userId, type\)/);
+assert.match(discoverSource, /profile\.hasLikedCurrentUser === true/);
 assert.match(matchesSource, /getDemoMatchedUserIds\(userId\)/);
 assert.match(matchesSource, /getDemoConversationUserIds\(userId\)/);
 assert.doesNotMatch(matchesSource, /realConversations\.length\s*\?/);
 assert.match(chatSource, /isDemoConversationAvailable\(user\?\._id, conversationId\)/);
 assert.doesNotMatch(chatSource, /setDemoMessages\(demoChatMessages/);
+assert.match(chatSource, /appendDemoMessage/);
 
 console.log("Fresh-account demo lifecycle verification: PASS");

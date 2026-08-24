@@ -10,6 +10,7 @@ import {
   type MatchedProfileData,
 } from "../services/matchService";
 import { getDemoProfile } from "../data/demoProfiles";
+import { getDemoMatchedUserIds } from "../services/demoConversationState";
 import { calculateProfileCompatibility } from "../utils/profileCompatibility";
 import { useAuth } from "../context/AuthContext";
 import { getSafeProfileReturnPath } from "../utils/profileNavigation";
@@ -42,6 +43,10 @@ export default function MatchedProfile() {
       const demoProfile = getDemoProfile(userId);
 
       if (demoProfile) {
+        if (!getDemoMatchedUserIds(user?._id).includes(demoProfile.userId)) {
+          setErrorMessage("הפרופיל זמין רק לאחר התאמה הדדית");
+          return;
+        }
         setData(getDemoMatchedProfile(demoProfile, user || {}));
         return;
       }

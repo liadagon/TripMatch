@@ -11,6 +11,7 @@ import { getDemoDiscoverProfiles, type DemoProfile } from "../data/demoProfiles"
 import {
   getEligibleDemoUserIds,
   recordDemoSwipe,
+  setDemoUserBlocked,
 } from "../services/demoConversationState";
 import { calculateProfileCompatibility } from "../utils/profileCompatibility";
 import {
@@ -21,6 +22,7 @@ import {
   ThumbsDown,
   MessageCircle,
   CalendarDays,
+  Ban,
 } from "lucide-react";
 import "./Discover.css";
 
@@ -37,6 +39,7 @@ type DiscoverProfile = {
   tags: string[];
   isDemo: boolean;
   destinationInfo?: DestinationInfo;
+  hasLikedCurrentUser?: boolean;
 };
 
 type UsableDiscoverUser = DiscoverUser & {
@@ -118,6 +121,7 @@ function mapDemoToProfile(profile: DemoProfile, currentUser: Parameters<typeof c
     images: [...profile.photos],
     tags: [...profile.interests, profile.travelStyle, profile.budget].slice(0, 5),
     isDemo: true,
+    hasLikedCurrentUser: profile.hasLikedCurrentUser,
   };
 }
 
@@ -232,7 +236,12 @@ export default function Discover() {
     try {
       if (profile.isDemo) {
         if (!user?._id) throw new Error("Missing authenticated user scope");
-        recordDemoSwipe(user._id, profile.userId, type);
+        recordDemoSwipe(
+          user._id,
+          profile.userId,
+          type,
+          profile.hasLikedCurrentUser === true,
+        );
         await new Promise((resolve) => window.setTimeout(resolve, 280));
       } else {
         await Promise.all([
@@ -345,6 +354,12 @@ export default function Discover() {
     }
   }
 
+  function blockDemoProfile() {
+    if (!profile.isDemo || !user?._id) return;
+    setDemoUserBlocked(user._id, profile.userId, true);
+    setProfiles((current) => current.slice(1));
+    setPhotoIndex(0);
+  }
 
   const cardStyle = {
     transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
@@ -475,6 +490,15 @@ export default function Discover() {
           )}
 
           <div className="discover-actions">
+            {profile.isDemo && (
+              <button
+                className="discover-skip-btn"
+                onClick={blockDemoProfile}
+                aria-label="חסימת משתמש הדגמה"
+              >
+                <Ban size={20} />
+              </button>
+            )}
             <button
               className="discover-skip-btn"
               onClick={() => moveToNextProfile("skip")}

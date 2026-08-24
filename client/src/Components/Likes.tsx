@@ -33,6 +33,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
+import { demoProfiles } from "../data/demoProfiles";
+import {
+  getDemoInteractionState,
+  isDemoUserBlocked,
+} from "../services/demoConversationState";
 import "./Likes.css";
 
 type LikesTab = "received" | "messages";
@@ -63,6 +68,25 @@ export default function Likes() {
   );
   const isBoostActive = hasActiveBoost(subscription);
   const isSubscriptionPending = isPendingSubscription(subscription);
+  const demoState = getDemoInteractionState(user?._id);
+  const demoReceivedLikes = demoProfiles
+    .filter(
+      (profile) =>
+        profile.hasLikedCurrentUser &&
+        demoState.swipes[profile.userId] !== "skip" &&
+        !isDemoUserBlocked(user?._id, profile.userId),
+    )
+    .map((profile): ReceivedLike => ({
+      _id: `demo-like-${profile.userId}`,
+      fromUser: profile,
+      createdAt: "",
+      updatedAt: "",
+    }));
+  const visibleReceivedLikes = isBoostActive
+    ? [...receivedLikes, ...demoReceivedLikes]
+    : receivedLikes;
+  const totalReceivedLikesCount = receivedLikesCount + demoReceivedLikes.length;
+  const receivedLikesLocked = !isBoostActive && totalReceivedLikesCount > 0;
 
   const loadSubscription = useCallback(async () => {
     setSubscriptionError("");
@@ -95,7 +119,7 @@ export default function Likes() {
       setReceivedLikes(result.locked ? [] : result.data);
     } catch {
       setReceivedLikes([]);
-      setReceivedLikesCount(3);
+      setReceivedLikesCount(0);
       setAreReceivedLikesLocked(true);
       setUsingDemoLikesFallback(true);
     } finally {
@@ -382,7 +406,7 @@ export default function Likes() {
           )}
 
           <article className="likes-main-card">
-            <div className="likes-count">{receivedLikesCount}</div>
+            <div className="likes-count">{totalReceivedLikesCount}</div>
 
             <div className="likes-main-heading">
               <h1>מי סימנו אותך</h1>
@@ -394,11 +418,11 @@ export default function Likes() {
                 <Heart size={34} />
                 <h2>טוענים לייקים...</h2>
               </div>
-            ) : areReceivedLikesLocked && receivedLikesCount > 0 ? (
+            ) : ((!isBoostActive && areReceivedLikesLocked) || receivedLikesLocked) && totalReceivedLikesCount > 0 ? (
               <div className="likes-locked-state">
                 <div className="likes-locked-heading">
                   <Heart size={30} fill="currentColor" />
-                  <h2>{receivedLikesCount} אנשים אהבו אותך</h2>
+                  <h2>{totalReceivedLikesCount} אנשים אהבו אותך</h2>
                   <p>
                     {usingDemoLikesFallback
                       ? "השרת אינו זמין כרגע, לכן מוצגת תצוגת הדגמה נעולה ללא פרטי מטיילים."
@@ -408,7 +432,7 @@ export default function Likes() {
 
                 <div className="likes-locked-grid" aria-hidden="true">
                   {Array.from({
-                    length: Math.min(receivedLikesCount, 3),
+                    length: Math.min(totalReceivedLikesCount, 3),
                   }).map((_, index) => (
                     <div className="likes-locked-card" key={index}>
                       <div className="likes-locked-avatar" />
@@ -428,12 +452,12 @@ export default function Likes() {
                   <Zap size={17} />
                 </button>
               </div>
-            ) : receivedLikes.length > 0 ? (
+            ) : visibleReceivedLikes.length > 0 ? (
               <div className="likes-received-grid">
-                {receivedLikes.map((like) => {
+                {visibleReceivedLikes.map((like) => {
                   const admirer = like.fromUser;
                   const image =
-                    admirer.photoURL || admirer.photo || "/pic2.png";
+                    admirer.photoURL || admirer.photo || "";
                   const destination =
                     admirer.preferredDestinations?.[0] || "יעד עדיין לא נבחר";
 
@@ -445,7 +469,7 @@ export default function Likes() {
                           {admirer.name}
                           {admirer.age ? `, ${admirer.age}` : ""}
                         </h2>
-                        <p>{admirer.location || "ישראל"}</p>
+                        <p>{[admirer.tripLocation?.city, admirer.tripLocation?.country].filter(Boolean).join(", ")}</p>
                         <strong>{destination}</strong>
                       </div>
                     </article>

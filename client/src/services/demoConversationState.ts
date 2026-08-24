@@ -6,6 +6,13 @@ const DEMO_INTERACTIONS_PREFIX = "tripmatch:demo-interactions:";
 
 export type DemoSwipeAction = "like" | "skip";
 
+export type DemoMessage = {
+  id: string;
+  from: "me" | "them";
+  text: string;
+  time: string;
+};
+
 type DemoInteractionState = {
   swipes: Record<string, DemoSwipeAction>;
   matches: string[];
@@ -13,6 +20,7 @@ type DemoInteractionState = {
   blocked: string[];
   hiddenConversations: string[];
   dismissed: string[];
+  messages: Record<string, DemoMessage[]>;
 };
 
 const EMPTY_STATE: DemoInteractionState = {
@@ -22,6 +30,7 @@ const EMPTY_STATE: DemoInteractionState = {
   blocked: [],
   hiddenConversations: [],
   dismissed: [],
+  messages: {},
 };
 
 function getDefaultStorage() {
@@ -32,6 +41,25 @@ function safeStringList(value: unknown) {
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : [];
+}
+
+function safeMessages(value: unknown): Record<string, DemoMessage[]> {
+  if (!value || typeof value !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(value).map(([demoId, messages]) => [
+      demoId,
+      Array.isArray(messages)
+        ? messages.filter((message): message is DemoMessage => {
+            if (!message || typeof message !== "object") return false;
+            const candidate = message as Partial<DemoMessage>;
+            return typeof candidate.id === "string" &&
+              (candidate.from === "me" || candidate.from === "them") &&
+              typeof candidate.text === "string" &&
+              typeof candidate.time === "string";
+          })
+        : [],
+    ]),
+  );
 }
 
 function getSafeAccountScope(userId: string) {
@@ -79,6 +107,7 @@ export function getDemoInteractionState(
       blocked: safeStringList(record.blocked),
       hiddenConversations: safeStringList(record.hiddenConversations),
       dismissed: safeStringList(record.dismissed),
+      messages: safeMessages(record.messages),
     };
   } catch {
     return { ...EMPTY_STATE, swipes: {} };
@@ -113,12 +142,13 @@ export function recordDemoSwipe(
   userId: string,
   demoUserId: string,
   action: DemoSwipeAction,
+  demoHasLikedCurrentUser = false,
   storage: Storage | null = getDefaultStorage(),
 ) {
   const state = getDemoInteractionState(userId, storage);
   state.swipes[demoUserId] = action;
 
-  if (action === "like") {
+  if (action === "like" && demoHasLikedCurrentUser) {
     state.matches = Array.from(new Set([...state.matches, demoUserId]));
     state.conversations = Array.from(
       new Set([...state.conversations, demoUserId]),
@@ -131,7 +161,7 @@ export function recordDemoSwipe(
   }
 
   writeDemoInteractionState(userId, state, storage);
-  return action === "like";
+  return action === "like" && demoHasLikedCurrentUser;
 }
 
 export function getDemoMatchedUserIds(
@@ -147,7 +177,34 @@ export function getDemoConversationUserIds(
 ) {
   const state = getDemoInteractionState(userId, storage);
   const hidden = new Set(state.hiddenConversations);
-  return state.conversations.filter((demoId) => !hidden.has(demoId));
+  const blocked = new Set(state.blocked);
+  return state.conversations.filter(
+    (demoId) => !hidden.has(demoId) && !blocked.has(demoId),
+  );
+}
+
+export function getDemoMessages(
+  userId: string | undefined,
+  demoUserId: string,
+  storage: Storage | null = getDefaultStorage(),
+) {
+  if (!isDemoConversationAvailable(userId, demoUserId, storage)) return [];
+  return getDemoInteractionState(userId, storage).messages[demoUserId] || [];
+}
+
+export function appendDemoMessage(
+  userId: string,
+  demoUserId: string,
+  message: DemoMessage,
+  storage: Storage | null = getDefaultStorage(),
+) {
+  if (!isDemoConversationAvailable(userId, demoUserId, storage)) {
+    throw new Error("Demo conversation is not available");
+  }
+  const state = getDemoInteractionState(userId, storage);
+  state.messages[demoUserId] = [...(state.messages[demoUserId] || []), message];
+  writeDemoInteractionState(userId, state, storage);
+  return state.messages[demoUserId];
 }
 
 export function isDemoConversationAvailable(

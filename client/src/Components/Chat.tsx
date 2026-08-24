@@ -14,6 +14,8 @@ import {
 } from "../data/conversations";
 import {
   hideDemoConversation,
+  appendDemoMessage,
+  getDemoMessages,
   isDemoConversationAvailable,
   isDemoUserBlocked,
   setDemoUserBlocked,
@@ -109,7 +111,7 @@ export default function Chat() {
           setIsLoading(false);
           return;
         }
-        setDemoMessages([]);
+        setDemoMessages(getDemoMessages(user?._id, conversationId));
         setIsDemoBlocked(isDemoUserBlocked(user?._id, conversationId));
         setBlockStatus({ blocked: false, blockedByMe: false });
         setIsLoading(false);
@@ -190,16 +192,20 @@ export default function Chat() {
         time: now,
       };
 
-      setDemoMessages((current) => [...current, localMessage]);
+      if (!user?._id) {
+        setIsSending(false);
+        return;
+      }
+      setDemoMessages(
+        appendDemoMessage(user._id, conversationId, localMessage),
+      );
       setText("");
       setIsSending(false);
 
       window.setTimeout(() => {
         const reply =
           demoChatReplies[Math.floor(Math.random() * demoChatReplies.length)];
-        setDemoMessages((current) => [
-          ...current,
-          {
+        const replyMessage: ChatMessage = {
             id: `demo-reply-${Date.now()}`,
             from: "them",
             text: reply,
@@ -207,8 +213,10 @@ export default function Chat() {
               hour: "2-digit",
               minute: "2-digit",
             }),
-          },
-        ]);
+          };
+        setDemoMessages(
+          appendDemoMessage(user._id, conversationId, replyMessage),
+        );
       }, 900);
       return;
     }
@@ -348,7 +356,7 @@ export default function Chat() {
     demoConversation?.images[0] ||
     otherUser?.photoURL ||
     otherUser?.photo ||
-    "/pic2.png";
+    "";
   const displayDestination =
     demoConversation?.destination || destination || "שיחה חדשה";
   const relationshipBlocked = isDemo
