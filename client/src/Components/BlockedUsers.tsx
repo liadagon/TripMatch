@@ -14,6 +14,11 @@ import {
   unblockMatchedUser,
   type BlockedUserRecord,
 } from "../services/blockService";
+import { conversations, type Conversation } from "../data/conversations";
+import {
+  getBlockedDemoUserIds,
+  setDemoUserBlocked,
+} from "../services/demoConversationState";
 import { isAppOwnedProfilePhoto } from "../utils/authenticatedIdentity";
 import "./BlockedUsers.css";
 
@@ -39,12 +44,36 @@ function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
   );
 }
 
+function DemoBlockedUserAvatar({ user }: { user: Conversation }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = user.images[0];
+
+  if (!image || imageFailed) {
+    return (
+      <div className="blocked-user-avatar-placeholder" aria-hidden="true">
+        <ImageOff size={26} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="blocked-user-avatar"
+      src={image}
+      alt=""
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 export default function BlockedUsers() {
   const navigate = useNavigate();
   const location = useLocation();
   const [blocks, setBlocks] = useState<BlockedUserRecord[]>([]);
+  const [demoBlocks, setDemoBlocks] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingUserId, setPendingUserId] = useState("");
+  const [pendingDemoUserId, setPendingDemoUserId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -54,6 +83,10 @@ export default function BlockedUsers() {
 
   useEffect(() => {
     let isActive = true;
+    const blockedDemoIds = new Set(getBlockedDemoUserIds());
+    setDemoBlocks(
+      conversations.filter((conversation) => blockedDemoIds.has(conversation.id)),
+    );
 
     getBlockedUsers()
       .then((records) => {
@@ -99,6 +132,26 @@ export default function BlockedUsers() {
     }
   }
 
+  function unblockDemo(user: Conversation) {
+    if (pendingUserId || pendingDemoUserId) return;
+
+    setPendingDemoUserId(user.id);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      setDemoUserBlocked(user.id, false);
+      setDemoBlocks((current) =>
+        current.filter((blockedUser) => blockedUser.id !== user.id),
+      );
+      setSuccessMessage("החסימה בוטלה בהצלחה");
+    } catch {
+      setErrorMessage("לא הצלחנו לבטל את החסימה. נסו שוב.");
+    } finally {
+      setPendingDemoUserId("");
+    }
+  }
+
   return (
     <div className="blocked-users-page" dir="rtl">
       <main className="blocked-users-shell">
@@ -140,7 +193,7 @@ export default function BlockedUsers() {
               <LoaderCircle className="blocked-users-spinner" size={34} />
               <h2>טוענים משתמשים חסומים...</h2>
             </div>
-          ) : blocks.length === 0 ? (
+          ) : blocks.length + demoBlocks.length === 0 ? (
             <div className="blocked-users-state-card blocked-users-empty">
               <div className="blocked-users-empty-icon" aria-hidden="true">
                 <UserRoundX size={42} />
@@ -171,6 +224,31 @@ export default function BlockedUsers() {
                       type="button"
                       disabled={Boolean(pendingUserId)}
                       onClick={() => void unblock(record)}
+                    >
+                      {isPending ? (
+                        <LoaderCircle className="blocked-users-spinner" size={18} />
+                      ) : (
+                        <UserRoundCheck size={18} />
+                      )}
+                      {isPending ? "מבטלים..." : "בטל חסימה"}
+                    </button>
+                  </article>
+                );
+              })}
+              {demoBlocks.map((user) => {
+                const isPending = pendingDemoUserId === user.id;
+
+                return (
+                  <article className="blocked-user-card" key={`demo-${user.id}`}>
+                    <DemoBlockedUserAvatar user={user} />
+                    <div className="blocked-user-summary">
+                      <span>משתמש הדגמה חסום</span>
+                      <h2>{user.name}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={Boolean(pendingUserId || pendingDemoUserId)}
+                      onClick={() => unblockDemo(user)}
                     >
                       {isPending ? (
                         <LoaderCircle className="blocked-users-spinner" size={18} />

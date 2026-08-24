@@ -31,6 +31,10 @@ export function isDemoUserBlocked(userId: string) {
   return readStringList(BLOCKED_DEMO_USERS_KEY).includes(userId);
 }
 
+export function getBlockedDemoUserIds() {
+  return readStringList(BLOCKED_DEMO_USERS_KEY);
+}
+
 export function setDemoUserBlocked(userId: string, blocked: boolean) {
   const blockedIds = new Set(readStringList(BLOCKED_DEMO_USERS_KEY));
 
