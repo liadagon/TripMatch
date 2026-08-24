@@ -29,6 +29,7 @@ import {
   getAuthenticatedIdentity,
   getAuthenticatedProfilePhotos,
 } from "../utils/authenticatedIdentity";
+import { filterCanonicalInterests } from "../data/profileOptions";
 import "./MyProfilePreview.css";
 
 type DetailItem = {
@@ -93,13 +94,7 @@ export function ProfilePreviewView({
         .filter(Boolean),
     ),
   );
-  const interests = Array.from(
-    new Set(
-      (user.interests || [])
-        .map((interest) => interest.trim())
-        .filter(Boolean),
-    ),
-  );
+  const interests = filterCanonicalInterests(user.interests);
   const travelDetails: DetailItem[] = [
     tripDestination
       ? { label: "יעד הטיול", value: tripDestination, icon: Plane }

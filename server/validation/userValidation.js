@@ -18,7 +18,11 @@ const updateProfileSchema = Joi.object({
   interests: Joi.array()
     .min(1)
     .max(10)
-    .items(Joi.string().trim().min(1).max(50))
+    .items(
+      Joi.string()
+        .trim()
+        .valid(...QUESTIONNAIRE_OPTIONS.interests),
+    )
     .optional(),
   preferredDestinations: Joi.array()
     .min(1)

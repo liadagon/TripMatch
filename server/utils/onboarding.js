@@ -9,6 +9,9 @@ const {
   getAppOwnedPhotoUrls,
   sanitizeUserPhotoFields,
 } = require("./profilePhotos");
+const {
+  filterCanonicalInterests,
+} = require("../constants/profileOptions");
 
 const CURRENT_REGISTRATION_FLOW_VERSION = 2;
 
@@ -32,8 +35,7 @@ const hasCompletedPersonalProfile = (user) =>
   Number.isInteger(user?.age) &&
   user.age >= 18 &&
   user.age <= 120 &&
-  Array.isArray(user?.interests) &&
-  user.interests.some(hasText) &&
+  filterCanonicalInterests(user?.interests).length > 0 &&
   hasText(user?.bio) &&
   user.bio.trim().length >= 20 &&
   user.bio.trim().length <= 300;
@@ -62,7 +64,7 @@ function getCurrentRegistrationValidationErrors(user) {
   QUESTIONNAIRE_FIELDS.forEach((field) => {
     if (!hasText(user?.questionnaire?.[field])) errors[field] = questionnaireMessages[field];
   });
-  if (!Array.isArray(user?.interests) || !user.interests.some(hasText)) {
+  if (filterCanonicalInterests(user?.interests).length === 0) {
     errors.interests = "יש לבחור לפחות תחום עניין אחד.";
   }
   if (!hasText(user?.bio) || user.bio.trim().length < 20) {
@@ -173,6 +175,7 @@ function normalizeAuthenticatedUser(user) {
   delete serialized.password;
   delete serialized.registrationFlowVersion;
   sanitizeUserPhotoFields(serialized);
+  serialized.interests = filterCanonicalInterests(serialized.interests);
 
   return {
     ...serialized,

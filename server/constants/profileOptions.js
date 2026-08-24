@@ -1,4 +1,4 @@
-module.exports = {
+const PROFILE_OPTIONS = {
   destinations: [
     "דרום אמריקה",
     "תאילנד וויאטנם",
@@ -63,4 +63,36 @@ module.exports = {
     "מריבות על החלטות קטנות",
     "לוח זמנים לא מסונכרן",
   ],
+  interests: [
+    "טבע",
+    "טרקים",
+    "חופים",
+    "אוכל מקומי",
+    "תרבות",
+    "חיי לילה",
+    "צילום",
+    "ספורט",
+    "מוזיקה",
+    "קניות",
+  ],
+};
+
+const canonicalInterests = new Set(PROFILE_OPTIONS.interests);
+
+function filterCanonicalInterests(values) {
+  if (!Array.isArray(values)) return [];
+
+  return [
+    ...new Set(
+      values
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => canonicalInterests.has(value)),
+    ),
+  ];
+}
+
+module.exports = {
+  ...PROFILE_OPTIONS,
+  filterCanonicalInterests,
 };

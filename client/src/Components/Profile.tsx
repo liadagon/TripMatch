@@ -44,7 +44,10 @@ import {
   getAuthenticatedIdentity,
   getAuthenticatedProfilePhotos,
 } from "../utils/authenticatedIdentity";
-import { PROFILE_OPTIONS } from "../data/profileOptions";
+import {
+  PROFILE_OPTIONS,
+  filterCanonicalInterests,
+} from "../data/profileOptions";
 
 type ProfileData = {
   name: string;
@@ -133,7 +136,7 @@ function profileFromUser(user: AuthUser | null): ProfileData {
     preferredDestination: user?.preferredDestinations?.[0] || "",
     budget: user?.budget || "",
     travelStyle: user?.travelStyle || "",
-    interests: user?.interests?.filter(Boolean) || [],
+    interests: filterCanonicalInterests(user?.interests),
     planningStyle: user?.questionnaire?.planningStyle || "",
     accommodationPreference:
       user?.questionnaire?.accommodationPreference || "",
@@ -607,9 +610,9 @@ export default function Profile() {
       const normalizedTravelStyle = draftProfile.travelStyle.trim();
       const normalizedPreferredDestination =
         draftProfile.preferredDestination.trim();
-      const normalizedInterests = draftProfile.interests
-        .map((interest) => interest.trim())
-        .filter(Boolean);
+      const normalizedInterests = filterCanonicalInterests(
+        draftProfile.interests,
+      );
 
       if (normalizedName !== profile.name.trim()) payload.name = normalizedName;
       if (normalizedAge && normalizedAge !== profile.age.trim()) {
@@ -637,12 +640,7 @@ export default function Profile() {
           ? [normalizedPreferredDestination]
           : [];
       }
-      if (
-        JSON.stringify(normalizedInterests) !==
-        JSON.stringify(profile.interests.map((interest) => interest.trim()).filter(Boolean))
-      ) {
-        payload.interests = normalizedInterests;
-      }
+      payload.interests = normalizedInterests;
       if (normalizedBio !== profile.aboutMe.trim()) payload.bio = normalizedBio;
 
       const questionnaireChanges: NonNullable<ProfileUpdatePayload["questionnaire"]> = {};
@@ -1241,7 +1239,7 @@ export default function Profile() {
               >
                 <legend>תחומי עניין {location.pathname === "/profile/setup" ? "*" : ""}</legend>
                 <div>
-                  {Array.from(new Set([...PROFILE_OPTIONS.interests, ...draftProfile.interests])).map((interest) => (
+                  {PROFILE_OPTIONS.interests.map((interest) => (
                     <button
                       key={interest}
                       type="button"

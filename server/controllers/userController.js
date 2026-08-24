@@ -24,6 +24,9 @@ const {
   hasValidCoordinates,
   isSameCityAndCountry,
 } = require("../utils/matchesMap");
+const {
+  filterCanonicalInterests,
+} = require("../constants/profileOptions");
 
 const DISCOVER_INTERNAL_FIELDS =
   "tripLocation.latitude tripLocation.longitude registrationCompletedAt registrationFlowVersion subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
@@ -121,6 +124,7 @@ const getUsers = async (req, res, next) => {
       delete profile.subscriptionStatus;
       delete profile.paypalSubscriptionId;
       delete profile.paypalPlanId;
+      profile.interests = filterCanonicalInterests(profile.interests);
 
       if (profile.tripLocation) {
         profile.tripLocation = {
@@ -189,9 +193,12 @@ const getUserById = async (req, res, next) => {
       });
     }
 
+    const profile = user.toObject();
+    profile.interests = filterCanonicalInterests(profile.interests);
+
     return res.status(200).json({
       success: true,
-      data: user,
+      data: profile,
     });
   } catch (error) {
     return next(error);
@@ -268,6 +275,8 @@ const updateCurrentUser = async (req, res, next) => {
     if (Object.prototype.hasOwnProperty.call(req.body, "questionnaire")) {
       Object.assign(user.questionnaire, req.body.questionnaire);
     }
+
+    user.interests = filterCanonicalInterests(user.interests);
 
     if (
       !user.registrationCompletedAt &&

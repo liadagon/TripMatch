@@ -15,7 +15,11 @@ const {
   CURRENT_REGISTRATION_FLOW_VERSION,
   getCurrentRegistrationValidationErrors,
   getRegistrationState,
+  normalizeAuthenticatedUser,
 } = require("../utils/onboarding");
+const {
+  filterCanonicalInterests,
+} = require("../constants/profileOptions");
 
 const preferences = {
   preferredDestinations: ["אירופה"],
@@ -104,6 +108,12 @@ async function run() {
     updateProfileSchema.validateAsync({ interests: ["   "] }),
   );
   await assert.rejects(() =>
+    updateProfileSchema.validateAsync({ interests: ["cfcf"] }),
+  );
+  assert.deepEqual(filterCanonicalInterests(["טבע", "cfcf", " טבע "]), [
+    "טבע",
+  ]);
+  await assert.rejects(() =>
     updateProfileSchema.validateAsync({ preferredDestinations: [] }),
   );
   for (const payload of [
@@ -163,6 +173,15 @@ async function run() {
     const refreshedUser = await User.findById(newUser._id);
     assert(refreshedUser.registrationCompletedAt);
     assert.equal(getRegistrationState(refreshedUser).registrationComplete, true);
+
+    refreshedUser.interests = ["טבע", "cfcf"];
+    await refreshedUser.save();
+    assert.deepEqual(normalizeAuthenticatedUser(refreshedUser).interests, ["טבע"]);
+    await updateUser(refreshedUser, {
+      bio: "Legacy interest cleanup from the isolated profile test",
+    });
+    const cleanedLegacyUser = await User.findById(newUser._id);
+    assert.deepEqual(cleanedLegacyUser.interests, ["טבע"]);
 
     const candidate = await User.create({
       name: "Consistency Candidate",
@@ -255,6 +274,7 @@ async function run() {
       privateFieldsExcluded: true,
       existingCompletionPreserved: true,
       bioBoundariesVerified: true,
+      legacyInterestsFilteredAndCleaned: true,
       incompleteFinalSaveRejectedWithoutPersistence: true,
       disposableRecordsRemoved: true,
     });

@@ -76,3 +76,20 @@ export const PROFILE_OPTIONS = {
     "קניות",
   ],
 } as const;
+
+const canonicalInterests = new Set<string>(PROFILE_OPTIONS.interests);
+
+export function filterCanonicalInterests(
+  values: readonly unknown[] | null | undefined,
+) {
+  if (!Array.isArray(values)) return [];
+
+  return Array.from(
+    new Set(
+      values
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter((value) => canonicalInterests.has(value)),
+    ),
+  );
+}

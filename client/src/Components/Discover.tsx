@@ -6,6 +6,7 @@ import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeServi
 import { getUsers } from "../services/userService";
 import type { DestinationInfo, DiscoverUser } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
+import { filterCanonicalInterests } from "../data/profileOptions";
 import {
   MapPin,
   Plane,
@@ -63,7 +64,7 @@ export function isUsableDiscoverProfile(
 
 function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
   const tags = [
-    ...(user.interests || []),
+    ...filterCanonicalInterests(user.interests),
     user.travelStyle,
     user.budget,
   ].filter((tag): tag is string => Boolean(tag));
