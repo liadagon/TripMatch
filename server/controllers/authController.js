@@ -35,6 +35,20 @@ const getAuthenticatedUserPayload = (user, { isNewUser = false } = {}) => {
   };
 };
 
+const sendAccountNotFound = (res) =>
+  res.status(404).json({
+    success: false,
+    code: "ACCOUNT_NOT_FOUND",
+    message: "TripMatch account not found; register first",
+  });
+
+const sendAccountAlreadyExists = (res) =>
+  res.status(409).json({
+    success: false,
+    code: "ACCOUNT_ALREADY_EXISTS",
+    message: "A TripMatch account already exists for this identity",
+  });
+
 const register = async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
@@ -54,7 +68,7 @@ const register = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      message: "Registration completed successfully",
+      message: "Registration started successfully",
       token,
       ...getAuthenticatedUserPayload(user, { isNewUser: true }),
     });
@@ -165,32 +179,34 @@ const googleLogin = async (req, res, next) => {
       });
     }
 
-    let user = await User.findOne({ firebaseUid });
-    let isNewUser = false;
+    const userByFirebaseUid = await User.findOne({ firebaseUid });
+    const userByEmail = userByFirebaseUid
+      ? null
+      : await User.findOne({ email });
+    let user = userByFirebaseUid || userByEmail;
+    const isRegisterIntent = req.body.intent === "register";
 
-    if (!user) {
-      const existingUser = await User.findOne({ email });
+    if (isRegisterIntent && user) return sendAccountAlreadyExists(res);
+    if (!isRegisterIntent && !user) return sendAccountNotFound(res);
 
-      if (existingUser) {
-        if (
-          existingUser.firebaseUid &&
-          existingUser.firebaseUid !== firebaseUid
-        ) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "This email is already registered with another Google account",
-          });
-        }
+    if (userByEmail) {
+      if (userByEmail.firebaseUid && userByEmail.firebaseUid !== firebaseUid) {
+        return res.status(400).json({
+          success: false,
+          code: "GOOGLE_IDENTITY_CONFLICT",
+          message: "This email is already registered with another Google account",
+        });
+      }
 
-        existingUser.firebaseUid = firebaseUid;
-        existingUser.emailVerified = true;
-        user = await existingUser.save();
-      } else {
-        const verifiedName =
-          typeof verifiedToken.name === "string"
-            ? verifiedToken.name.trim()
-            : "";
+      userByEmail.firebaseUid = firebaseUid;
+      userByEmail.emailVerified = true;
+      user = await userByEmail.save();
+    } else if (!user) {
+      const verifiedName =
+        typeof verifiedToken.name === "string"
+          ? verifiedToken.name.trim()
+          : "";
+      try {
         user = await User.create({
           name: verifiedName || email.split("@")[0],
           email,
@@ -199,7 +215,9 @@ const googleLogin = async (req, res, next) => {
           firebaseUid,
           registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
         });
-        isNewUser = true;
+      } catch (error) {
+        if (error?.code === 11000) return sendAccountAlreadyExists(res);
+        throw error;
       }
     } else if (!user.emailVerified) {
       user.emailVerified = true;
@@ -221,12 +239,12 @@ const googleLogin = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message: isNewUser
+      message: isRegisterIntent
         ? "Google authentication succeeded; complete onboarding to finish registration"
         : "Google authentication completed successfully",
       token,
-      ...getAuthenticatedUserPayload(user, { isNewUser }),
-      isNewUser,
+      ...getAuthenticatedUserPayload(user, { isNewUser: isRegisterIntent }),
+      isNewUser: isRegisterIntent,
     });
   } catch (error) {
     if (error.authStage !== "jwt_creation") {
@@ -278,11 +296,11 @@ const requestEmailCode = async (req, res, next) => {
   }
 };
 
-async function findOrCreateVerifiedEmailUser(email) {
+async function resolveVerifiedEmailUser(email, intent) {
   let user = await User.findOne({ email });
-  let isNewUser = false;
 
-  if (user) {
+  if (intent === "login") {
+    if (!user) return { accountNotFound: true };
     if (!user.emailVerified) {
       await User.updateOne(
         { _id: user._id },
@@ -291,47 +309,40 @@ async function findOrCreateVerifiedEmailUser(email) {
       user.emailVerified = true;
     }
 
-    return { user, isNewUser };
+    return { user, isNewUser: false };
   }
+
+  if (user) return { accountAlreadyExists: true };
 
   try {
     user = await User.create({
-      name: email.split("@")[0].slice(0, 80),
+      name: "",
       email,
       authProvider: "email",
       emailVerified: true,
       registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
     });
-    isNewUser = true;
   } catch (error) {
     if (error?.code !== 11000) {
       throw error;
     }
 
-    user = await User.findOne({ email });
-
-    if (!user) {
-      throw error;
-    }
-
-    if (!user.emailVerified) {
-      await User.updateOne(
-        { _id: user._id },
-        { $set: { emailVerified: true } },
-      );
-      user.emailVerified = true;
-    }
+    return { accountAlreadyExists: true };
   }
 
-  return { user, isNewUser };
+  return { user, isNewUser: true };
 }
 
 const verifyEmailCode = async (req, res, next) => {
   try {
     await consumeEmailOtp(req.body.email, req.body.code);
-    const { user, isNewUser } = await findOrCreateVerifiedEmailUser(
+    const result = await resolveVerifiedEmailUser(
       req.body.email,
+      req.body.intent,
     );
+    if (result.accountNotFound) return sendAccountNotFound(res);
+    if (result.accountAlreadyExists) return sendAccountAlreadyExists(res);
+    const { user, isNewUser } = result;
     const token = createToken(user._id);
 
     return res.status(200).json({

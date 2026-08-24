@@ -124,13 +124,13 @@ export type EmailLoginResponse = {
 };
 
 export type RegisterPayload = {
-  name: string;
+  name?: string;
   email: string;
   password: string;
   bio?: string;
   age?: number;
   location?: string;
-  tripLocation: TripLocation;
+  tripLocation?: TripLocation;
   preferredDestinations?: string[];
   travelStyle?: string;
   budget?: string;
@@ -150,16 +150,28 @@ type CurrentUserResponse = {
   accountState: "registration_in_progress" | "registered";
 };
 
-export const googleLogin = (idToken: string) =>
-  api.post<GoogleLoginResponse>("/api/auth/google", { idToken });
+export const googleLogin = (
+  idToken: string,
+  intent: "login" | "register",
+) => api.post<GoogleLoginResponse>("/api/auth/google", { idToken, intent });
 
-export const requestEmailOtp = (email: string) =>
-  api.post<EmailOtpRequestResponse>("/api/auth/email/request-code", { email });
+export const requestEmailOtp = (
+  email: string,
+  intent: "login" | "register",
+) => api.post<EmailOtpRequestResponse>("/api/auth/email/request-code", {
+  email,
+  intent,
+});
 
-export const verifyEmailOtp = (email: string, code: string) =>
+export const verifyEmailOtp = (
+  email: string,
+  code: string,
+  intent: "login" | "register",
+) =>
   api.post<EmailOtpVerifyResponse>("/api/auth/email/verify-code", {
     email,
     code,
+    intent,
   });
 
 export const emailLogin = (email: string, password: string) =>

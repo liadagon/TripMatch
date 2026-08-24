@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   signInWithGoogle,
   getGoogleAuthErrorMessage,
@@ -8,6 +8,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import {
   getAuthenticationPath,
+  getAuthenticationIntent,
   shouldConfirmExistingAccount,
   type AuthenticationIntent,
 } from "../utils/authNavigation";
@@ -23,15 +24,19 @@ const heroImages = [
 
 export default function Welcome() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { authenticateWithGoogle, logout } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [googleError, setGoogleError] = useState("");
+  const [showRegistrationCta, setShowRegistrationCta] = useState(false);
   const [pendingExistingAccountPath, setPendingExistingAccountPath] = useState<
     ReturnType<typeof getAuthenticationPath> | null
   >(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isLogoutLoading, setIsLogoutLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthenticationIntent>("login");
+  const [authMode, setAuthMode] = useState<AuthenticationIntent>(() =>
+    getAuthenticationIntent(location.state),
+  );
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -45,12 +50,13 @@ export default function Welcome() {
 
   const handleGoogleAuthentication = async () => {
     setGoogleError("");
+    setShowRegistrationCta(false);
     setPendingExistingAccountPath(null);
     setIsGoogleLoading(true);
 
     try {
       const { idToken } = await signInWithGoogle();
-      const result = await authenticateWithGoogle(idToken);
+      const result = await authenticateWithGoogle(idToken, authMode);
 
       const destination = getAuthenticationPath(result);
 
@@ -64,7 +70,12 @@ export default function Welcome() {
       console.error("Google login failed:", error);
 
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 400) {
+        if (error.response?.data?.code === "ACCOUNT_NOT_FOUND") {
+          setGoogleError("החשבון לא קיים. יש להירשם מחדש.");
+          setShowRegistrationCta(true);
+        } else if (error.response?.data?.code === "ACCOUNT_ALREADY_EXISTS") {
+          setGoogleError("החשבון כבר קיים. יש לעבור להתחברות.");
+        } else if (error.response?.status === 400) {
           setGoogleError(
             "כתובת האימייל הזו כבר רשומה באמצעות שיטת התחברות אחרת.",
           );
@@ -91,6 +102,7 @@ export default function Welcome() {
 
   function changeAuthMode(mode: AuthenticationIntent) {
     setGoogleError("");
+    setShowRegistrationCta(false);
     setPendingExistingAccountPath(null);
     setAuthMode(mode);
   }
@@ -204,6 +216,15 @@ export default function Welcome() {
             </p>
 
             {googleError && <p className="google-error">{googleError}</p>}
+            {showRegistrationCta && (
+              <button
+                type="button"
+                className="auth-mode-link account-not-found-cta"
+                onClick={() => changeAuthMode("register")}
+              >
+                לעבור להרשמה
+              </button>
+            )}
 
             <p className="note">מיועד למטיילים ישראלים</p>
           </div>

@@ -30,6 +30,7 @@ import { clearDemoConversationState } from "../services/demoConversationState";
 import { clearBoostPromoSnooze } from "../utils/boostPromoSnooze";
 import { wasDocumentRestoredThroughHistory } from "../utils/browserHistorySession";
 import LoadingState from "../Components/LoadingState";
+import type { AuthenticationIntent } from "../utils/authNavigation";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -39,10 +40,12 @@ type AuthContextValue = {
   register: (payload: RegisterPayload) => Promise<AuthUser>;
   authenticateWithGoogle: (
     idToken: string,
+    intent: AuthenticationIntent,
   ) => Promise<GoogleAuthenticationResult>;
   authenticateWithEmailCode: (
     email: string,
     code: string,
+    intent: AuthenticationIntent,
   ) => Promise<AuthenticationResult>;
   updateProfile: (payload: ProfileUpdatePayload) => Promise<AuthUser>;
   logout: () => Promise<void>;
@@ -168,11 +171,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.data.data;
   }
 
-  async function authenticateWithGoogle(idToken: string) {
+  async function authenticateWithGoogle(
+    idToken: string,
+    intent: AuthenticationIntent,
+  ) {
     let response;
 
     try {
-      response = await googleLogin(idToken);
+      response = await googleLogin(idToken, intent);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("[Google auth] TripMatch token exchange failed", {
@@ -203,8 +209,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }
 
-  async function authenticateWithEmailCode(email: string, code: string) {
-    const response = await verifyEmailOtp(email, code);
+  async function authenticateWithEmailCode(
+    email: string,
+    code: string,
+    intent: AuthenticationIntent,
+  ) {
+    const response = await verifyEmailOtp(email, code, intent);
 
     localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
     const currentUserResponse = await getCurrentUser();

@@ -20,6 +20,8 @@ const profileSource = await read("../src/Components/Profile.tsx");
 const photoUploadCssSource = await read("../src/Components/PhotoUpload.css");
 const existingAccountDialogSource = await read("../src/Components/ExistingAccountDialog.tsx");
 const firebaseSource = await read("../src/firebase.ts");
+const authServiceSource = await read("../src/services/authService.ts");
+const emailOtpRequestSource = await read("../src/Components/EmailOtpRequest.tsx");
 
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: {
@@ -178,9 +180,19 @@ assert.equal(getAuthenticationIntent(undefined), "login");
 
 assert.match(existingAccountDialogSource, /role="dialog"/);
 assert.match(welcomeSource, /getAuthenticationPath\(result\)/);
+assert.match(welcomeSource, /authenticateWithGoogle\(idToken, authMode\)/);
+assert.match(welcomeSource, /ACCOUNT_NOT_FOUND/);
+assert.match(welcomeSource, /החשבון לא קיים\. יש להירשם מחדש\./);
+assert.match(welcomeSource, /לעבור להרשמה/);
 assert.match(welcomeSource, /setPendingExistingAccountPath\(destination\);\s+return;/);
 assert.match(welcomeSource, /<ExistingAccountDialog/);
 assert.match(emailOtpVerifySource, /getAuthenticationPath\(result\)/);
+assert.match(emailOtpVerifySource, /authenticateWithEmailCode\([\s\S]*authIntent/);
+assert.match(emailOtpVerifySource, /ACCOUNT_NOT_FOUND/);
+assert.match(emailOtpVerifySource, /לעבור להרשמה/);
+assert.match(emailOtpRequestSource, /requestEmailOtp\(normalizedEmail, authIntent\)/);
+assert.match(authServiceSource, /\/api\/auth\/google", \{ idToken, intent \}/);
+assert.match(authServiceSource, /\/api\/auth\/email\/verify-code[\s\S]*intent/);
 assert.match(emailOtpVerifySource, /<ExistingAccountDialog/);
 assert.match(
   emailOtpVerifySource,

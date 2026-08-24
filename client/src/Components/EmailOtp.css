@@ -177,6 +177,18 @@
   font-weight: 800;
 }
 
+.email-otp-form .email-otp-registration-cta {
+  margin-top: 10px;
+  border: 1px solid #145cff;
+  color: #145cff;
+  background: #fff;
+  box-shadow: none;
+}
+
+.email-otp-form .email-otp-registration-cta:hover {
+  background: rgba(20, 92, 255, 0.06);
+}
+
 .email-otp-side {
   position: relative;
   width: 100%;

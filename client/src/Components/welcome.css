@@ -351,6 +351,12 @@ body {
   text-align: center;
 }
 
+.account-not-found-cta {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 15px;
+}
+
 .existing-account-overlay {
   position: fixed;
   inset: 0;

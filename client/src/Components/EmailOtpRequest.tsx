@@ -39,7 +39,7 @@ export default function EmailOtpRequest() {
     setIsLoading(true);
 
     try {
-      const response = await requestEmailOtp(normalizedEmail);
+      const response = await requestEmailOtp(normalizedEmail, authIntent);
 
       navigate("/email-otp/verify", {
         state: {

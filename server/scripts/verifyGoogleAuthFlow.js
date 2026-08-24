@@ -134,8 +134,16 @@ async function verifyGoogleAuthFlow() {
     picture: "https://example.com/traveler.jpg",
   };
 
+  const missingLogin = await invoke(googleLogin, {
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
+  });
+  assert.equal(missingLogin.response.statusCode, 404);
+  assert.equal(missingLogin.response.body.code, "ACCOUNT_NOT_FOUND");
+  assert.equal(users.length, 0);
+  assert.equal(createCount, 0);
+
   const firstLogin = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "register" },
   });
 
   assert.equal(firstLogin.response.statusCode, 200);
@@ -190,7 +198,7 @@ async function verifyGoogleAuthFlow() {
   });
 
   const partialLogin = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
   assert.equal(partialLogin.response.body.onboardingComplete, false);
   assert.equal(partialLogin.response.body.nextOnboardingStep, "profile");
@@ -201,7 +209,7 @@ async function verifyGoogleAuthFlow() {
   verifiedToken.name = "Provider Replacement Name";
 
   const returningLogin = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
 
   assert.equal(returningLogin.response.statusCode, 200);
@@ -223,12 +231,20 @@ async function verifyGoogleAuthFlow() {
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const repeatedLogin = await invoke(googleLogin, {
-      body: { idToken: "mock-firebase-id-token" },
+      body: { idToken: "mock-firebase-id-token", intent: "login" },
     });
     assert.equal(repeatedLogin.response.body.isNewUser, false);
     assert.equal(repeatedLogin.response.body.data._id, users[0]._id);
   }
 
+  assert.equal(users.length, 1);
+  assert.equal(createCount, 1);
+
+  const duplicateRegister = await invoke(googleLogin, {
+    body: { idToken: "mock-firebase-id-token", intent: "register" },
+  });
+  assert.equal(duplicateRegister.response.statusCode, 409);
+  assert.equal(duplicateRegister.response.body.code, "ACCOUNT_ALREADY_EXISTS");
   assert.equal(users.length, 1);
   assert.equal(createCount, 1);
 
@@ -274,7 +290,7 @@ async function verifyGoogleAuthFlow() {
   };
 
   const legacyLogin = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
   assert.equal(legacyLogin.response.statusCode, 200);
   assert.equal(legacyLogin.response.body.isNewUser, false);
@@ -312,7 +328,7 @@ async function verifyGoogleAuthFlow() {
   };
 
   const partialLegacyLogin = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
   assert.equal(partialLegacyLogin.response.body.isNewUser, false);
   assert.equal(partialLegacyLogin.response.body.data._id, partialLegacyGoogleUser._id);
@@ -326,7 +342,7 @@ async function verifyGoogleAuthFlow() {
     name: "No Photo Traveler",
   };
   const googleWithoutPhoto = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "register" },
   });
   assert.equal(googleWithoutPhoto.response.body.isNewUser, true);
   assert.equal(googleWithoutPhoto.response.body.onboardingComplete, false);
@@ -357,7 +373,7 @@ async function verifyGoogleAuthFlow() {
   };
 
   const linkedEmailUser = await invoke(googleLogin, {
-    body: { idToken: "mock-firebase-id-token" },
+    body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
   assert.equal(linkedEmailUser.response.statusCode, 200);
   assert.equal(linkedEmailUser.response.body.isNewUser, false);
@@ -373,13 +389,17 @@ async function verifyGoogleAuthFlow() {
   );
 
   assert.equal(
-    googleLoginSchema.validate({ idToken: "mock-firebase-id-token" }).error,
+    googleLoginSchema.validate({
+      idToken: "mock-firebase-id-token",
+      intent: "login",
+    }).error,
     undefined,
   );
   assert(googleLoginSchema.validate({}).error);
   assert(
     googleLoginSchema.validate({
       idToken: "mock-firebase-id-token",
+      intent: "login",
       unexpected: true,
     }).error,
   );
@@ -402,6 +422,9 @@ async function verifyGoogleAuthFlow() {
     existingAppPhotoPreserved: true,
     durableRegistrationState: true,
     validationPassed: true,
+    missingLoginReturnsAccountNotFound: true,
+    registerCreatesMissingUserOnly: true,
+    duplicateRegisterRejected: true,
   });
 }
 

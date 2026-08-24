@@ -218,12 +218,12 @@ const {
   emailOtpVerifySchema,
 } = require("../validation/authValidation");
 
-async function requestCode(email) {
-  return invoke(requestEmailCode, { body: { email } });
+async function requestCode(email, intent = "login") {
+  return invoke(requestEmailCode, { body: { email, intent } });
 }
 
-async function verifyCode(email, code) {
-  return invoke(verifyEmailCode, { body: { email, code } });
+async function verifyCode(email, code, intent = "login") {
+  return invoke(verifyEmailCode, { body: { email, code, intent } });
 }
 
 async function verifyEndpointRateLimit() {
@@ -261,7 +261,10 @@ async function verifyEndpointRateLimit() {
 
 async function run() {
   assert.equal(
-    emailOtpRequestSchema.validate({ email: "Traveler@Outlook.com" }).value
+    emailOtpRequestSchema.validate({
+      email: "Traveler@Outlook.com",
+      intent: "login",
+    }).value
       .email,
     "traveler@outlook.com",
   );
@@ -270,11 +273,12 @@ async function run() {
     emailOtpVerifySchema.validate({
       email: "traveler@university.edu",
       code: "123456",
+      intent: "register",
     }).error === undefined,
   );
 
   const newEmail = "new.traveler@outlook.com";
-  const requested = await requestCode(newEmail);
+  const requested = await requestCode(newEmail, "login");
   assert.equal(requested.response.statusCode, 200);
   assert.equal(emailSendCount, 1);
   const newCode = sentCodes.get(newEmail);
@@ -283,12 +287,23 @@ async function run() {
   assert.notEqual(storedRecord.codeHash, newCode);
   assert.equal(storedRecord.codeHash.length, 64);
 
-  const cooldown = await requestCode(newEmail);
+  const cooldown = await requestCode(newEmail, "login");
   assert.equal(cooldown.response.statusCode, 429);
   assert.equal(cooldown.response.body.code, "OTP_RESEND_COOLDOWN");
   assert.equal(emailSendCount, 1);
 
-  const newVerification = await verifyCode(newEmail, newCode);
+  const missingVerification = await verifyCode(newEmail, newCode, "login");
+  assert.equal(missingVerification.response.statusCode, 404);
+  assert.equal(missingVerification.response.body.code, "ACCOUNT_NOT_FOUND");
+  assert.equal(userCreateCount, 0);
+  assert.equal(users.length, 0);
+
+  await requestCode(newEmail, "register");
+  const newVerification = await verifyCode(
+    newEmail,
+    sentCodes.get(newEmail),
+    "register",
+  );
   assert.equal(newVerification.response.statusCode, 200);
   assert.equal(newVerification.response.body.isNewUser, true);
   assert.equal(newVerification.response.body.data.authProvider, "email");
@@ -318,10 +333,11 @@ async function run() {
   const createsAfterNewRegistration = userCreateCount;
   users[0].photoURL = "http://localhost:5000/api/file/64b000000000000000000002";
   users[0].photos = ["http://localhost:5000/api/file/64b000000000000000000002"];
-  await requestCode(newEmail);
+  await requestCode(newEmail, "login");
   const repeatedAuthentication = await verifyCode(
     newEmail,
     sentCodes.get(newEmail),
+    "login",
   );
   assert.equal(repeatedAuthentication.response.statusCode, 200);
   assert.equal(repeatedAuthentication.response.body.isNewUser, false);
@@ -352,10 +368,11 @@ async function run() {
     tripLocation: { city: "Barcelona", country: "Spain" },
     registrationCompletedAt: new Date(),
   });
-  await requestCode(newEmail);
+  await requestCode(newEmail, "login");
   const completedAuthentication = await verifyCode(
     newEmail,
     sentCodes.get(newEmail),
+    "login",
   );
   assert.equal(completedAuthentication.response.body.onboardingComplete, true);
   assert.equal(completedAuthentication.response.body.nextOnboardingStep, null);
@@ -370,10 +387,11 @@ async function run() {
     emailVerified: false,
   });
   const usersBeforeExistingEmailLogin = users.length;
-  await requestCode(existingEmailUser.email);
+  await requestCode(existingEmailUser.email, "login");
   const existingEmailVerification = await verifyCode(
     existingEmailUser.email,
     sentCodes.get(existingEmailUser.email),
+    "login",
   );
   assert.equal(existingEmailVerification.response.statusCode, 200);
   assert.equal(existingEmailVerification.response.body.isNewUser, false);
@@ -382,6 +400,19 @@ async function run() {
     existingEmailUser._id,
   );
   assert.equal(existingEmailUser.emailVerified, true);
+  assert.equal(users.length, usersBeforeExistingEmailLogin);
+
+  await requestCode(existingEmailUser.email, "register");
+  const duplicateEmailRegister = await verifyCode(
+    existingEmailUser.email,
+    sentCodes.get(existingEmailUser.email),
+    "register",
+  );
+  assert.equal(duplicateEmailRegister.response.statusCode, 409);
+  assert.equal(
+    duplicateEmailRegister.response.body.code,
+    "ACCOUNT_ALREADY_EXISTS",
+  );
   assert.equal(users.length, usersBeforeExistingEmailLogin);
 
   const authRequest = {
@@ -461,18 +492,14 @@ async function run() {
     firebaseUid: "duplicate-race-google-uid",
     emailVerified: false,
   };
-  await requestCode(raceEmail);
+  await requestCode(raceEmail, "register");
   const raceVerification = await verifyCode(
     raceEmail,
     sentCodes.get(raceEmail),
+    "register",
   );
-  const recoveredRaceUser = raceVerification.response.body.data;
-  assert.equal(raceVerification.response.statusCode, 200);
-  assert.equal(raceVerification.response.body.isNewUser, false);
-  assert.equal(recoveredRaceUser._id, "duplicate-race-google-user");
-  assert.equal(recoveredRaceUser.authProvider, "google");
-  assert.equal(recoveredRaceUser.firebaseUid, "duplicate-race-google-uid");
-  assert.equal(recoveredRaceUser.emailVerified, true);
+  assert.equal(raceVerification.response.statusCode, 409);
+  assert.equal(raceVerification.response.body.code, "ACCOUNT_ALREADY_EXISTS");
   assert.equal(
     users.filter((user) => user.email === raceEmail).length,
     1,
@@ -489,14 +516,15 @@ async function run() {
     maxAttempts: 5,
     resendCooldownSeconds: 60,
     newUserCreatedOnce: true,
+    missingLoginReturnsAccountNotFound: true,
+    duplicateRegisterRejected: true,
     newUserOnboardingIncomplete: true,
     partialUserResumesAtQuestionnaire: true,
     completeUserEntersApp: true,
     existingEmailUserReusedAndVerified: true,
     existingGoogleUserReused: true,
     googleThenEmailPreservesProgress: true,
-    duplicateKeyRaceUserReusedAndVerified: true,
-    duplicateKeyRaceIdentityPreserved: true,
+    duplicateKeyRaceRejectedWithoutDuplicate: true,
     duplicateUsersCreated: false,
     wrongExpiredAndReusedCodesRejected: true,
     jwtRestorationPassed: true,

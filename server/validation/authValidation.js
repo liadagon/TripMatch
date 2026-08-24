@@ -3,9 +3,10 @@ const tripLocationSchema = require("./tripLocationValidation");
 
 const email = Joi.string().trim().lowercase().email();
 const password = Joi.string().min(8).max(128);
+const authenticationIntent = Joi.string().valid("login", "register").required();
 
 const registerSchema = Joi.object({
-  name: Joi.string().trim().min(2).max(80).required(),
+  name: Joi.string().trim().min(2).max(80).optional(),
   email: email.required(),
   password: password.required(),
   photo: Joi.string().trim().allow("").optional(),
@@ -13,7 +14,7 @@ const registerSchema = Joi.object({
   bio: Joi.string().trim().max(500).allow("").optional(),
   age: Joi.number().integer().min(18).max(120).optional(),
   location: Joi.string().trim().max(100).allow("").optional(),
-  tripLocation: tripLocationSchema.required(),
+  tripLocation: tripLocationSchema.optional(),
   interests: Joi.array().items(Joi.string().trim().max(50)).optional(),
   preferredDestinations: Joi.array()
     .items(Joi.string().trim().max(100))
@@ -31,15 +32,18 @@ const loginSchema = Joi.object({
 
 const googleLoginSchema = Joi.object({
   idToken: Joi.string().trim().required(),
+  intent: authenticationIntent,
 }).unknown(false);
 
 const emailOtpRequestSchema = Joi.object({
   email: email.required(),
+  intent: authenticationIntent,
 }).unknown(false);
 
 const emailOtpVerifySchema = Joi.object({
   email: email.required(),
   code: Joi.string().pattern(/^\d{6}$/).required(),
+  intent: authenticationIntent,
 }).unknown(false);
 
 module.exports = {

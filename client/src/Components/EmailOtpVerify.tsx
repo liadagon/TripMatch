@@ -68,6 +68,7 @@ export default function EmailOtpVerify() {
   const authIntent = getAuthenticationIntent(location.state);
   const [code, setCode] = useState([...EMPTY_CODE]);
   const [error, setError] = useState("");
+  const [showRegistrationCta, setShowRegistrationCta] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -127,6 +128,7 @@ export default function EmailOtpVerify() {
     nextCode[index] = digit;
     setCode(nextCode);
     setError("");
+    setShowRegistrationCta(false);
 
     if (digit && index < code.length - 1) {
       inputsRef.current[index + 1]?.focus();
@@ -166,7 +168,11 @@ export default function EmailOtpVerify() {
     setIsVerifying(true);
 
     try {
-      const result = await authenticateWithEmailCode(email, codeValue);
+      const result = await authenticateWithEmailCode(
+        email,
+        codeValue,
+        authIntent,
+      );
       const destination = getAuthenticationPath(result);
 
       if (shouldConfirmExistingAccount(authIntent, result.isNewUser)) {
@@ -186,7 +192,12 @@ export default function EmailOtpVerify() {
       if (axios.isAxiosError<OtpErrorResponse>(verifyError)) {
         const responseCode = verifyError.response?.data.code;
 
-        if (responseCode === "OTP_TOO_MANY_ATTEMPTS") {
+        if (responseCode === "ACCOUNT_NOT_FOUND") {
+          setError("החשבון לא קיים. יש להירשם מחדש.");
+          setShowRegistrationCta(true);
+        } else if (responseCode === "ACCOUNT_ALREADY_EXISTS") {
+          setError("החשבון כבר קיים. יש לעבור להתחברות.");
+        } else if (responseCode === "OTP_TOO_MANY_ATTEMPTS") {
           setError("בוצעו יותר מדי ניסיונות. בקשו קוד חדש.");
           setCooldownSeconds(0);
         } else if (responseCode === "OTP_INVALID_OR_EXPIRED") {
@@ -213,7 +224,7 @@ export default function EmailOtpVerify() {
     setIsResending(true);
 
     try {
-      const response = await requestEmailOtp(email);
+      const response = await requestEmailOtp(email, authIntent);
       setCooldownSeconds(response.data.cooldownSeconds);
       resetCode();
     } catch (resendError) {
@@ -326,6 +337,21 @@ export default function EmailOtpVerify() {
                   <p className="email-otp-error" role="alert">
                     {error}
                   </p>
+                )}
+
+                {showRegistrationCta && (
+                  <button
+                    type="button"
+                    className="email-otp-registration-cta"
+                    onClick={() =>
+                      navigate("/", {
+                        replace: true,
+                        state: { authIntent: "register" },
+                      })
+                    }
+                  >
+                    לעבור להרשמה
+                  </button>
                 )}
 
                 <button
