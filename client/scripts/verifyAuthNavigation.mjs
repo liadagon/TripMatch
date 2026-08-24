@@ -69,7 +69,9 @@ for (const authProvider of ["google", "email"]) {
     "/likes",
     "/matches",
     "/chat/conversation-id",
+    "/profile",
     "/profile-preview",
+    "/blocked-users",
     "/boost/return",
   ]) {
     assert.equal(
@@ -95,13 +97,20 @@ for (const authProvider of ["google", "email"]) {
   );
   assert.equal(
     getOnboardingRouteRedirect(questionnaireUser, "/profile/setup", {
-      allowIncomplete: true,
+      allowIncomplete: false,
     }),
     "/questionnaire",
   );
+  for (const blockedPath of ["/profile", "/discover", "/likes", "/matches", "/chat/conversation-id", "/blocked-users", "/boost/return"]) {
+    assert.equal(
+      getOnboardingRouteRedirect(questionnaireUser, blockedPath),
+      "/questionnaire",
+    );
+  }
 
   const profileUser = user(authProvider, false, "profile");
-  for (const earlierStep of ["/photo-upload", "/questionnaire", "/profile/setup"]) {
+  assert.equal(getProfileCompletionPath(profileUser), "/questionnaire");
+  for (const earlierStep of ["/photo-upload", "/questionnaire"]) {
     assert.equal(
       getOnboardingRouteRedirect(profileUser, earlierStep, {
         allowIncomplete: true,
@@ -123,7 +132,7 @@ for (const authProvider of ["google", "email"]) {
       user: user(authProvider, false, "profile"),
       isNewUser: false,
     }),
-    "/profile/setup",
+    "/questionnaire",
   );
   assert.equal(
     getAuthenticationPath({
@@ -135,7 +144,6 @@ for (const authProvider of ["google", "email"]) {
   for (const registrationPath of [
     "/photo-upload",
     "/questionnaire",
-    "/profile/setup",
   ]) {
     assert.equal(
       getOnboardingRouteRedirect(
@@ -161,7 +169,6 @@ assert.equal(
 );
 assert.equal(getPreviousOnboardingPath("/photo-upload"), "/");
 assert.equal(getPreviousOnboardingPath("/questionnaire"), "/photo-upload");
-assert.equal(getPreviousOnboardingPath("/profile/setup"), "/questionnaire");
 assert.equal(shouldConfirmExistingAccount("register", false), true);
 assert.equal(shouldConfirmExistingAccount("register", true), false);
 assert.equal(shouldConfirmExistingAccount("login", false), false);
@@ -227,9 +234,8 @@ for (const blockedPath of ["/discover", "/likes", "/matches", "/chat/"]) {
 }
 assert.match(protectedRouteSource, /getOnboardingRouteRedirect\(/);
 assert.match(protectedRouteSource, /<Navigate to=\{redirect\} replace/);
-assert.match(source, /pathname === "\/profile\/setup"\) return "\/discover"/);
 assert.match(appSource, /allowIncomplete: true/);
-assert.match(appSource, /path="\/profile\/setup"/);
+assert.match(appSource, /path="\/profile\/setup"[\s\S]*Navigate to="\/profile" replace/);
 assert.match(appSource, /path="\/profile" element=\{protectedPage\(<Profile \/>\)\}/);
 assert.match(appSource, /user\?\.registrationComplete/);
 assert.match(postLoginWelcomeSource, /האימות הצליח/);
@@ -251,7 +257,9 @@ assert.match(profileSource, /יש לבחור יעד לטיול\./);
 assert.match(profileSource, /לא כל השדות הנדרשים הושלמו\. יש להשלים את השדות המסומנים\./);
 assert.match(photoUploadSource, /getPersistedPhotos\(user\)/);
 assert.match(photoUploadSource, /Promise\.resolve\(photo\.previewUrl\)/);
-assert.match(questionnaireSource, /persistedAnswers/);
+assert.match(questionnaireSource, /name: user\?\.name \|\| ""/);
+assert.match(questionnaireSource, /tripLocation: user\?\.tripLocation \|\| null/);
+assert.match(questionnaireSource, /filterCanonicalInterests\(user\?\.interests\)/);
 assert.match(photoUploadSource, /type="button"[\s\S]*className="photo-upload-back"/);
 assert.match(questionnaireSource, /type="button"[\s\S]*className="questionnaire-back-btn"/);
 assert.match(profileSource, /type="button" className="profile-back-btn"/);

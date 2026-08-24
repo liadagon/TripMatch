@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 const User = require("../models/User");
+const PROFILE_OPTIONS = require("../constants/profileOptions");
 const protect = require("../middleware/auth");
 const {
   CURRENT_REGISTRATION_FLOW_VERSION,
@@ -21,11 +22,10 @@ const {
 } = require("../services/profileImageStorage");
 
 const questionnaire = {
-  planningStyle: "planned",
-  accommodationPreference: "hotel",
-  companionScope: "whole-trip",
-  companionPriority: "compatibility",
-  dealBreaker: "boundaries",
+  accommodationPreference: PROFILE_OPTIONS.accommodationPreferences[0],
+  companionScope: PROFILE_OPTIONS.companionScopes[0],
+  companionPriority: PROFILE_OPTIONS.companionPriorities[0],
+  dealBreaker: PROFILE_OPTIONS.dealBreakers[0],
 };
 
 async function restoreWithJwt(user) {
@@ -78,13 +78,17 @@ async function run() {
     Object.assign(currentUser, {
       photoURL: appPhoto,
       photos: [appPhoto],
-      preferredDestinations: ["Europe"],
-      tripDates: "summer",
-      tripDuration: "two-weeks",
-      budget: "medium",
-      travelStyle: "cities",
+    });
+    assert.equal(getRegistrationState(currentUser).nextRegistrationStep, "questionnaire");
+
+    Object.assign(currentUser, {
+      preferredDestinations: [PROFILE_OPTIONS.destinations[0]],
+      tripDates: PROFILE_OPTIONS.tripDates[0],
+      tripDuration: PROFILE_OPTIONS.tripDurations[0],
+      budget: PROFILE_OPTIONS.budgets[0],
+      travelStyle: PROFILE_OPTIONS.travelStyles[0],
       age: 28,
-      interests: ["hiking"],
+      interests: [PROFILE_OPTIONS.interests[0]],
       bio: "A sufficiently detailed traveler biography",
       questionnaire,
       tripLocation: {

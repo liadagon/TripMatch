@@ -3,6 +3,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const User = require("../models/User");
 const requireOnboardingComplete = require("../middleware/requireOnboardingComplete");
+const PROFILE_OPTIONS = require("../constants/profileOptions");
+const { registerSchema } = require("../validation/authValidation");
 const {
   QUESTIONNAIRE_FIELDS,
   CURRENT_REGISTRATION_FLOW_VERSION,
@@ -13,11 +15,10 @@ const {
 } = require("../utils/onboarding");
 
 const completedQuestionnaire = {
-  planningStyle: "planned",
-  accommodationPreference: "hotel",
-  companionScope: "whole-trip",
-  companionPriority: "compatibility",
-  dealBreaker: "boundaries",
+  accommodationPreference: PROFILE_OPTIONS.accommodationPreferences[0],
+  companionScope: PROFILE_OPTIONS.companionScopes[0],
+  companionPriority: PROFILE_OPTIONS.companionPriorities[0],
+  dealBreaker: PROFILE_OPTIONS.dealBreakers[0],
 };
 
 function completeUser(authProvider) {
@@ -28,13 +29,13 @@ function completeUser(authProvider) {
     authProvider,
     photoURL: "http://localhost:5000/api/file/64b000000000000000000003",
     photos: ["http://localhost:5000/api/file/64b000000000000000000003"],
-    preferredDestinations: ["Europe"],
-    tripDates: "summer",
-    tripDuration: "two-weeks",
-    budget: "medium",
-    travelStyle: "cities",
+    preferredDestinations: [PROFILE_OPTIONS.destinations[0]],
+    tripDates: PROFILE_OPTIONS.tripDates[0],
+    tripDuration: PROFILE_OPTIONS.tripDurations[0],
+    budget: PROFILE_OPTIONS.budgets[0],
+    travelStyle: PROFILE_OPTIONS.travelStyles[0],
     age: 28,
-    interests: ["hiking"],
+    interests: [PROFILE_OPTIONS.interests[0]],
     bio: "A sufficiently detailed traveler biography",
     questionnaire: { ...completedQuestionnaire },
     tripLocation: { city: "Barcelona", country: "Spain" },
@@ -99,7 +100,17 @@ for (const authProvider of ["google", "email"]) {
   };
   assert.equal(
     getOnboardingState(missingDestination).nextOnboardingStep,
-    "profile",
+    "questionnaire",
+  );
+
+  const missingPersonalProfile = {
+    ...complete,
+    registrationCompletedAt: undefined,
+    bio: "",
+  };
+  assert.equal(
+    getOnboardingState(missingPersonalProfile).nextOnboardingStep,
+    "questionnaire",
   );
   assert.equal(
     getOnboardingState({
@@ -107,7 +118,7 @@ for (const authProvider of ["google", "email"]) {
       registrationCompletedAt: undefined,
       tripLocation: {},
     }).nextOnboardingStep,
-    "profile",
+    "questionnaire",
   );
 
   const blocked = invokeGuard(newUser);
@@ -130,6 +141,7 @@ for (const field of QUESTIONNAIRE_FIELDS) {
 for (const field of [
   "preferredDestinations",
   "tripDates",
+  "tripDuration",
   "budget",
   "travelStyle",
 ]) {
@@ -138,6 +150,41 @@ for (const field of [
   user[field] = field === "preferredDestinations" ? [] : "";
   assert.equal(getOnboardingState(user).nextOnboardingStep, "questionnaire");
 }
+
+const credentialsOnlyRegistration = registerSchema.validate({
+  email: "new-registration@example.com",
+  password: "safe-test-password",
+});
+assert.equal(credentialsOnlyRegistration.error, undefined);
+const credentialsOnlyUser = new User({
+  email: credentialsOnlyRegistration.value.email,
+  password: credentialsOnlyRegistration.value.password,
+  authProvider: "local",
+  registrationFlowVersion: CURRENT_REGISTRATION_FLOW_VERSION,
+});
+assert.equal(credentialsOnlyUser.validateSync(), undefined);
+assert.equal(credentialsOnlyUser.name, "");
+assert.equal(getOnboardingState(credentialsOnlyUser).nextOnboardingStep, "photos");
+
+for (const [field, missingValue] of [
+  ["name", "   "],
+  ["age", undefined],
+  ["interests", []],
+  ["bio", "   "],
+]) {
+  const user = completeUser("email");
+  user.registrationCompletedAt = undefined;
+  user[field] = missingValue;
+  assert.equal(getOnboardingState(user).nextOnboardingStep, "questionnaire");
+}
+
+const nonCanonicalQuestionnaire = completeUser("google");
+nonCanonicalQuestionnaire.registrationCompletedAt = undefined;
+nonCanonicalQuestionnaire.budget = "not-a-canonical-budget";
+assert.equal(
+  getOnboardingState(nonCanonicalQuestionnaire).nextOnboardingStep,
+  "questionnaire",
+);
 
 const historicalCompleteUser = completeUser("email");
 delete historicalCompleteUser.registrationFlowVersion;
@@ -201,7 +248,7 @@ assert.doesNotMatch(fileRoutesSource, /requireOnboardingComplete/);
 console.log("Shared onboarding enforcement verification passed", {
   authoritativeRuleSharedByGoogleAndEmail: true,
   oneRequiredPhoto: true,
-  allTenTravelPreferenceAnswersRequired: true,
+  allNineTravelPreferenceAnswersRequired: true,
   personalProfileRequiredForNewRegistrations: true,
   tripDestinationRequired: true,
   partialUsersResumeAtCorrectStep: true,

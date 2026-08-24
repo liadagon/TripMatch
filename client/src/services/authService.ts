@@ -1,5 +1,6 @@
 import api from "./api";
 import type { TripLocation } from "../types/tripLocation";
+import type { ApplicationGender } from "../utils/genderedHebrew";
 
 export type AuthUser = {
   _id: string;
@@ -7,6 +8,7 @@ export type AuthUser = {
   email: string;
   authProvider: "local" | "google" | "email";
   emailVerified?: boolean;
+  gender?: ApplicationGender;
   firebaseUid?: string;
   photo?: string;
   photoURL?: string;

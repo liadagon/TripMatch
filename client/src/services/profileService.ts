@@ -26,6 +26,7 @@ type EditableProfileFields = Partial<
 >;
 
 export type ProfileUpdatePayload = EditableProfileFields & {
+  completeRegistration?: true;
   questionnaire?: Partial<NonNullable<AuthUser["questionnaire"]>>;
 };
 

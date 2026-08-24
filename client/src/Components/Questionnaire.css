@@ -121,16 +121,6 @@
   letter-spacing: -0.8px;
 }
 
-.questionnaire-question-text::after {
-  content: "בחרי תשובה אחת כדי שנמצא לך שותפים מתאימים";
-  display: block;
-  margin-top: 10px;
-  font-size: 17px;
-  font-weight: 700;
-  color: #64748b;
-  letter-spacing: 0;
-}
-
 .questionnaire-answers {
   width: 100%;
   margin-top: 34px;
@@ -224,6 +214,18 @@
   cursor: pointer;
 }
 
+.questionnaire-section-name {
+  margin: 0 0 6px;
+  color: #6557d5;
+  font-weight: 800;
+}
+
+.questionnaire-helper-text {
+  margin: -4px 0 20px;
+  color: #718198;
+  text-align: center;
+}
+
 .questionnaire-card-invalid {
   border: 2px solid #d92d20;
   box-shadow: 0 18px 50px rgba(180, 35, 24, 0.16);
@@ -264,6 +266,175 @@
   transform: scale(0.97);
 }
 
+.questionnaire-progress-track {
+  bottom: -20px;
+}
+
+.questionnaire-content {
+  padding-top: 42px;
+}
+
+.questionnaire-step-form {
+  width: 100%;
+}
+
+.questionnaire-card.questionnaire-section-card {
+  padding: 38px 56px 42px;
+  text-align: right;
+}
+
+.questionnaire-section-card .questionnaire-icon,
+.questionnaire-section-card .questionnaire-section-name,
+.questionnaire-section-card .questionnaire-question-text,
+.questionnaire-section-card .questionnaire-helper-text {
+  text-align: center;
+}
+
+.questionnaire-section-card .questionnaire-icon {
+  margin-bottom: 14px;
+}
+
+.questionnaire-step-fields {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.questionnaire-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.questionnaire-form-field,
+.questionnaire-location-field {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  color: #243b58;
+  font-weight: 800;
+}
+
+.questionnaire-location-field {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  direction: rtl;
+}
+
+.questionnaire-location-field .trip-location-picker,
+.questionnaire-location-field .trip-location-input-wrap,
+.questionnaire-location-field .trip-location-suggestions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.questionnaire-section-card,
+.questionnaire-step-fields {
+  overflow: visible;
+}
+
+.questionnaire-form-field > span:first-child,
+.questionnaire-location-field > span:first-child {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.questionnaire-form-field input,
+.questionnaire-form-field select,
+.questionnaire-form-field textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid #cbd8e8;
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: #173456;
+  background: #fbfdff;
+  font: inherit;
+}
+
+.questionnaire-form-field textarea {
+  resize: vertical;
+}
+
+.questionnaire-form-field input:focus,
+.questionnaire-form-field select:focus,
+.questionnaire-form-field textarea:focus {
+  outline: 3px solid rgba(20, 92, 255, 0.13);
+  border-color: #145cff;
+}
+
+.questionnaire-form-field.invalid input,
+.questionnaire-form-field.invalid select,
+.questionnaire-form-field.invalid textarea,
+.questionnaire-interest-field.invalid,
+.questionnaire-location-field.invalid {
+  border-color: #d92d20;
+}
+
+.questionnaire-form-field small,
+.questionnaire-interest-field small,
+.questionnaire-location-field small {
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.questionnaire-interest-field {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #d6e1ef;
+  border-radius: 16px;
+}
+
+.questionnaire-interest-field legend {
+  padding-inline: 6px;
+  color: #243b58;
+  font-weight: 800;
+}
+
+.questionnaire-interest-field p {
+  margin: 0 0 12px;
+  color: #718198;
+}
+
+.questionnaire-interest-field > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.questionnaire-interest-field button {
+  border: 1px solid #c9d8ea;
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: #37526f;
+  background: #f8fbff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.questionnaire-interest-field button.selected {
+  border-color: #4d67d8;
+  color: #fff;
+  background: linear-gradient(135deg, #296bd9, #6859d8);
+}
+
+.questionnaire-bio-field {
+  position: relative;
+}
+
+.questionnaire-character-counter {
+  justify-self: end;
+  color: #718198;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .questionnaire-page {
     align-items: flex-start;
@@ -279,21 +450,25 @@
   }
 
   .questionnaire-progress-track {
-    bottom: -78px;
+    bottom: -18px;
     width: calc(100vw - 48px);
   }
 
   .questionnaire-card {
     border-radius: 26px;
-    padding: 86px 22px 30px;
+    padding: 28px 20px 30px;
+  }
+
+  .questionnaire-content {
+    padding-top: 28px;
+  }
+
+  .questionnaire-two-column {
+    grid-template-columns: 1fr;
   }
 
   .questionnaire-question-text {
     font-size: 25px;
-  }
-
-  .questionnaire-question-text::after {
-    font-size: 14px;
   }
 
   .questionnaire-answers {

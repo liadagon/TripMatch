@@ -278,11 +278,7 @@ const updateCurrentUser = async (req, res, next) => {
 
     user.interests = filterCanonicalInterests(user.interests);
 
-    if (
-      !user.registrationCompletedAt &&
-      user.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
-      Object.prototype.hasOwnProperty.call(req.body, "tripLocation")
-    ) {
+    if (req.body.completeRegistration === true) {
       const fields = getCurrentRegistrationValidationErrors(user);
       if (Object.keys(fields).length > 0) {
         return res.status(400).json({
@@ -293,9 +289,10 @@ const updateCurrentUser = async (req, res, next) => {
           fields,
         });
       }
+
+      markRegistrationCompleteIfEligible(user);
     }
 
-    markRegistrationCompleteIfEligible(user);
     await user.save();
     const data = normalizeAuthenticatedUser(user);
 

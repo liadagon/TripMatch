@@ -108,10 +108,7 @@ export default function App() {
         <Route path="/chat/:userId" element={protectedPage(<Chat />)} />
         <Route
           path="/profile/setup"
-          element={protectedPage(<Profile />, {
-            allowIncomplete: true,
-            onboardingOnly: true,
-          })}
+          element={protectedPage(<Navigate to="/profile" replace />)}
         />
         <Route path="/profile" element={protectedPage(<Profile />)} />
         <Route path="/blocked-users" element={protectedPage(<BlockedUsers />)} />

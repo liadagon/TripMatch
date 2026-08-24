@@ -201,7 +201,7 @@ async function verifyGoogleAuthFlow() {
     body: { idToken: "mock-firebase-id-token", intent: "login" },
   });
   assert.equal(partialLogin.response.body.onboardingComplete, false);
-  assert.equal(partialLogin.response.body.nextOnboardingStep, "profile");
+  assert.equal(partialLogin.response.body.nextOnboardingStep, "questionnaire");
 
   users[0].tripLocation = { city: "Barcelona", country: "Spain" };
   users[0].registrationCompletedAt = new Date();
@@ -414,7 +414,7 @@ async function verifyGoogleAuthFlow() {
     emailThenGoogleReusesUserAndProgress: true,
     newUserOnboardingIncomplete: true,
     missingGooglePhotoRequiresPhotoStep: true,
-    partialUserResumesAtProfile: true,
+  partialUserResumesAtQuestionnaire: true,
     completeUserEntersApp: true,
     currentUserRestoredFromJwt: true,
     providerAvatarNeverPersisted: true,

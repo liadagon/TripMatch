@@ -1,5 +1,4 @@
 const QUESTIONNAIRE_FIELDS = [
-  "planningStyle",
   "accommodationPreference",
   "companionScope",
   "companionPriority",
@@ -9,9 +8,8 @@ const {
   getAppOwnedPhotoUrls,
   sanitizeUserPhotoFields,
 } = require("./profilePhotos");
-const {
-  filterCanonicalInterests,
-} = require("../constants/profileOptions");
+const PROFILE_OPTIONS = require("../constants/profileOptions");
+const { filterCanonicalInterests } = PROFILE_OPTIONS;
 
 const CURRENT_REGISTRATION_FLOW_VERSION = 2;
 
@@ -19,6 +17,9 @@ const hasText = (value) =>
   typeof value === "string" && value.trim().length > 0;
 
 const hasRequiredPhoto = (user) => getAppOwnedPhotoUrls(user).length > 0;
+
+const hasCanonicalValue = (value, options) =>
+  hasText(value) && options.includes(value.trim());
 
 const hasCompletedQuestionnaire = (user) =>
   Array.isArray(user?.preferredDestinations) &&
@@ -29,9 +30,28 @@ const hasCompletedQuestionnaire = (user) =>
   QUESTIONNAIRE_FIELDS.every((field) => hasText(user?.questionnaire?.[field]));
 
 const hasCompletedCurrentQuestionnaire = (user) =>
-  hasCompletedQuestionnaire(user) && hasText(user?.tripDuration);
+  Array.isArray(user?.preferredDestinations) &&
+  user.preferredDestinations.length === 1 &&
+  hasCanonicalValue(user.preferredDestinations[0], PROFILE_OPTIONS.destinations) &&
+  hasCanonicalValue(user?.tripDates, PROFILE_OPTIONS.tripDates) &&
+  hasCanonicalValue(user?.tripDuration, PROFILE_OPTIONS.tripDurations) &&
+  hasCanonicalValue(user?.budget, PROFILE_OPTIONS.budgets) &&
+  hasCanonicalValue(user?.travelStyle, PROFILE_OPTIONS.travelStyles) &&
+  hasCanonicalValue(
+    user?.questionnaire?.accommodationPreference,
+    PROFILE_OPTIONS.accommodationPreferences,
+  ) &&
+  hasCanonicalValue(user?.questionnaire?.companionScope, PROFILE_OPTIONS.companionScopes) &&
+  hasCanonicalValue(
+    user?.questionnaire?.companionPriority,
+    PROFILE_OPTIONS.companionPriorities,
+  ) &&
+  hasCanonicalValue(user?.questionnaire?.dealBreaker, PROFILE_OPTIONS.dealBreakers);
 
 const hasCompletedPersonalProfile = (user) =>
+  hasText(user?.name) &&
+  user.name.trim().length >= 2 &&
+  user.name.trim().length <= 80 &&
   Number.isInteger(user?.age) &&
   user.age >= 18 &&
   user.age <= 120 &&
@@ -42,27 +62,41 @@ const hasCompletedPersonalProfile = (user) =>
 
 function getCurrentRegistrationValidationErrors(user) {
   const errors = {};
+  if (!hasText(user?.name) || user.name.trim().length < 2 || user.name.trim().length > 80) {
+    errors.name = "יש להזין שם באורך של 2 עד 80 תווים.";
+  }
   if (!hasRequiredPhoto(user)) errors.photo = "יש להעלות לפחות תמונת פרופיל אחת.";
   if (!Number.isInteger(user?.age) || user.age < 18 || user.age > 120) {
     errors.age = "יש להזין גיל תקין בין 18 ל-120.";
   }
   if (!hasTripDestination(user)) errors.tripLocation = "יש לבחור יעד לטיול.";
-  if (!Array.isArray(user?.preferredDestinations) || !user.preferredDestinations.some(hasText)) {
+  if (
+    !Array.isArray(user?.preferredDestinations) ||
+    user.preferredDestinations.length !== 1 ||
+    !hasCanonicalValue(user.preferredDestinations[0], PROFILE_OPTIONS.destinations)
+  ) {
     errors.preferredDestinations = "יש לבחור יעד מועדף לטיול.";
   }
-  if (!hasText(user?.tripDates)) errors.tripDates = "יש לבחור תאריכי טיול.";
-  if (!hasText(user?.tripDuration)) errors.tripDuration = "יש לבחור משך טיול.";
-  if (!hasText(user?.budget)) errors.budget = "יש לבחור תקציב.";
-  if (!hasText(user?.travelStyle)) errors.travelStyle = "יש לבחור סגנון טיול.";
+  if (!hasCanonicalValue(user?.tripDates, PROFILE_OPTIONS.tripDates)) errors.tripDates = "יש לבחור תאריכי טיול.";
+  if (!hasCanonicalValue(user?.tripDuration, PROFILE_OPTIONS.tripDurations)) errors.tripDuration = "יש לבחור משך טיול.";
+  if (!hasCanonicalValue(user?.budget, PROFILE_OPTIONS.budgets)) errors.budget = "יש לבחור תקציב.";
+  if (!hasCanonicalValue(user?.travelStyle, PROFILE_OPTIONS.travelStyles)) errors.travelStyle = "יש לבחור סגנון טיול.";
   const questionnaireMessages = {
-    planningStyle: "יש לבחור סגנון תכנון.",
     accommodationPreference: "יש לבחור העדפת לינה.",
     companionScope: "יש לבחור עם מי תרצו לטייל.",
     companionPriority: "יש לבחור מה חשוב לכם בשותף לטיול.",
     dealBreaker: "יש לבחור מה מהווה מבחינתכם Deal Breaker.",
   };
+  const questionnaireOptions = {
+    accommodationPreference: PROFILE_OPTIONS.accommodationPreferences,
+    companionScope: PROFILE_OPTIONS.companionScopes,
+    companionPriority: PROFILE_OPTIONS.companionPriorities,
+    dealBreaker: PROFILE_OPTIONS.dealBreakers,
+  };
   QUESTIONNAIRE_FIELDS.forEach((field) => {
-    if (!hasText(user?.questionnaire?.[field])) errors[field] = questionnaireMessages[field];
+    if (!hasCanonicalValue(user?.questionnaire?.[field], questionnaireOptions[field])) {
+      errors[field] = questionnaireMessages[field];
+    }
   });
   if (filterCanonicalInterests(user?.interests).length === 0) {
     errors.interests = "יש לבחור לפחות תחום עניין אחד.";
@@ -114,11 +148,7 @@ function getRegistrationState(user) {
     };
   }
 
-  if (
-    !hasCompletedQuestionnaire(user) ||
-    (user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
-      !hasCompletedCurrentQuestionnaire(user))
-  ) {
+  if (user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION) {
     return {
       registrationComplete: false,
       registrationInProgress: true,
@@ -128,26 +158,22 @@ function getRegistrationState(user) {
     };
   }
 
-  if (
-    !hasTripDestination(user) ||
-    (user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
-      !hasCompletedPersonalProfile(user))
-  ) {
+  if (!hasCompletedQuestionnaire(user)) {
     return {
       registrationComplete: false,
       registrationInProgress: true,
-      nextRegistrationStep: "profile",
+      nextRegistrationStep: "questionnaire",
       onboardingComplete: false,
-      nextOnboardingStep: "profile",
+      nextOnboardingStep: "questionnaire",
     };
   }
 
   return {
     registrationComplete: false,
     registrationInProgress: true,
-    nextRegistrationStep: "profile",
+    nextRegistrationStep: "questionnaire",
     onboardingComplete: false,
-    nextOnboardingStep: "profile",
+    nextOnboardingStep: "questionnaire",
   };
 }
 

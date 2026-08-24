@@ -11,6 +11,7 @@ const userListQuerySchema = Joi.object({
 }).unknown(false);
 
 const updateProfileSchema = Joi.object({
+  completeRegistration: Joi.boolean().valid(true).optional(),
   name: Joi.string().trim().min(2).max(80).optional(),
   bio: Joi.string().trim().min(20).max(300).optional(),
   age: Joi.number().integer().min(18).max(120).optional(),

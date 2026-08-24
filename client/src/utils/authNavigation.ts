@@ -15,7 +15,6 @@ export const EXISTING_ACCOUNT_CONFIRMATION = {
 type ProfileCompletionPath =
   | "/photo-upload"
   | "/questionnaire"
-  | "/profile/setup"
   | "/discover";
 
 export type OnboardingPath =
@@ -26,7 +25,6 @@ export type OnboardingPath =
 export const ONBOARDING_PATHS: readonly OnboardingPath[] = [
   "/photo-upload",
   "/questionnaire",
-  "/profile/setup",
 ];
 
 export function getPreviousOnboardingPath(
@@ -44,7 +42,7 @@ export function getProfileCompletionPath(
   const stepRoutes = {
     photos: "/photo-upload",
     questionnaire: "/questionnaire",
-    profile: "/profile/setup",
+    profile: "/questionnaire",
   } as const;
 
   return user.nextRegistrationStep
@@ -87,8 +85,6 @@ export function getOnboardingRouteRedirect(
 
     return null;
   }
-
-  if (pathname === "/profile/setup") return "/discover";
 
   return options.onboardingOnly ? "/discover" : null;
 }
