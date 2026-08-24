@@ -9,41 +9,16 @@ import {
   getMatchedProfile,
   type MatchedProfileData,
 } from "../services/matchService";
-import {
-  getConversationById,
-  type Conversation as DemoConversation,
-} from "../data/conversations";
-import { demoDiscoverProfiles } from "../data/demoProfiles";
+import { getDemoProfile } from "../data/demoProfiles";
+import { calculateProfileCompatibility } from "../utils/profileCompatibility";
+import { useAuth } from "../context/AuthContext";
 import { getSafeProfileReturnPath } from "../utils/profileNavigation";
 
-function getDemoProfile(
-  conversation: DemoConversation,
-): MatchedProfileData {
-  const discoverProfile = demoDiscoverProfiles.find(
-    (profile) => profile.userId === conversation.id,
-  );
-  const profile: ProfilePreviewUser = {
-    _id: `demo-${conversation.id}`,
-    name: conversation.name,
-    age: conversation.age,
-    location: discoverProfile?.city,
-    interests: discoverProfile?.tags || [],
-    preferredDestinations: discoverProfile?.destination
-      ? [discoverProfile.destination]
-      : [],
-    tripDates: discoverProfile?.dates,
-    photos: conversation.images,
-    photoURL: conversation.images[0],
-  };
-
+function getDemoMatchedProfile(profile: ProfilePreviewUser, currentUser: Parameters<typeof calculateProfileCompatibility>[0]): MatchedProfileData {
   return {
     profile,
-    compatibility: {
-      percentage: conversation.match,
-      matchedCriteria: 0,
-      comparedCriteria: 0,
-    },
-    conversationId: conversation.id,
+    compatibility: calculateProfileCompatibility(currentUser, profile),
+    conversationId: profile._id.replace(/^demo-/, ""),
   };
 }
 
@@ -51,6 +26,7 @@ export default function MatchedProfile() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userId } = useParams();
+  const { user } = useAuth();
   const [data, setData] = useState<MatchedProfileData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const returnTarget = getSafeProfileReturnPath(location.state) || "/discover";
@@ -63,10 +39,10 @@ export default function MatchedProfile() {
       setData(null);
       setErrorMessage("");
 
-      const demoConversation = getConversationById(userId);
+      const demoProfile = getDemoProfile(userId);
 
-      if (demoConversation) {
-        setData(getDemoProfile(demoConversation));
+      if (demoProfile) {
+        setData(getDemoMatchedProfile(demoProfile, user || {}));
         return;
       }
 
@@ -97,7 +73,7 @@ export default function MatchedProfile() {
     return () => {
       isActive = false;
     };
-  }, [userId]);
+  }, [user, userId]);
 
   if (!data) {
     return (

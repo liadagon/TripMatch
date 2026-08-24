@@ -103,7 +103,7 @@ function mapRealConversations(
                 .filter(Boolean)
                 .join(" · ") || "TripMatch",
             preview: conversation.lastMessage?.text || "התחילו שיחה חדשה",
-            image: otherUser.photoURL || otherUser.photo || "/pic2.png",
+            image: otherUser.photoURL || otherUser.photo || "",
             time: new Date(conversation.updatedAt).toLocaleTimeString("he-IL", {
               hour: "2-digit",
               minute: "2-digit",
@@ -161,7 +161,7 @@ export default function Matches() {
                   id: record._id,
                   userId: otherUser._id,
                   name: otherUser.name,
-                  image: otherUser.photoURL || otherUser.photo || "/pic2.png",
+                  image: otherUser.photoURL || otherUser.photo || "",
                   isDemo: false,
                 },
               ]

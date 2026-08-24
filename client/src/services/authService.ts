@@ -40,6 +40,7 @@ export type PublicUser = Pick<
   AuthUser,
   | "_id"
   | "name"
+  | "gender"
   | "age"
   | "location"
   | "bio"
@@ -51,6 +52,7 @@ export type PublicUser = Pick<
   | "tripDuration"
   | "photo"
   | "photoURL"
+  | "photos"
 > & {
   questionnaire?: AuthUser["questionnaire"];
   tripLocation?: Omit<

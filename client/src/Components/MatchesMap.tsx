@@ -10,7 +10,7 @@ import {
   type MatchesMapData,
   type MatchesMapMarker,
 } from "../services/matchesMapService";
-import { conversations as demoConversations } from "../data/conversations";
+import { demoProfiles } from "../data/demoProfiles";
 import {
   getDemoMatchedUserIds,
   isDemoUserBlocked,
@@ -19,9 +19,6 @@ import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 import "leaflet/dist/leaflet.css";
 import "./MatchesMap.css";
 
-const FALLBACK_PHOTO = "/pic2.png";
-const DEMO_DISTANCES_KM = [2.4, 4.8, 7.1, 11.3];
-const DEMO_BEARINGS_DEGREES = [28, 112, 205, 318];
 
 type DisplayMapMarker = MatchesMapMarker & {
   isDemo: boolean;
@@ -29,36 +26,31 @@ type DisplayMapMarker = MatchesMapMarker & {
 
 function createDemoMarkers(
   me: NonNullable<MatchesMapData["me"]>,
-  destinationLabel: string,
   currentUserId: string | undefined,
 ): DisplayMapMarker[] {
-  const latitudeRadians = me.latitude * Math.PI / 180;
-  const longitudeScale = Math.max(Math.cos(latitudeRadians), 0.2);
-
   const matchedIds = new Set(getDemoMatchedUserIds(currentUserId));
 
-  return demoConversations
+  return demoProfiles
     .filter(
-      (conversation) =>
-        matchedIds.has(conversation.id) &&
-        !isDemoUserBlocked(currentUserId, conversation.id),
+      (profile) =>
+        matchedIds.has(profile.userId) &&
+        !isDemoUserBlocked(currentUserId, profile.userId),
     )
-    .slice(0, DEMO_DISTANCES_KM.length)
-    .map((conversation, index) => {
-      const distanceKm = DEMO_DISTANCES_KM[index];
-      const bearing = DEMO_BEARINGS_DEGREES[index] * Math.PI / 180;
-      const latitudeOffset = distanceKm * Math.cos(bearing) / 111.32;
-      const longitudeOffset =
-        distanceKm * Math.sin(bearing) / (111.32 * longitudeScale);
-
+    .map((profile) => {
+      const latitudeDelta = (profile.tripLocation.latitude - me.latitude) * Math.PI / 180;
+      const longitudeDelta = (profile.tripLocation.longitude - me.longitude) * Math.PI / 180;
+      const originLatitude = me.latitude * Math.PI / 180;
+      const targetLatitude = profile.tripLocation.latitude * Math.PI / 180;
+      const haversine = Math.sin(latitudeDelta / 2) ** 2 + Math.cos(originLatitude) * Math.cos(targetLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+      const distanceKm = 6371 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
       return {
-        userId: conversation.id,
-        name: conversation.name,
-        photoURL: conversation.images[0] || FALLBACK_PHOTO,
-        destinationLabel,
-        latitude: Number((me.latitude + latitudeOffset).toFixed(5)),
-        longitude: Number((me.longitude + longitudeOffset).toFixed(5)),
-        distanceKm,
+        userId: profile.userId,
+        name: profile.name,
+        photoURL: profile.photos[0],
+        destinationLabel: profile.tripLocation.formattedAddress,
+        latitude: profile.tripLocation.latitude,
+        longitude: profile.tripLocation.longitude,
+        distanceKm: Number(distanceKm.toFixed(1)),
         isDemo: true,
       };
     });
@@ -167,13 +159,17 @@ const MatchPhotoMarker = memo(function MatchPhotoMarker({
     <Marker position={[match.latitude, match.longitude]} icon={icon}>
       <Popup className="matches-map-popup">
         <div className="matches-map-popup-card" dir="rtl">
-          <img
-            src={match.photoURL || FALLBACK_PHOTO}
-            alt={`תמונת הפרופיל של ${match.name}`}
-            onError={(event) => {
-              event.currentTarget.src = FALLBACK_PHOTO;
-            }}
-          />
+          {match.photoURL ? (
+            <img
+              src={match.photoURL}
+              alt={`תמונת הפרופיל של ${match.name}`}
+              onError={(event) => {
+                event.currentTarget.hidden = true;
+              }}
+            />
+          ) : (
+            <UserRound aria-hidden="true" />
+          )}
           <div>
             <h2>{match.name}</h2>
             <p>
@@ -259,9 +255,9 @@ export default function MatchesMap() {
   const demoMatches = useMemo(
     () =>
       data?.me
-        ? createDemoMarkers(data.me, destinationLabel, user?._id)
+        ? createDemoMarkers(data.me, user?._id)
         : [],
-    [data?.me, destinationLabel, user?._id],
+    [data?.me, user?._id],
   );
   const isDemoMode = Boolean(
     data?.me && data.matches.length === 0 && demoMatches.length > 0,

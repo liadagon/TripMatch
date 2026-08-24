@@ -17,8 +17,10 @@ const {
 const MATCH_PROFILE_FIELDS = "name photo photoURL";
 const EXPANDED_MATCH_PROFILE_FIELDS = [
   "name",
+  "gender",
   "age",
   "location",
+  "tripLocation",
   "bio",
   "interests",
   "preferredDestinations",

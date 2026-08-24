@@ -1,5 +1,6 @@
 const PUBLIC_PROFILE_FIELDS = [
   "name",
+  "gender",
   "age",
   "location",
   "tripLocation.name",
@@ -20,6 +21,7 @@ const PUBLIC_PROFILE_FIELDS = [
   "questionnaire.dealBreaker",
   "photo",
   "photoURL",
+  "photos",
 ].join(" ");
 
 module.exports = PUBLIC_PROFILE_FIELDS;

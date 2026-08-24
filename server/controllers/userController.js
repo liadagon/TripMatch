@@ -125,7 +125,6 @@ const getUsers = async (req, res, next) => {
         ? calculateDistanceKm(req.user.tripLocation, candidateLocation)
         : null;
 
-      delete profile.questionnaire;
       delete profile.registrationCompletedAt;
       delete profile.registrationFlowVersion;
       delete profile.score;

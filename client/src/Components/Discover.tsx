@@ -7,11 +7,12 @@ import { getUsers } from "../services/userService";
 import type { DestinationInfo, DiscoverUser } from "../services/userService";
 import { getConversationWithUser } from "../services/conversationService";
 import { filterCanonicalInterests } from "../data/profileOptions";
-import { getDemoDiscoverProfiles } from "../data/demoProfiles";
+import { getDemoDiscoverProfiles, type DemoProfile } from "../data/demoProfiles";
 import {
   getEligibleDemoUserIds,
   recordDemoSwipe,
 } from "../services/demoConversationState";
+import { calculateProfileCompatibility } from "../utils/profileCompatibility";
 import {
   MapPin,
   Plane,
@@ -82,8 +83,8 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
     city:
       [user.tripLocation?.city, user.tripLocation?.country]
         .filter(Boolean)
-        .join(", ") || user.location || "ישראל",
-    dates: user.tripDates || "גמיש",
+        .join(", "),
+    dates: user.tripDates,
     destination:
       [
         user.tripLocation?.city,
@@ -92,17 +93,31 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
       ]
         .filter(Boolean)
         .join(", ") ||
-      user.preferredDestinations?.[0] ||
-      "עדיין לא נבחר יעד",
+      user.preferredDestinations[0],
     match: user.compatibility.percentage,
     images: [
-      user.photoURL ||
-        user.photo ||
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=90",
+      user.photoURL || user.photo || "",
     ],
-    tags: tags.length ? tags.slice(0, 5) : ["מטיילת ב-TripMatch"],
+    tags: tags.slice(0, 5),
     isDemo: false,
     destinationInfo: user.destinationInfo,
+  };
+}
+
+function mapDemoToProfile(profile: DemoProfile, currentUser: Parameters<typeof calculateProfileCompatibility>[0]): DiscoverProfile {
+  const compatibility = calculateProfileCompatibility(currentUser, profile);
+  return {
+    id: profile.id,
+    userId: profile.userId,
+    name: profile.name,
+    age: profile.age,
+    city: [profile.tripLocation.city, profile.tripLocation.country].filter(Boolean).join(", "),
+    dates: profile.tripDates,
+    destination: profile.tripLocation.formattedAddress,
+    match: compatibility.percentage,
+    images: [...profile.photos],
+    tags: [...profile.interests, profile.travelStyle, profile.budget].slice(0, 5),
+    isDemo: true,
   };
 }
 
@@ -116,7 +131,7 @@ function getDestinationTitle(destinationInfo: DestinationInfo) {
   return destinationInfo.label;
 }
 
-function getFreshDemoProfiles(userId: string | undefined) {
+function getFreshDemoProfiles(userId: string | undefined, currentUser: Parameters<typeof calculateProfileCompatibility>[0] = {}) {
   const allDemoProfiles = getDemoDiscoverProfiles();
   const eligibleDemoIds = new Set(
     getEligibleDemoUserIds(
@@ -124,9 +139,9 @@ function getFreshDemoProfiles(userId: string | undefined) {
       allDemoProfiles.map((candidate) => candidate.userId),
     ),
   );
-  return allDemoProfiles.filter((candidate) =>
-    eligibleDemoIds.has(candidate.userId),
-  );
+  return allDemoProfiles
+    .filter((candidate) => eligibleDemoIds.has(candidate.userId))
+    .map((candidate) => mapDemoToProfile(candidate, currentUser));
 }
 
 export default function Discover() {
@@ -161,12 +176,12 @@ export default function Discover() {
         )
         .filter(isUsableDiscoverProfile)
         .map(mapUserToProfile);
-      const demoProfiles = getFreshDemoProfiles(user?._id);
+      const demoProfiles = getFreshDemoProfiles(user?._id, user || {});
 
       setProfiles([...realProfiles, ...demoProfiles]);
     } catch (error) {
       console.warn("[Discover] Backend profiles unavailable.", error);
-      setProfiles(getFreshDemoProfiles(user?._id));
+      setProfiles(getFreshDemoProfiles(user?._id, user || {}));
       setSwipeError("לא הצלחנו לטעון התאמות מהשרת. נסי שוב בעוד רגע");
     } finally {
       setIsLoading(false);
@@ -329,6 +344,7 @@ export default function Discover() {
       setSwipeError("אפשר לשלוח הודעה רק אחרי שנוצרה התאמה הדדית");
     }
   }
+
 
   const cardStyle = {
     transform: `translateX(${dragX}px) rotate(${dragX / 26}deg)`,
