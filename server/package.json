@@ -26,6 +26,7 @@
     "verify:paypal-subscriptions": "node scripts/verifyPayPalSubscriptionFlow.js",
     "verify:paypal-webhooks": "node scripts/verifyPayPalWebhookFlow.js",
     "verify:boost-entitlements": "node scripts/verifyBoostEntitlements.js",
+    "verify:real-matching-mongo": "node scripts/verifyRealMatchingMongo.js",
     "verify:subscription-mongo": "node scripts/verifySubscriptionMongo.js",
     "verify:virtual-populate": "node scripts/verifyUserMatchesVirtual.js"
   },
