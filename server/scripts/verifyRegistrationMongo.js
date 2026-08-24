@@ -80,8 +80,12 @@ async function run() {
       photos: [appPhoto],
       preferredDestinations: ["Europe"],
       tripDates: "summer",
+      tripDuration: "two-weeks",
       budget: "medium",
       travelStyle: "cities",
+      age: 28,
+      interests: ["hiking"],
+      bio: "A sufficiently detailed traveler biography",
       questionnaire,
       tripLocation: {
         placeId: "64b000000000000000000005",

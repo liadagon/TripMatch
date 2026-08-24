@@ -27,12 +27,52 @@ const hasCompletedQuestionnaire = (user) =>
 
 const hasCompletedCurrentQuestionnaire = (user) =>
   hasCompletedQuestionnaire(user) && hasText(user?.tripDuration);
+
 const hasCompletedPersonalProfile = (user) =>
   Number.isInteger(user?.age) &&
   user.age >= 18 &&
   user.age <= 120 &&
   Array.isArray(user?.interests) &&
-  user.interests.some(hasText);
+  user.interests.some(hasText) &&
+  hasText(user?.bio) &&
+  user.bio.trim().length >= 20 &&
+  user.bio.trim().length <= 300;
+
+function getCurrentRegistrationValidationErrors(user) {
+  const errors = {};
+  if (!hasRequiredPhoto(user)) errors.photo = "יש להעלות לפחות תמונת פרופיל אחת.";
+  if (!Number.isInteger(user?.age) || user.age < 18 || user.age > 120) {
+    errors.age = "יש להזין גיל תקין בין 18 ל-120.";
+  }
+  if (!hasTripDestination(user)) errors.tripLocation = "יש לבחור יעד לטיול.";
+  if (!Array.isArray(user?.preferredDestinations) || !user.preferredDestinations.some(hasText)) {
+    errors.preferredDestinations = "יש לבחור יעד מועדף לטיול.";
+  }
+  if (!hasText(user?.tripDates)) errors.tripDates = "יש לבחור תאריכי טיול.";
+  if (!hasText(user?.tripDuration)) errors.tripDuration = "יש לבחור משך טיול.";
+  if (!hasText(user?.budget)) errors.budget = "יש לבחור תקציב.";
+  if (!hasText(user?.travelStyle)) errors.travelStyle = "יש לבחור סגנון טיול.";
+  const questionnaireMessages = {
+    planningStyle: "יש לבחור סגנון תכנון.",
+    accommodationPreference: "יש לבחור העדפת לינה.",
+    companionScope: "יש לבחור עם מי תרצו לטייל.",
+    companionPriority: "יש לבחור מה חשוב לכם בשותף לטיול.",
+    dealBreaker: "יש לבחור מה מהווה מבחינתכם Deal Breaker.",
+  };
+  QUESTIONNAIRE_FIELDS.forEach((field) => {
+    if (!hasText(user?.questionnaire?.[field])) errors[field] = questionnaireMessages[field];
+  });
+  if (!Array.isArray(user?.interests) || !user.interests.some(hasText)) {
+    errors.interests = "יש לבחור לפחות תחום עניין אחד.";
+  }
+  if (!hasText(user?.bio) || user.bio.trim().length < 20) {
+    errors.bio = "יש לכתוב לפחות 20 תווים.";
+  } else if (user.bio.trim().length > 300) {
+    errors.bio = "ניתן לכתוב עד 300 תווים.";
+  }
+  return errors;
+}
+
 function hasTripDestination(user) {
   const destination = user?.tripLocation;
   return Boolean(
@@ -115,10 +155,7 @@ function markRegistrationCompleteIfEligible(user, now = new Date()) {
   if (
     !user?.registrationCompletedAt &&
     user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
-    hasRequiredPhoto(user) &&
-    hasCompletedCurrentQuestionnaire(user) &&
-    hasCompletedPersonalProfile(user) &&
-    hasTripDestination(user)
+    Object.keys(getCurrentRegistrationValidationErrors(user)).length === 0
   ) {
     user.registrationCompletedAt = now;
     return true;
@@ -147,6 +184,7 @@ module.exports = {
   QUESTIONNAIRE_FIELDS,
   CURRENT_REGISTRATION_FLOW_VERSION,
   getOnboardingState,
+  getCurrentRegistrationValidationErrors,
   getRegistrationState,
   hasCompletedQuestionnaire,
   hasCompletedCurrentQuestionnaire,

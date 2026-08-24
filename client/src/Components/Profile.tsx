@@ -40,7 +40,10 @@ import {
 import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
 import { getPreviousOnboardingPath } from "../utils/authNavigation";
-import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
+import {
+  getAuthenticatedIdentity,
+  getAuthenticatedProfilePhotos,
+} from "../utils/authenticatedIdentity";
 import { PROFILE_OPTIONS } from "../data/profileOptions";
 
 type ProfileData = {
@@ -62,6 +65,29 @@ type ProfileData = {
   aboutMe: string;
   imageUrl: string;
 };
+
+type ProfileField =
+  | "name"
+  | "age"
+  | "photo"
+  | "tripLocation"
+  | "dates"
+  | "duration"
+  | "preferredDestination"
+  | "budget"
+  | "travelStyle"
+  | "planningStyle"
+  | "accommodationPreference"
+  | "companionScope"
+  | "companionPriority"
+  | "dealBreaker"
+  | "interests"
+  | "aboutMe";
+
+type ProfileFieldErrors = Partial<Record<ProfileField, string>>;
+
+const REQUIRED_FIELDS_MESSAGE =
+  "לא כל השדות הנדרשים הושלמו. יש להשלים את השדות המסומנים.";
 
 const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = new Set([
@@ -174,6 +200,59 @@ function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
   return [imageUrl, ...remainingPhotos];
 }
 
+function getBackendProfileFieldErrors(error: unknown): ProfileFieldErrors {
+  if (!axios.isAxiosError(error) || error.response?.status !== 400) return {};
+  const backendFields = error.response.data?.fields;
+  if (backendFields && typeof backendFields === "object") {
+    const fieldNames: Record<string, ProfileField> = {
+      photo: "photo",
+      age: "age",
+      tripLocation: "tripLocation",
+      preferredDestinations: "preferredDestination",
+      tripDates: "dates",
+      tripDuration: "duration",
+      budget: "budget",
+      travelStyle: "travelStyle",
+      planningStyle: "planningStyle",
+      accommodationPreference: "accommodationPreference",
+      companionScope: "companionScope",
+      companionPriority: "companionPriority",
+      dealBreaker: "dealBreaker",
+      interests: "interests",
+      bio: "aboutMe",
+    };
+    return Object.fromEntries(
+      Object.entries(backendFields)
+        .filter(([field, fieldMessage]) => fieldNames[field] && typeof fieldMessage === "string")
+        .map(([field, fieldMessage]) => [fieldNames[field], fieldMessage]),
+    );
+  }
+  const message = String(error.response.data?.message || "");
+  const mappings: Array<[string, ProfileField, string]> = [
+    ["name", "name", "יש להזין שם באורך של לפחות 2 תווים."],
+    ["age", "age", "יש להזין גיל תקין בין 18 ל-120."],
+    ["tripLocation", "tripLocation", "יש לבחור יעד לטיול."],
+    ["preferredDestinations", "preferredDestination", "יש לבחור יעד מועדף לטיול."],
+    ["tripDates", "dates", "יש לבחור תאריכי טיול."],
+    ["tripDuration", "duration", "יש לבחור משך טיול."],
+    ["budget", "budget", "יש לבחור תקציב."],
+    ["travelStyle", "travelStyle", "יש לבחור סגנון טיול."],
+    ["planningStyle", "planningStyle", "יש לבחור סגנון תכנון."],
+    ["accommodationPreference", "accommodationPreference", "יש לבחור העדפת לינה."],
+    ["companionScope", "companionScope", "יש לבחור עם מי תרצו לטייל."],
+    ["companionPriority", "companionPriority", "יש לבחור מה חשוב לכם בשותף לטיול."],
+    ["dealBreaker", "dealBreaker", "יש לבחור מה מהווה מבחינתכם Deal Breaker."],
+    ["interests", "interests", "יש לבחור לפחות תחום עניין אחד."],
+    ["bio", "aboutMe", "יש לכתוב בין 20 ל-300 תווים."],
+  ];
+
+  return Object.fromEntries(
+    mappings
+      .filter(([backendField]) => message.includes(backendField))
+      .map(([, field, fieldMessage]) => [field, fieldMessage]),
+  );
+}
+
 function optionsWithCurrent(
   options: readonly string[],
   currentValue: string,
@@ -182,12 +261,14 @@ function optionsWithCurrent(
     ? [currentValue, ...options]
     : options;
 }
+
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, deleteAccount, updateProfile: persistProfile } = useAuth();
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
   const modalPhotoInputRef = useRef<HTMLInputElement>(null);
+  const editFormRef = useRef<HTMLFormElement>(null);
   const [profile, setProfile] = useState<ProfileData>(() => profileFromUser(user));
   const [draftProfile, setDraftProfile] = useState<ProfileData>(profile);
   const [pendingProfileImage, setPendingProfileImage] = useState<File | null>(null);
@@ -196,6 +277,7 @@ export default function Profile() {
   const [photoError, setPhotoError] = useState("");
   const [tripLocationError, setTripLocationError] = useState("");
   const [profileSaveError, setProfileSaveError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
   const [hasPrivateBoostBadge, setHasPrivateBoostBadge] = useState(false);
@@ -283,6 +365,7 @@ export default function Profile() {
     setPhotoError("");
     setTripLocationError("");
     setProfileSaveError("");
+    setFieldErrors({});
   }
 
   function closeEditModal() {
@@ -292,6 +375,115 @@ export default function Profile() {
     setPhotoError("");
     setTripLocationError("");
     setProfileSaveError("");
+    setFieldErrors({});
+  }
+
+  function clearFieldError(field: ProfileField) {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function focusFirstInvalidField(errors: ProfileFieldErrors) {
+    const firstField = Object.keys(errors)[0] as ProfileField | undefined;
+    if (!firstField) return;
+
+    window.requestAnimationFrame(() => {
+      const field = editFormRef.current?.querySelector<HTMLElement>(
+        `[data-profile-field="${firstField}"]`,
+      );
+      field?.scrollIntoView({ behavior: "smooth", block: "center" });
+      field
+        ?.querySelector<HTMLElement>("input, select, textarea, button")
+        ?.focus({ preventScroll: true });
+    });
+  }
+
+  function showValidationErrors(errors: ProfileFieldErrors) {
+    setFieldErrors(errors);
+    setProfileSaveError(REQUIRED_FIELDS_MESSAGE);
+    focusFirstInvalidField(errors);
+  }
+
+  function validateProfileDraft() {
+    const errors: ProfileFieldErrors = {};
+    const isRegistrationSetup = location.pathname === "/profile/setup";
+    const requireExistingValue = (currentValue: string, nextValue: string) =>
+      isRegistrationSetup || Boolean(currentValue.trim()) || Boolean(nextValue.trim());
+
+    if (draftProfile.name.trim().length < 2) {
+      errors.name = "יש להזין שם באורך של לפחות 2 תווים.";
+    }
+
+    const normalizedAge = draftProfile.age.trim();
+    if (
+      (isRegistrationSetup || Boolean(profile.age.trim()) || Boolean(normalizedAge)) &&
+      (!Number.isInteger(Number(normalizedAge)) ||
+        Number(normalizedAge) < 18 ||
+        Number(normalizedAge) > 120)
+    ) {
+      errors.age = "יש להזין גיל תקין בין 18 ל-120.";
+    }
+
+    if (
+      isRegistrationSetup &&
+      !pendingProfileImage &&
+      getAuthenticatedProfilePhotos(user).length === 0
+    ) {
+      errors.photo = "יש להעלות לפחות תמונת פרופיל אחת.";
+    }
+
+    if (
+      (isRegistrationSetup || Boolean(profile.tripLocation) || Boolean(draftProfile.tripLocation)) &&
+      !draftProfile.tripLocation
+    ) {
+      errors.tripLocation = "יש לבחור יעד לטיול.";
+    }
+
+    const requiredTextFields: Array<[
+      ProfileField,
+      string,
+      string,
+      string,
+    ]> = [
+      ["preferredDestination", profile.preferredDestination, draftProfile.preferredDestination, "יש לבחור יעד מועדף לטיול."],
+      ["dates", profile.dates, draftProfile.dates, "יש לבחור תאריכי טיול."],
+      ["duration", profile.duration, draftProfile.duration, "יש לבחור משך טיול."],
+      ["budget", profile.budget, draftProfile.budget, "יש לבחור תקציב."],
+      ["travelStyle", profile.travelStyle, draftProfile.travelStyle, "יש לבחור סגנון טיול."],
+      ["planningStyle", profile.planningStyle, draftProfile.planningStyle, "יש לבחור סגנון תכנון."],
+      ["accommodationPreference", profile.accommodationPreference, draftProfile.accommodationPreference, "יש לבחור העדפת לינה."],
+      ["companionScope", profile.companionScope, draftProfile.companionScope, "יש לבחור עם מי תרצו לטייל."],
+      ["companionPriority", profile.companionPriority, draftProfile.companionPriority, "יש לבחור מה חשוב לכם בשותף לטיול."],
+      ["dealBreaker", profile.dealBreaker, draftProfile.dealBreaker, "יש לבחור מה מהווה מבחינתכם Deal Breaker."],
+    ];
+    requiredTextFields.forEach(([field, currentValue, nextValue, message]) => {
+      if (requireExistingValue(currentValue, nextValue) && !nextValue.trim()) {
+        errors[field] = message;
+      }
+    });
+
+    if (
+      (isRegistrationSetup || profile.interests.length > 0) &&
+      draftProfile.interests.length === 0
+    ) {
+      errors.interests = "יש לבחור לפחות תחום עניין אחד.";
+    }
+
+    const normalizedBio = draftProfile.aboutMe.trim();
+    const bioChanged = normalizedBio !== profile.aboutMe.trim();
+    if (isRegistrationSetup && normalizedBio.length < 20) {
+      errors.aboutMe = "יש לכתוב לפחות 20 תווים.";
+    } else if (!isRegistrationSetup && bioChanged && normalizedBio && normalizedBio.length < 20) {
+      errors.aboutMe = "יש לכתוב לפחות 20 תווים.";
+    } else if (bioChanged && normalizedBio.length > 300) {
+      errors.aboutMe = "ניתן לכתוב עד 300 תווים.";
+    }
+
+    return errors;
   }
 
   function updateDraft(
@@ -307,7 +499,9 @@ export default function Profile() {
             .filter(Boolean)
         : value,
     }));
+    clearFieldError(field as ProfileField);
   }
+
   function toggleInterest(interest: string) {
     if (
       !draftProfile.interests.includes(interest) &&
@@ -316,12 +510,14 @@ export default function Profile() {
       setProfileSaveError("ניתן לבחור עד 10 תחומי עניין.");
       return;
     }
+
     setDraftProfile((current) => ({
       ...current,
       interests: current.interests.includes(interest)
         ? current.interests.filter((item) => item !== interest)
         : [...current.interests, interest],
     }));
+    clearFieldError("interests");
     setProfileSaveError("");
   }
 
@@ -344,6 +540,7 @@ export default function Profile() {
       if (destination === "draft") {
         setDraftProfile((current) => ({ ...current, imageUrl: previewUrl }));
         setPendingProfileImage(file);
+        clearFieldError("photo");
         return;
       }
 
@@ -369,35 +566,10 @@ export default function Profile() {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!draftProfile.tripLocation) {
-      setTripLocationError("יש לבחור יעד או מיקום לטיול לפני סיום ההרשמה.");
-      return;
-    }
-
-    if (!draftProfile.dates.trim()) {
-      setProfileSaveError("יש למלא תאריכי טיול לפני סיום ההרשמה.");
-      return;
-    }
-
-    if (!draftProfile.budget.trim()) {
-      setProfileSaveError("יש למלא תקציב לפני סיום ההרשמה.");
-      return;
-    }
-
-    if (!draftProfile.travelStyle.trim()) {
-      setProfileSaveError("יש למלא סגנון טיול לפני סיום ההרשמה.");
-      return;
-    }
-
     const normalizedAge = draftProfile.age.trim();
-    if (
-      normalizedAge &&
-      (!Number.isInteger(Number(normalizedAge)) ||
-        Number(normalizedAge) < 18 ||
-        Number(normalizedAge) > 120)
-    ) {
-      setProfileSaveError("יש להזין גיל תקין בין 18 ל-120.");
+    const validationErrors = validateProfileDraft();
+    if (Object.keys(validationErrors).length > 0) {
+      showValidationErrors(validationErrors);
       return;
     }
 
@@ -405,11 +577,14 @@ export default function Profile() {
     setPhotoError("");
     setTripLocationError("");
     setProfileSaveError("");
+    setFieldErrors({});
 
+    let pendingImageUploaded = false;
     try {
       const imageUrl = pendingProfileImage
         ? await uploadProfileImage(pendingProfileImage)
         : draftProfile.imageUrl;
+      pendingImageUploaded = Boolean(pendingProfileImage);
       const payload: ProfileUpdatePayload = {};
       const normalizedName = draftProfile.name.trim();
       const normalizedBio = draftProfile.aboutMe.trim();
@@ -417,6 +592,7 @@ export default function Profile() {
       const normalizedDuration = draftProfile.duration.trim();
       const normalizedBudget = draftProfile.budget.trim();
       const normalizedTravelStyle = draftProfile.travelStyle.trim();
+
       if (normalizedName !== profile.name.trim()) payload.name = normalizedName;
       if (normalizedAge && normalizedAge !== profile.age.trim()) {
         payload.age = Number(normalizedAge);
@@ -447,6 +623,7 @@ export default function Profile() {
         payload.interests = draftProfile.interests;
       }
       if (normalizedBio !== profile.aboutMe.trim()) payload.bio = normalizedBio;
+
       const questionnaireChanges: NonNullable<ProfileUpdatePayload["questionnaire"]> = {};
       const questionnaireFields = [
         "planningStyle",
@@ -483,18 +660,18 @@ export default function Profile() {
           return;
         }
 
-        setProfileSaveError(
-          "לא ניתן לסיים את ההרשמה. יש להשלים את כל פרטי הטיול הנדרשים.",
-        );
+        setProfileSaveError(REQUIRED_FIELDS_MESSAGE);
         setIsEditing(true);
       }
     } catch (error) {
-      if (pendingProfileImage) {
+      const backendErrors = getBackendProfileFieldErrors(error);
+      if (Object.keys(backendErrors).length > 0) {
+        showValidationErrors(backendErrors);
+      } else if (pendingProfileImage && !pendingImageUploaded) {
         setPhotoError(getProfilePhotoError(error));
+        showValidationErrors({ photo: getProfilePhotoError(error) });
       } else {
-        setProfileSaveError(
-          "לא הצלחנו לשמור את הפרופיל. בדקי שכל השדות תקינים ונסי שוב.",
-        );
+        setProfileSaveError("לא הצלחנו לשמור את השינויים. נסו שוב.");
       }
     } finally {
       setIsSaving(false);
@@ -836,32 +1013,45 @@ export default function Profile() {
               </button>
             </div>
 
-            <form className="profile-edit-form" onSubmit={saveProfile}>
+            <form ref={editFormRef} className="profile-edit-form" onSubmit={saveProfile} noValidate>
               {profileSaveError && (
-                <div className="profile-error-message profile-form-wide" role="alert">
+                <div className="profile-error-message profile-general-validation profile-form-wide" role="alert">
                   {profileSaveError}
                 </div>
               )}
-              <label>
+              <label
+                data-profile-field="name"
+                className={fieldErrors.name ? "profile-field-invalid" : ""}
+              >
                 <span>שם</span>
                 <input
                   value={draftProfile.name}
+                  aria-invalid={Boolean(fieldErrors.name)}
                   onChange={(event) => updateDraft("name", event.target.value)}
                 />
+                {fieldErrors.name && <small className="profile-field-error">{fieldErrors.name}</small>}
               </label>
 
-              <label>
-                <span>גיל</span>
+              <label
+                data-profile-field="age"
+                className={fieldErrors.age ? "profile-field-invalid" : ""}
+              >
+                <span>גיל {location.pathname === "/profile/setup" ? "*" : ""}</span>
                 <input
                   type="number"
                   min="18"
                   max="120"
                   value={draftProfile.age}
+                  aria-invalid={Boolean(fieldErrors.age)}
                   onChange={(event) => updateDraft("age", event.target.value)}
                 />
+                {fieldErrors.age && <small className="profile-field-error">{fieldErrors.age}</small>}
               </label>
 
-              <div className="profile-trip-location profile-form-wide">
+              <div
+                data-profile-field="tripLocation"
+                className={`profile-trip-location profile-form-wide ${fieldErrors.tripLocation ? "profile-field-invalid" : ""}`}
+              >
                 <span>איפה תהיו בחו״ל? *</span>
                 <TripLocationPicker
                   value={draftProfile.tripLocation}
@@ -873,42 +1063,130 @@ export default function Profile() {
                         ? getTripLocationLabel(tripLocation)
                         : current.city,
                     }));
+                    clearFieldError("tripLocation");
                     setTripLocationError("");
                   }}
-                  hasError={Boolean(tripLocationError)}
+                  hasError={Boolean(fieldErrors.tripLocation || tripLocationError)}
                   disabled={isSaving}
                 />
-                {tripLocationError && (
-                  <small className="profile-photo-error">{tripLocationError}</small>
+                {(fieldErrors.tripLocation || tripLocationError) && (
+                  <small className="profile-field-error">{fieldErrors.tripLocation || tripLocationError}</small>
                 )}
               </div>
 
-              <label>
+              <label data-profile-field="dates" className={fieldErrors.dates ? "profile-field-invalid" : ""}>
                 <span>תאריכי טיול *</span>
-                <input
+                <select
                   value={draftProfile.dates}
+                  aria-invalid={Boolean(fieldErrors.dates)}
                   onChange={(event) => updateDraft("dates", event.target.value)}
-                />
+                >
+                  <option value="">בחירת מועד</option>
+                  {optionsWithCurrent(PROFILE_OPTIONS.tripDates, draftProfile.dates).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                {fieldErrors.dates && <small className="profile-field-error">{fieldErrors.dates}</small>}
               </label>
 
-              <label>
+              <label data-profile-field="duration" className={fieldErrors.duration ? "profile-field-invalid" : ""}>
+                <span>משך הטיול {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <select
+                  value={draftProfile.duration}
+                  aria-invalid={Boolean(fieldErrors.duration)}
+                  onChange={(event) => updateDraft("duration", event.target.value)}
+                >
+                  <option value="">בחירת משך</option>
+                  {optionsWithCurrent(PROFILE_OPTIONS.tripDurations, draftProfile.duration).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                {fieldErrors.duration && <small className="profile-field-error">{fieldErrors.duration}</small>}
+              </label>
+
+              <label data-profile-field="preferredDestination" className={fieldErrors.preferredDestination ? "profile-field-invalid" : ""}>
+                <span>אזור מועדף לטיול *</span>
+                <select
+                  value={draftProfile.preferredDestination}
+                  aria-invalid={Boolean(fieldErrors.preferredDestination)}
+                  onChange={(event) => updateDraft("preferredDestination", event.target.value)}
+                >
+                  <option value="">בחירת אזור</option>
+                  {optionsWithCurrent(PROFILE_OPTIONS.destinations, draftProfile.preferredDestination).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                {fieldErrors.preferredDestination && <small className="profile-field-error">{fieldErrors.preferredDestination}</small>}
+              </label>
+
+              <label data-profile-field="budget" className={fieldErrors.budget ? "profile-field-invalid" : ""}>
                 <span>תקציב *</span>
-                <input
+                <select
                   value={draftProfile.budget}
+                  aria-invalid={Boolean(fieldErrors.budget)}
                   onChange={(event) => updateDraft("budget", event.target.value)}
-                />
+                >
+                  <option value="">בחירת תקציב</option>
+                  {optionsWithCurrent(PROFILE_OPTIONS.budgets, draftProfile.budget).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                {fieldErrors.budget && <small className="profile-field-error">{fieldErrors.budget}</small>}
               </label>
 
-              <label>
+              <label data-profile-field="travelStyle" className={fieldErrors.travelStyle ? "profile-field-invalid" : ""}>
                 <span>סגנון טיול *</span>
-                <input
+                <select
                   value={draftProfile.travelStyle}
+                  aria-invalid={Boolean(fieldErrors.travelStyle)}
                   onChange={(event) => updateDraft("travelStyle", event.target.value)}
-                />
+                >
+                  <option value="">בחירת סגנון</option>
+                  {optionsWithCurrent(PROFILE_OPTIONS.travelStyles, draftProfile.travelStyle).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+                {fieldErrors.travelStyle && <small className="profile-field-error">{fieldErrors.travelStyle}</small>}
               </label>
 
-              <div className="profile-photo-picker profile-form-wide">
-                <span>תמונת פרופיל</span>
+              {([
+                ["סגנון תכנון", "planningStyle", PROFILE_OPTIONS.planningStyles],
+                ["לינה מועדפת", "accommodationPreference", PROFILE_OPTIONS.accommodationPreferences],
+                ["שותפות לטיול", "companionScope", PROFILE_OPTIONS.companionScopes],
+                ["מה חשוב לי בשותפ/ה", "companionPriority", PROFILE_OPTIONS.companionPriorities],
+                ["קו אדום מבחינתי", "dealBreaker", PROFILE_OPTIONS.dealBreakers],
+              ] as Array<[string, ProfileField, readonly string[]]>).map(([label, field, options]) => {
+                const key = field as Exclude<keyof ProfileData, "tripLocation">;
+                const value = draftProfile[key] as string;
+                return (
+                  <label
+                    key={field}
+                    data-profile-field={field}
+                    className={fieldErrors[key as ProfileField] ? "profile-field-invalid" : ""}
+                  >
+                    <span>{label} {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                    <select
+                      value={value}
+                      aria-invalid={Boolean(fieldErrors[key as ProfileField])}
+                      onChange={(event) => updateDraft(key, event.target.value)}
+                    >
+                      <option value="">לא נבחר</option>
+                      {optionsWithCurrent(options as readonly string[], value).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {fieldErrors[key as ProfileField] && (
+                      <small className="profile-field-error">{fieldErrors[key as ProfileField]}</small>
+                    )}
+                  </label>
+                );
+              })}
+
+              <div
+                data-profile-field="photo"
+                className={`profile-photo-picker profile-form-wide ${fieldErrors.photo ? "profile-field-invalid" : ""}`}
+              >
+                <span>תמונת פרופיל {location.pathname === "/profile/setup" ? "*" : ""}</span>
                 <div className="profile-photo-picker-content">
                   <img
                     src={draftProfile.imageUrl}
@@ -931,24 +1209,47 @@ export default function Profile() {
                     בחירת תמונה
                   </button>
                 </div>
-                {photoError && <small className="profile-photo-error">{photoError}</small>}
+                {(fieldErrors.photo || photoError) && (
+                  <small className="profile-field-error">{fieldErrors.photo || photoError}</small>
+                )}
               </div>
 
-              <label className="profile-form-wide">
-                <span>תחומי עניין / תגיות</span>
-                <input
-                  value={draftProfile.interests.join(", ")}
-                  onChange={(event) => updateDraft("interests", event.target.value)}
-                />
-              </label>
+              <fieldset
+                data-profile-field="interests"
+                className={`profile-interest-picker profile-form-wide ${fieldErrors.interests ? "profile-field-invalid" : ""}`}
+              >
+                <legend>תחומי עניין {location.pathname === "/profile/setup" ? "*" : ""}</legend>
+                <div>
+                  {Array.from(new Set([...PROFILE_OPTIONS.interests, ...draftProfile.interests])).map((interest) => (
+                    <button
+                      key={interest}
+                      type="button"
+                      className={draftProfile.interests.includes(interest) ? "selected" : ""}
+                      aria-pressed={draftProfile.interests.includes(interest)}
+                      onClick={() => toggleInterest(interest)}
+                    >
+                      {interest}
+                    </button>
+                  ))}
+                </div>
+                {fieldErrors.interests && <small className="profile-field-error">{fieldErrors.interests}</small>}
+              </fieldset>
 
-              <label className="profile-form-wide">
-                <span>קצת עליי</span>
+              <label
+                data-profile-field="aboutMe"
+                className={`profile-form-wide ${fieldErrors.aboutMe ? "profile-field-invalid" : ""}`}
+              >
+                <span>קצת עליי {location.pathname === "/profile/setup" ? "*" : ""}</span>
+                <small className="profile-field-help">ספרו בקצרה על עצמכם – לפחות 20 ועד 300 תווים.</small>
                 <textarea
                   rows={5}
+                  maxLength={300}
                   value={draftProfile.aboutMe}
+                  aria-invalid={Boolean(fieldErrors.aboutMe)}
                   onChange={(event) => updateDraft("aboutMe", event.target.value)}
                 />
+                <small className="profile-character-counter">{draftProfile.aboutMe.length} / 300</small>
+                {fieldErrors.aboutMe && <small className="profile-field-error">{fieldErrors.aboutMe}</small>}
               </label>
 
               <div className="profile-modal-actions">

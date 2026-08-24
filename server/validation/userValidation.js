@@ -12,7 +12,7 @@ const userListQuerySchema = Joi.object({
 
 const updateProfileSchema = Joi.object({
   name: Joi.string().trim().min(2).max(80).optional(),
-  bio: Joi.string().trim().max(500).allow("").optional(),
+  bio: Joi.string().trim().min(20).max(300).allow("").optional(),
   age: Joi.number().integer().min(18).max(120).optional(),
   tripLocation: tripLocationSchema.optional(),
   interests: Joi.array().max(10).items(Joi.string().trim().max(50)).optional(),

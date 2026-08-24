@@ -19,6 +19,7 @@
     "verify:onboarding-mongo": "node scripts/verifyOnboardingMongo.js",
     "verify:registration-architecture": "node scripts/verifyRegistrationArchitecture.js",
     "verify:registration-mongo": "node scripts/verifyRegistrationMongo.js",
+    "verify:profile-consistency-mongo": "node scripts/verifyProfileConsistencyMongo.js",
     "verify:account-deletion": "node scripts/verifyAccountDeletionFlow.js",
     "verify:account-deletion-mongo": "node scripts/verifyAccountDeletionMongo.js",
     "verify:paypal-oauth": "node scripts/verifyPayPalOAuth.js",

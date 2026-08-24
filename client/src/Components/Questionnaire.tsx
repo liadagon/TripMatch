@@ -19,6 +19,9 @@ import {
 import "./Questionnaire.css";
 import { PROFILE_OPTIONS } from "../data/profileOptions";
 
+const REQUIRED_FIELDS_MESSAGE =
+  "לא כל השדות הנדרשים הושלמו. יש להשלים את השדות המסומנים.";
+
 const questions = [
   {
     icon: Globe2,
@@ -100,6 +103,9 @@ export default function Questionnaire() {
     },
   );
   const [saveError, setSaveError] = useState("");
+  const [invalidQuestions, setInvalidQuestions] = useState<Set<number>>(
+    () => new Set(),
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const question = questions[currentQuestion];
@@ -113,12 +119,33 @@ export default function Questionnaire() {
     nextAnswers[currentQuestion] = index;
     setSelectedAnswers(nextAnswers);
     setSaveError("");
+    setInvalidQuestions((current) => {
+      const next = new Set(current);
+      next.delete(currentQuestion);
+      return next;
+    });
   }
 
   async function goNext() {
-    if (!hasSelectedAnswer || isSaving) return;
+    if (isSaving) return;
+
+    if (!hasSelectedAnswer) {
+      setInvalidQuestions((current) => new Set(current).add(currentQuestion));
+      setSaveError(REQUIRED_FIELDS_MESSAGE);
+      return;
+    }
 
     if (isLastQuestion) {
+      const unansweredQuestions = selectedAnswers
+        .map((answer, index) => (answer === null ? index : -1))
+        .filter((index) => index >= 0);
+      if (unansweredQuestions.length > 0) {
+        setInvalidQuestions(new Set(unansweredQuestions));
+        setSaveError(REQUIRED_FIELDS_MESSAGE);
+        setCurrentQuestion(unansweredQuestions[0]);
+        return;
+      }
+
       const answers = selectedAnswers.map((answerIndex, questionIndex) =>
         answerIndex === null ? "" : questions[questionIndex].answers[answerIndex],
       );
@@ -143,7 +170,7 @@ export default function Questionnaire() {
         });
         navigate(getProfileCompletionPath(updatedUser), { replace: true });
       } catch {
-        setSaveError("לא הצלחנו לשמור את התשובות נסי שוב");
+        setSaveError("לא הצלחנו לשמור את השינויים. נסו שוב.");
       } finally {
         setIsSaving(false);
       }
@@ -185,7 +212,9 @@ export default function Questionnaire() {
         </header>
 
         <main className="questionnaire-content">
-          <section className="questionnaire-card">
+          <section
+            className={`questionnaire-card ${invalidQuestions.has(currentQuestion) ? "questionnaire-card-invalid" : ""}`}
+          >
             <div className="questionnaire-icon">
               <Icon size={36} strokeWidth={2.4} />
             </div>
@@ -195,6 +224,7 @@ export default function Questionnaire() {
             <div className="questionnaire-answers">
               {question.answers.map((answer, index) => (
                 <button
+                  type="button"
                   key={answer}
                   className={
                     selectedAnswers[currentQuestion] === index
@@ -207,6 +237,11 @@ export default function Questionnaire() {
                 </button>
               ))}
             </div>
+            {invalidQuestions.has(currentQuestion) && (
+              <p className="questionnaire-field-error" role="alert">
+                יש לבחור תשובה לפני שממשיכים.
+              </p>
+            )}
           </section>
         </main>
 

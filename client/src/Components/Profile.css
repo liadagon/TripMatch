@@ -714,6 +714,86 @@
   box-shadow: 0 0 0 4px rgba(20, 92, 255, 0.1);
 }
 
+.profile-general-validation {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border: 1px solid rgba(180, 35, 24, 0.28);
+  background: #fff1f0;
+}
+
+.profile-field-invalid input,
+.profile-field-invalid select,
+.profile-field-invalid textarea,
+.profile-field-invalid .trip-location-control,
+.profile-field-invalid .profile-photo-picker-content {
+  border-color: #d92d20 !important;
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.1);
+}
+
+.profile-interest-picker.profile-field-invalid {
+  padding: 12px;
+  border: 1px solid #d92d20;
+  border-radius: 18px;
+}
+
+.profile-field-error {
+  display: block;
+  margin-top: 2px;
+  color: #b42318 !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.profile-field-help,
+.profile-character-counter {
+  color: #64748b !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.profile-character-counter {
+  justify-self: end;
+  direction: ltr;
+}
+
+.profile-interest-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.profile-interest-picker legend {
+  margin-bottom: 10px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.profile-interest-picker > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.profile-interest-picker button {
+  border: 1px solid rgba(20, 92, 255, 0.16);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #334155;
+  background: rgba(248, 250, 252, 0.9);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile-interest-picker button.selected {
+  border-color: rgba(0, 174, 189, 0.45);
+  color: #075985;
+  background: rgba(0, 216, 196, 0.16);
+}
+
 .profile-form-wide,
 .profile-modal-actions {
   grid-column: 1 / -1;

@@ -268,6 +268,24 @@ const updateCurrentUser = async (req, res, next) => {
     if (Object.prototype.hasOwnProperty.call(req.body, "questionnaire")) {
       Object.assign(user.questionnaire, req.body.questionnaire);
     }
+
+    if (
+      !user.registrationCompletedAt &&
+      user.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
+      Object.prototype.hasOwnProperty.call(req.body, "tripLocation")
+    ) {
+      const fields = getCurrentRegistrationValidationErrors(user);
+      if (Object.keys(fields).length > 0) {
+        return res.status(400).json({
+          success: false,
+          code: "REGISTRATION_VALIDATION_FAILED",
+          message:
+            "לא כל השדות הנדרשים הושלמו. יש להשלים את השדות המסומנים.",
+          fields,
+        });
+      }
+    }
+
     markRegistrationCompleteIfEligible(user);
     await user.save();
     const data = normalizeAuthenticatedUser(user);

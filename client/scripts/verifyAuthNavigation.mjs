@@ -233,8 +233,10 @@ assert.match(questionnaireSource, /getPreviousOnboardingPath\("\/questionnaire"\
 assert.match(profileSource, /getPreviousOnboardingPath\("\/profile\/setup"\)/);
 assert.match(profileSource, /location\.pathname === "\/profile\/setup"/);
 assert.match(profileSource, /navigate\("\/discover", \{ replace: true \}\)/);
-assert.match(profileSource, /normalizedAge \? \{ age: Number\(normalizedAge\) \} : \{\}/);
-assert.match(profileSource, /יש לבחור יעד או מיקום לטיול לפני סיום ההרשמה\./);
+assert.match(profileSource, /if \(normalizedAge && normalizedAge !== profile\.age\.trim\(\)\)/);
+assert.match(profileSource, /payload\.age = Number\(normalizedAge\)/);
+assert.match(profileSource, /יש לבחור יעד לטיול\./);
+assert.match(profileSource, /לא כל השדות הנדרשים הושלמו\. יש להשלים את השדות המסומנים\./);
 assert.match(photoUploadSource, /getPersistedPhotos\(user\)/);
 assert.match(photoUploadSource, /Promise\.resolve\(photo\.previewUrl\)/);
 assert.match(questionnaireSource, /persistedAnswers/);
