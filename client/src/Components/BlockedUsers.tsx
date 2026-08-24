@@ -1,12 +1,43 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Ban, UserRoundCheck } from "lucide-react";
+import {
+  ArrowRight,
+  CircleCheck,
+  ImageOff,
+  LoaderCircle,
+  ShieldBan,
+  UserRoundCheck,
+  UserRoundX,
+} from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   getBlockedUsers,
   unblockMatchedUser,
   type BlockedUserRecord,
 } from "../services/blockService";
+import { isAppOwnedProfilePhoto } from "../utils/authenticatedIdentity";
 import "./BlockedUsers.css";
+
+function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
+  const image = [user.photoURL, user.photo].find(isAppOwnedProfilePhoto);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!image || imageFailed) {
+    return (
+      <div className="blocked-user-avatar-placeholder" aria-hidden="true">
+        <ImageOff size={26} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="blocked-user-avatar"
+      src={image}
+      alt=""
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
 
 export default function BlockedUsers() {
   const navigate = useNavigate();
@@ -15,6 +46,11 @@ export default function BlockedUsers() {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingUserId, setPendingUserId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  function returnToProfile() {
+    navigate("/profile", { replace: true, state: location.state });
+  }
 
   useEffect(() => {
     let isActive = true;
@@ -24,7 +60,9 @@ export default function BlockedUsers() {
         if (isActive) setBlocks(records);
       })
       .catch(() => {
-        if (isActive) setErrorMessage("לא הצלחנו לטעון את המשתמשים החסומים");
+        if (isActive) {
+          setErrorMessage("לא הצלחנו לטעון את המשתמשים החסומים. נסו שוב.");
+        }
       })
       .finally(() => {
         if (isActive) setIsLoading(false);
@@ -41,16 +79,21 @@ export default function BlockedUsers() {
 
     setPendingUserId(userId);
     setErrorMessage("");
+    setSuccessMessage("");
 
     try {
       const result = await unblockMatchedUser(userId);
-      if (result.removed) {
-        setBlocks((current) =>
-          current.filter((block) => block._id !== record._id),
-        );
+      if (!result.removed) {
+        setErrorMessage("לא הצלחנו לבטל את החסימה. נסו שוב.");
+        return;
       }
+
+      setBlocks((current) =>
+        current.filter((block) => block._id !== record._id),
+      );
+      setSuccessMessage("החסימה בוטלה בהצלחה");
     } catch {
-      setErrorMessage("לא הצלחנו לבטל את החסימה. נסו שוב");
+      setErrorMessage("לא הצלחנו לבטל את החסימה. נסו שוב.");
     } finally {
       setPendingUserId("");
     }
@@ -59,53 +102,87 @@ export default function BlockedUsers() {
   return (
     <div className="blocked-users-page" dir="rtl">
       <main className="blocked-users-shell">
+        <button
+          type="button"
+          className="blocked-users-back"
+          onClick={returnToProfile}
+        >
+          <ArrowRight size={20} />
+          חזרה לפרופיל
+        </button>
+
         <header className="blocked-users-header">
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/profile", { replace: true, state: location.state })
-            }
-          >
-            <ArrowRight size={20} />
-            חזרה לפרופיל
-          </button>
-          <div>
-            <Ban size={27} />
-            <h1>משתמשים חסומים</h1>
+          <div className="blocked-users-header-icon" aria-hidden="true">
+            <ShieldBan size={32} />
           </div>
-          <p>כאן מופיעים רק משתמשים שחסמת בעצמך.</p>
+          <div>
+            <p className="blocked-users-eyebrow">TripMatch Safety</p>
+            <h1>משתמשים חסומים</h1>
+            <p>כאן תוכלו לנהל משתמשים שחסמתם.</p>
+          </div>
         </header>
 
-        {errorMessage && <p className="blocked-users-error" role="alert">{errorMessage}</p>}
+        {successMessage && (
+          <p className="blocked-users-notice blocked-users-success" role="status">
+            <CircleCheck size={19} />
+            {successMessage}
+          </p>
+        )}
+        {errorMessage && (
+          <p className="blocked-users-notice blocked-users-error" role="alert">
+            {errorMessage}
+          </p>
+        )}
 
-        <section className="blocked-users-list" aria-live="polite">
+        <section className="blocked-users-content" aria-live="polite">
           {isLoading ? (
-            <p className="blocked-users-empty">טוענים משתמשים חסומים...</p>
+            <div className="blocked-users-state-card">
+              <LoaderCircle className="blocked-users-spinner" size={34} />
+              <h2>טוענים משתמשים חסומים...</h2>
+            </div>
           ) : blocks.length === 0 ? (
-            <p className="blocked-users-empty">אין משתמשים חסומים כרגע</p>
+            <div className="blocked-users-state-card blocked-users-empty">
+              <div className="blocked-users-empty-icon" aria-hidden="true">
+                <UserRoundX size={42} />
+              </div>
+              <h2>אין משתמשים חסומים כרגע</h2>
+              <p>
+                משתמשים שתחסמו יופיעו כאן ותוכלו לבטל את החסימה בכל עת.
+              </p>
+              <button type="button" onClick={returnToProfile}>
+                <ArrowRight size={18} />
+                חזרה לפרופיל
+              </button>
+            </div>
           ) : (
-            blocks.map((record) => {
-              const user = record.blocked;
-              const image = user.photoURL || user.photo || "/pic2.png";
+            <div className="blocked-users-list">
+              {blocks.map((record) => {
+                const user = record.blocked;
+                const isPending = pendingUserId === user._id;
 
-              return (
-                <article className="blocked-user-card" key={record._id}>
-                  <img src={image} alt={user.name} />
-                  <div>
-                    <h2>{user.name}{user.age ? `, ${user.age}` : ""}</h2>
-                    <p>{user.preferredDestinations?.[0] || "TripMatch"}</p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={pendingUserId === user._id}
-                    onClick={() => void unblock(record)}
-                  >
-                    <UserRoundCheck size={18} />
-                    {pendingUserId === user._id ? "מבטלת..." : "ביטול חסימה"}
-                  </button>
-                </article>
-              );
-            })
+                return (
+                  <article className="blocked-user-card" key={record._id}>
+                    <BlockedUserAvatar user={user} />
+                    <div className="blocked-user-summary">
+                      <span>משתמש חסום</span>
+                      <h2>{user.name}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={Boolean(pendingUserId)}
+                      onClick={() => void unblock(record)}
+                    >
+                      {isPending ? (
+                        <LoaderCircle className="blocked-users-spinner" size={18} />
+                      ) : (
+                        <UserRoundCheck size={18} />
+                      )}
+                      {isPending ? "מבטלים..." : "בטל חסימה"}
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
           )}
         </section>
       </main>

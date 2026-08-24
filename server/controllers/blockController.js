@@ -1,9 +1,9 @@
 const Block = require("../models/Block");
 const Match = require("../models/Match");
 const getBlockStatus = require("../utils/blockRelationship");
+const { sanitizeUserPhotoFields } = require("../utils/profilePhotos");
 
-const BLOCKED_USER_FIELDS =
-  "name age photo photoURL preferredDestinations tripDates";
+const BLOCKED_USER_FIELDS = "name photo photoURL";
 
 const findMatch = (currentUserId, otherUserId) =>
   Match.exists({ users: { $all: [currentUserId, otherUserId] } });
@@ -13,7 +13,14 @@ const getBlockedUsers = async (req, res, next) => {
     const blocks = await Block.find({ blocker: req.user._id })
       .sort({ createdAt: -1 })
       .populate("blocked", BLOCKED_USER_FIELDS);
-    const data = blocks.filter((block) => block.blocked);
+    const data = blocks
+      .filter((block) => block.blocked)
+      .map((block) => {
+        const record = block.toObject();
+        record.blocked = sanitizeUserPhotoFields(record.blocked);
+        delete record.blocked.photos;
+        return record;
+      });
 
     return res.status(200).json({
       success: true,
