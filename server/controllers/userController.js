@@ -27,6 +27,15 @@ const {
 const {
   filterCanonicalInterests,
 } = require("../constants/profileOptions");
+const {
+  getAppOwnedPhotoUrls,
+  isAppOwnedPhotoUrl,
+} = require("../utils/profilePhotos");
+const {
+  deleteOwnedProfileImagesByUrls,
+  getOwnedProfileImageIds,
+  getProfileImageIdFromUrl,
+} = require("../services/profileImageStorage");
 
 const DISCOVER_INTERNAL_FIELDS =
   "tripLocation.latitude tripLocation.longitude registrationCompletedAt registrationFlowVersion subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
@@ -266,6 +275,44 @@ const updateCurrentUser = async (req, res, next) => {
       });
     }
 
+    let removedProfilePhotos = [];
+    if (Object.prototype.hasOwnProperty.call(req.body, "photos")) {
+      const requestedPhotos = [...new Set(req.body.photos)];
+      if (
+        requestedPhotos.length !== req.body.photos.length ||
+        requestedPhotos.some((photo) => !isAppOwnedPhotoUrl(photo))
+      ) {
+        return res.status(400).json({
+          success: false,
+          code: "INVALID_PROFILE_PHOTOS",
+          message: "Profile photos must use app-owned image URLs",
+        });
+      }
+
+      const requestedGridFsPhotos = requestedPhotos.filter((photo) =>
+        getProfileImageIdFromUrl(photo),
+      );
+      const ownedIds = await getOwnedProfileImageIds(
+        req.user._id,
+        requestedGridFsPhotos,
+      );
+      if (ownedIds.length !== requestedGridFsPhotos.length) {
+        return res.status(403).json({
+          success: false,
+          code: "PROFILE_PHOTO_NOT_OWNED",
+          message: "A profile photo is not owned by the authenticated user",
+        });
+      }
+
+      const requestedSet = new Set(requestedPhotos);
+      removedProfilePhotos = getAppOwnedPhotoUrls(user).filter(
+        (photo) => !requestedSet.has(photo),
+      );
+      req.body.photos = requestedPhotos;
+      req.body.photoURL = requestedPhotos[0] || "";
+      req.body.photo = "";
+    }
+
     PROFILE_FIELDS.filter((field) => field !== "questionnaire").forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         user[field] = req.body[field];
@@ -294,6 +341,9 @@ const updateCurrentUser = async (req, res, next) => {
     }
 
     await user.save();
+    if (removedProfilePhotos.length > 0) {
+      await deleteOwnedProfileImagesByUrls(req.user._id, removedProfilePhotos);
+    }
     const data = normalizeAuthenticatedUser(user);
 
     return res.status(200).json({

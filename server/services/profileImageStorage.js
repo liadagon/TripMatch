@@ -31,6 +31,18 @@ function parseProfileImageId(fileId) {
   return new mongoose.Types.ObjectId(fileId);
 }
 
+function getProfileImageIdFromUrl(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  try {
+    const pathname = new URL(value.trim(), "https://tripmatch.invalid").pathname;
+    const match = pathname.match(/^\/api\/file\/([a-f\d]{24})$/i);
+    return match ? parseProfileImageId(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function storeProfileImage({ buffer, contentType, ownerId }) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
     throw new TypeError("Uploaded image content is required");
@@ -77,6 +89,29 @@ async function deleteProfileImage(fileId) {
   await getProfileImageBucket().delete(fileId);
 }
 
+async function getOwnedProfileImageIds(ownerId, photoUrls) {
+  const requestedIds = photoUrls
+    .map(getProfileImageIdFromUrl)
+    .filter(Boolean);
+  if (requestedIds.length === 0) return [];
+
+  const normalizedOwnerId = new mongoose.Types.ObjectId(String(ownerId));
+  const files = await getProfileImageBucket()
+    .find({
+      _id: { $in: requestedIds },
+      "metadata.ownerId": normalizedOwnerId,
+      "metadata.purpose": PROFILE_IMAGE_PURPOSE,
+    })
+    .toArray();
+  return files.map(({ _id }) => _id);
+}
+
+async function deleteOwnedProfileImagesByUrls(ownerId, photoUrls) {
+  const ownedIds = await getOwnedProfileImageIds(ownerId, photoUrls);
+  await Promise.all(ownedIds.map((fileId) => deleteProfileImage(fileId)));
+  return ownedIds.length;
+}
+
 async function deleteProfileImagesByOwner(ownerId, { session } = {}) {
   if (!mongoose.connection.db) {
     const error = new Error("MongoDB file storage is unavailable");
@@ -120,9 +155,12 @@ module.exports = {
   PROFILE_IMAGE_BUCKET_NAME,
   PROFILE_IMAGE_PURPOSE,
   deleteProfileImage,
+  deleteOwnedProfileImagesByUrls,
   deleteProfileImagesByOwner,
   findProfileImage,
   openProfileImageDownloadStream,
   parseProfileImageId,
+  getProfileImageIdFromUrl,
+  getOwnedProfileImageIds,
   storeProfileImage,
 };

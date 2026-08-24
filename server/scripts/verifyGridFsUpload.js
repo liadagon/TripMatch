@@ -49,6 +49,17 @@ async function uploadFile(baseUrl, token, bytes, contentType, filename) {
   });
 }
 
+async function updatePhotos(baseUrl, token, photos) {
+  return fetch(`${baseUrl}/api/users/me`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ photos }),
+  });
+}
+
 async function run() {
   assert(process.env.DATABASE_URL, "DATABASE_URL is not configured");
   assert(process.env.JWT_SECRET, "JWT_SECRET is not configured");
@@ -59,6 +70,7 @@ async function run() {
   const legacyPath = path.join(publicDirectory, legacyFilename);
   const storedFileIds = [];
   let temporaryUser;
+  let otherTemporaryUser;
   let server;
 
   try {
@@ -68,9 +80,21 @@ async function run() {
       email: verificationEmail,
       authProvider: "email",
       emailVerified: true,
+      registrationCompletedAt: new Date(),
     });
     const token = jwt.sign(
       { userId: temporaryUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" },
+    );
+    otherTemporaryUser = await User.create({
+      name: "GridFS Ownership Verification User",
+      email: `gridfs-owner-${verificationId}@example.com`,
+      authProvider: "email",
+      emailVerified: true,
+    });
+    const otherToken = jwt.sign(
+      { userId: otherTemporaryUser._id },
       process.env.JWT_SECRET,
       { expiresIn: "10m" },
     );
@@ -112,6 +136,36 @@ async function run() {
     assert.equal(storedFile.metadata.purpose, PROFILE_IMAGE_PURPOSE);
     assert.equal(String(storedFile.metadata.ownerId), String(temporaryUser._id));
     assert.notEqual(storedFile.filename, "untrusted-original-name.exe");
+
+    const secondUploadResponse = await uploadFile(
+      baseUrl,
+      token,
+      pngBytes,
+      "image/png",
+      "second.png",
+    );
+    assert.equal(secondUploadResponse.status, 201);
+    const secondUploadBody = await secondUploadResponse.json();
+    const secondFileId = parseProfileImageId(
+      new URL(secondUploadBody.url).pathname.split("/").at(-1),
+    );
+    assert(secondFileId);
+    storedFileIds.push(secondFileId);
+
+    const foreignUploadResponse = await uploadFile(
+      baseUrl,
+      otherToken,
+      pngBytes,
+      "image/png",
+      "foreign.png",
+    );
+    assert.equal(foreignUploadResponse.status, 201);
+    const foreignUploadBody = await foreignUploadResponse.json();
+    const foreignFileId = parseProfileImageId(
+      new URL(foreignUploadBody.url).pathname.split("/").at(-1),
+    );
+    assert(foreignFileId);
+    storedFileIds.push(foreignFileId);
     const chunkCount = await mongoose.connection.db
       .collection(`${PROFILE_IMAGE_BUCKET_NAME}.chunks`)
       .countDocuments({ files_id: fileId });
@@ -130,18 +184,67 @@ async function run() {
     const downloadedBytes = Buffer.from(await downloadResponse.arrayBuffer());
     assert.deepEqual(downloadedBytes, pngBytes);
 
-    const profileResponse = await fetch(`${baseUrl}/api/users/me`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ photoURL: uploadBody.url, photos: [uploadBody.url] }),
-    });
+    const profileResponse = await updatePhotos(baseUrl, token, [
+      uploadBody.url,
+      secondUploadBody.url,
+    ]);
     assert.equal(profileResponse.status, 200);
     const persistedUser = await User.findById(temporaryUser._id).lean();
     assert.equal(persistedUser.photoURL, uploadBody.url);
-    assert.deepEqual(persistedUser.photos, [uploadBody.url]);
+    assert.deepEqual(persistedUser.photos, [
+      uploadBody.url,
+      secondUploadBody.url,
+    ]);
+
+    const foreignOwnershipResponse = await updatePhotos(baseUrl, token, [
+      foreignUploadBody.url,
+    ]);
+    assert.equal(foreignOwnershipResponse.status, 403);
+    const foreignOwnershipBody = await foreignOwnershipResponse.json();
+    assert.equal(foreignOwnershipBody.code, "PROFILE_PHOTO_NOT_OWNED");
+    const unchangedAfterForeignAttempt = await User.findById(
+      temporaryUser._id,
+    ).lean();
+    assert.deepEqual(unchangedAfterForeignAttempt.photos, [
+      uploadBody.url,
+      secondUploadBody.url,
+    ]);
+    assert(await findProfileImage(foreignFileId));
+
+    const removeFirstResponse = await updatePhotos(baseUrl, token, [
+      secondUploadBody.url,
+    ]);
+    assert.equal(removeFirstResponse.status, 200);
+    const afterFirstRemoval = await User.findById(temporaryUser._id).lean();
+    assert.deepEqual(afterFirstRemoval.photos, [secondUploadBody.url]);
+    assert.equal(afterFirstRemoval.photoURL, secondUploadBody.url);
+    assert.equal(await findProfileImage(fileId), null);
+    assert(await findProfileImage(secondFileId));
+
+    const removeFinalResponse = await updatePhotos(baseUrl, token, []);
+    assert.equal(removeFinalResponse.status, 200);
+    const afterFinalRemoval = await User.findById(temporaryUser._id).lean();
+    assert.deepEqual(afterFinalRemoval.photos, []);
+    assert.equal(afterFinalRemoval.photoURL, "");
+    assert(afterFinalRemoval.registrationCompletedAt);
+    assert.equal(await findProfileImage(secondFileId), null);
+    assert(await findProfileImage(foreignFileId));
+
+    const externalPhotoResponse = await updatePhotos(baseUrl, token, [
+      "https://example.com/provider-avatar.jpg",
+    ]);
+    assert.equal(externalPhotoResponse.status, 400);
+    const externalPhotoBody = await externalPhotoResponse.json();
+    assert.equal(externalPhotoBody.code, "INVALID_PROFILE_PHOTOS");
+
+    const seventhPhotoResponse = await updatePhotos(
+      baseUrl,
+      token,
+      Array.from({ length: 7 }, (_, index) =>
+        `${baseUrl}/public/verification-${index}.png`,
+      ),
+    );
+    assert.equal(seventhPhotoResponse.status, 400);
 
     const unsupportedResponse = await uploadFile(
       baseUrl,
@@ -186,6 +289,13 @@ async function run() {
       metadataStored: true,
       gridFsDownloadMatchesUpload: true,
       profileUrlPersisted: true,
+      orderedPhotoListPersisted: true,
+      removedGridFsFilesDeleted: true,
+      finalPhotoRemovalAllowedForCompletedUser: true,
+      registrationCompletionPreserved: true,
+      crossUserPhotoOwnershipRejected: true,
+      externalProviderPhotoRejected: true,
+      seventhPhotoRejected: true,
       noUploadWrittenToPublicDirectory: true,
       unsupportedMimeRejected: true,
       oversizedFileRejected: true,
@@ -202,6 +312,9 @@ async function run() {
 
     if (temporaryUser?._id) {
       await User.deleteOne({ _id: temporaryUser._id }).catch(() => {});
+    }
+    if (otherTemporaryUser?._id) {
+      await User.deleteOne({ _id: otherTemporaryUser._id }).catch(() => {});
     }
 
     await close(server).catch(() => {});
