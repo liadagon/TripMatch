@@ -28,6 +28,17 @@ assert.match(mapSource, /zIndexOffset=\{2000\}/);
 assert.match(mapSource, /aria-label", "המיקום שלי במפת ההתאמות"/);
 assert.match(mapSource, /title="המיקום שלי במפת ההתאמות"/);
 assert.match(mapSource, /alt="המיקום שלי במפת ההתאמות"/);
+assert.match(mapSource, /const mapRef = useRef<L\.Map \| null>\(null\)/);
+assert.match(mapSource, /ref=\{mapRef\}/);
+assert.match(
+  mapSource,
+  /mapRef\.current\.flyTo\(\s*\[currentUserMarker\.latitude, currentUserMarker\.longitude\],\s*11,/,
+);
+assert.match(mapSource, /\{ animate: true, duration: 0\.75 \}/);
+assert.match(mapSource, /\{currentUserMarker && \([\s\S]*className="matches-map-return-to-self"/);
+assert.match(mapSource, /aria-label="חזרה למיקום שלי במפה"/);
+assert.match(mapSource, /title="חזרה למיקום שלי במפה"/);
+assert.match(mapSource, /<span>חזרה אליי<\/span>/);
 assert.match(mapSource, /<strong>המיקום שלי<\/strong>/);
 assert.match(mapSource, /currentUserMarker\.destinationLabel/);
 assert.match(mapSource, /<strong>\{displayMatches\.length\} התאמות באזור<\/strong>/);
@@ -44,6 +55,9 @@ assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user::after[\s\S
 assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user::after[\s\S]*pointer-events: none/);
 assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user span/);
 assert.match(mapCssSource, /\.matches-map-photo-marker\.current-user span[\s\S]*top: -28px/);
+assert.match(mapCssSource, /\.matches-map-return-to-self[\s\S]*position: absolute/);
+assert.match(mapCssSource, /\.matches-map-return-to-self:focus-visible/);
+assert.match(mapCssSource, /@media \(max-width: 700px\)[\s\S]*\.matches-map-return-to-self span[\s\S]*display: none/);
 assert.match(identitySource, /getAuthenticatedProfilePhotos\(user\)\[0\] \|\| ""/);
 assert.match(identitySource, /isAppOwnedProfilePhoto/);
 
@@ -54,6 +68,11 @@ assert.doesNotMatch(
   mapSource.slice(selfMarkerStart, selfMarkerEnd),
   /navigate\(|matched-profile/,
   "The self marker must not navigate to a matched profile",
+);
+assert.equal(
+  (mapSource.match(/<Marker/g) || []).length,
+  2,
+  "The recenter control must not add another self marker",
 );
 
 console.log("Matches Map current-user marker verification: PASS");

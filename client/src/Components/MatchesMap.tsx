@@ -1,7 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import { Map, MapPin, MessageCircle, RefreshCw, UserRound } from "lucide-react";
+import { Crosshair, Map, MapPin, MessageCircle, RefreshCw, UserRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getConversationWithUser } from "../services/conversationService";
@@ -248,6 +248,7 @@ const MatchPhotoMarker = memo(function MatchPhotoMarker({
 export default function MatchesMap() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const mapRef = useRef<L.Map | null>(null);
   const [data, setData] = useState<MatchesMapData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -323,6 +324,16 @@ export default function MatchesMap() {
     },
     [navigate],
   );
+
+  const returnToCurrentUser = useCallback(() => {
+    if (!currentUserMarker || !mapRef.current) return;
+
+    mapRef.current.flyTo(
+      [currentUserMarker.latitude, currentUserMarker.longitude],
+      11,
+      { animate: true, duration: 0.75 },
+    );
+  }, [currentUserMarker]);
 
   function retryMapTiles() {
     setMapError("");
@@ -408,6 +419,7 @@ export default function MatchesMap() {
             <div className="matches-map-canvas-wrap">
               <MapContainer
                 key={mapKey}
+                ref={mapRef}
                 center={[mapCenter.latitude, mapCenter.longitude]}
                 zoom={11}
                 minZoom={3}
@@ -460,6 +472,19 @@ export default function MatchesMap() {
                   />
                 ))}
               </MapContainer>
+
+              {currentUserMarker && (
+                <button
+                  type="button"
+                  className="matches-map-return-to-self"
+                  aria-label="חזרה למיקום שלי במפה"
+                  title="חזרה למיקום שלי במפה"
+                  onClick={returnToCurrentUser}
+                >
+                  <Crosshair size={18} aria-hidden="true" />
+                  <span>חזרה אליי</span>
+                </button>
+              )}
 
               {isMapLoading && !mapError && (
                 <div className="matches-map-tile-status" role="status">
