@@ -13,6 +13,12 @@ const PUBLIC_PROFILE_FIELDS = [
   "travelStyle",
   "budget",
   "tripDates",
+  "tripDuration",
+  "questionnaire.planningStyle",
+  "questionnaire.accommodationPreference",
+  "questionnaire.companionScope",
+  "questionnaire.companionPriority",
+  "questionnaire.dealBreaker",
   "photo",
   "photoURL",
 ].join(" ");

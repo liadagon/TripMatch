@@ -33,6 +33,7 @@ const calculateProfileCompatibility = (firstUser, secondUser) => {
     compareValue(firstUser.travelStyle, secondUser.travelStyle),
     compareValue(firstUser.budget, secondUser.budget),
     compareValue(firstUser.tripDates, secondUser.tripDates),
+    compareValue(firstUser.tripDuration, secondUser.tripDuration),
     compareValue(
       firstUser.questionnaire?.planningStyle,
       secondUser.questionnaire?.planningStyle
@@ -48,6 +49,10 @@ const calculateProfileCompatibility = (firstUser, secondUser) => {
     compareValue(
       firstUser.questionnaire?.companionPriority,
       secondUser.questionnaire?.companionPriority
+    ),
+    compareValue(
+      firstUser.questionnaire?.dealBreaker,
+      secondUser.questionnaire?.dealBreaker
     ),
   ].filter((result) => result !== null);
   const matchedCriteria = comparisons.filter(Boolean).length;

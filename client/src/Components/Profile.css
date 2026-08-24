@@ -340,6 +340,50 @@
   font-weight: 900;
 }
 
+.profile-preferences-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-preferences-grid > div {
+  padding: 15px 17px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.profile-preferences-grid span,
+.profile-preferences-grid strong {
+  display: block;
+}
+
+.profile-preferences-grid span {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.profile-preferences-grid strong {
+  margin-top: 4px;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.profile-complete-preferences {
+  margin-top: 14px;
+  border: 1px solid rgba(20, 92, 255, 0.2);
+  border-radius: 999px;
+  padding: 11px 16px;
+  color: #145cff;
+  background: rgba(20, 92, 255, 0.07);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .profile-safe-box {
   width: fit-content;
   max-width: min(560px, 100%);
@@ -639,6 +683,7 @@
 }
 
 .profile-edit-form input,
+.profile-edit-form select,
 .profile-edit-form textarea {
   width: 100%;
   border: 1px solid rgba(15, 23, 42, 0.1);
@@ -662,6 +707,7 @@
 }
 
 .profile-edit-form input:focus,
+.profile-edit-form select:focus,
 .profile-edit-form textarea:focus {
   border-color: rgba(20, 92, 255, 0.55);
   background: #ffffff;
@@ -851,6 +897,9 @@
   }
 }
 @media (max-width: 768px) {
+  .profile-preferences-grid {
+    grid-template-columns: 1fr;
+  }
   .profile-layout {
     padding: 22px 14px var(--tripmatch-nav-space);
   }

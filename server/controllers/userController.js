@@ -6,6 +6,9 @@ const PUBLIC_PROFILE_FIELDS = require("../utils/publicProfile");
 const calculateProfileCompatibility = require("../utils/profileCompatibility");
 const { hasBoostAccess } = require("../utils/subscriptionEntitlement");
 const {
+  CURRENT_REGISTRATION_FLOW_VERSION,
+  getRegistrationState,
+  getCurrentRegistrationValidationErrors,
   markRegistrationCompleteIfEligible,
   normalizeAuthenticatedUser,
 } = require("../utils/onboarding");
@@ -23,19 +26,19 @@ const {
 } = require("../utils/matchesMap");
 
 const DISCOVER_INTERNAL_FIELDS =
-  "tripLocation.latitude tripLocation.longitude questionnaire subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
+  "tripLocation.latitude tripLocation.longitude registrationCompletedAt registrationFlowVersion subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
 
 const PROFILE_FIELDS = [
   "name",
   "bio",
   "age",
-  "location",
   "tripLocation",
   "interests",
   "preferredDestinations",
   "travelStyle",
   "budget",
   "tripDates",
+  "tripDuration",
   "questionnaire",
   "photo",
   "photoURL",
@@ -70,11 +73,12 @@ const getUsers = async (req, res, next) => {
       usersQuery.sort({ _id: 1 });
     }
 
-    const [users, total] = await Promise.all([
-      usersQuery,
-      User.countDocuments(filter),
-    ]);
-    const rankedUsers = users
+    const users = await usersQuery;
+    const eligibleUsers = users.filter(
+      (user) => getRegistrationState(user).registrationComplete,
+    );
+    const total = eligibleUsers.length;
+    const rankedUsers = eligibleUsers
       .map((user) => {
         const compatibility = calculateProfileCompatibility(req.user, user);
         const profile = user.toObject();
@@ -110,6 +114,8 @@ const getUsers = async (req, res, next) => {
         : null;
 
       delete profile.questionnaire;
+      delete profile.registrationCompletedAt;
+      delete profile.registrationFlowVersion;
       delete profile.score;
       delete profile.subscriptionPlan;
       delete profile.subscriptionStatus;
@@ -253,12 +259,15 @@ const updateCurrentUser = async (req, res, next) => {
       });
     }
 
-    PROFILE_FIELDS.forEach((field) => {
+    PROFILE_FIELDS.filter((field) => field !== "questionnaire").forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         user[field] = req.body[field];
       }
     });
 
+    if (Object.prototype.hasOwnProperty.call(req.body, "questionnaire")) {
+      Object.assign(user.questionnaire, req.body.questionnaire);
+    }
     markRegistrationCompleteIfEligible(user);
     await user.save();
     const data = normalizeAuthenticatedUser(user);

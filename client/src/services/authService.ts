@@ -47,9 +47,11 @@ export type PublicUser = Pick<
   | "travelStyle"
   | "budget"
   | "tripDates"
+  | "tripDuration"
   | "photo"
   | "photoURL"
 > & {
+  questionnaire?: AuthUser["questionnaire"];
   tripLocation?: Omit<
     TripLocation,
     "placeId" | "formattedAddress" | "latitude" | "longitude"

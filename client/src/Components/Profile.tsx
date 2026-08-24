@@ -20,7 +20,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../services/authService";
-import { uploadProfileImage } from "../services/profileService";
+import {
+  uploadProfileImage,
+  type ProfileUpdatePayload,
+} from "../services/profileService";
 import TripLocationPicker, {
   getTripLocationLabel,
 } from "./TripLocationPicker";
@@ -38,6 +41,7 @@ import { getMySubscription } from "../services/subscriptionService";
 import { hasActiveBoost } from "../utils/subscriptionUi";
 import { getPreviousOnboardingPath } from "../utils/authNavigation";
 import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
+import { PROFILE_OPTIONS } from "../data/profileOptions";
 
 type ProfileData = {
   name: string;
@@ -45,10 +49,16 @@ type ProfileData = {
   city: string;
   tripLocation: TripLocation | null;
   dates: string;
+  duration: string;
+  preferredDestination: string;
   budget: string;
   travelStyle: string;
   interests: string[];
+  planningStyle: string;
+  accommodationPreference: string;
+  companionScope: string;
   companionPriority: string;
+  dealBreaker: string;
   aboutMe: string;
   imageUrl: string;
 };
@@ -67,10 +77,16 @@ const emptyProfile: ProfileData = {
   city: "",
   tripLocation: null,
   dates: "",
+  duration: "",
+  preferredDestination: "",
   budget: "",
   travelStyle: "",
   interests: [],
+  planningStyle: "",
+  accommodationPreference: "",
+  companionScope: "",
   companionPriority: "",
+  dealBreaker: "",
   aboutMe: "",
   imageUrl: "",
 };
@@ -87,10 +103,17 @@ function profileFromUser(user: AuthUser | null): ProfileData {
       : user?.location || "",
     tripLocation: user?.tripLocation || null,
     dates: user?.tripDates || "",
+    duration: user?.tripDuration || "",
+    preferredDestination: user?.preferredDestinations?.[0] || "",
     budget: user?.budget || "",
     travelStyle: user?.travelStyle || "",
     interests: user?.interests?.filter(Boolean) || [],
+    planningStyle: user?.questionnaire?.planningStyle || "",
+    accommodationPreference:
+      user?.questionnaire?.accommodationPreference || "",
+    companionScope: user?.questionnaire?.companionScope || "",
     companionPriority: user?.questionnaire?.companionPriority || "",
+    dealBreaker: user?.questionnaire?.dealBreaker || "",
     aboutMe: user?.bio || "",
     imageUrl: identity.photoURL,
   };
@@ -151,6 +174,14 @@ function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
   return [imageUrl, ...remainingPhotos];
 }
 
+function optionsWithCurrent(
+  options: readonly string[],
+  currentValue: string,
+) {
+  return currentValue && !options.some((option) => option === currentValue)
+    ? [currentValue, ...options]
+    : options;
+}
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -277,6 +308,22 @@ export default function Profile() {
         : value,
     }));
   }
+  function toggleInterest(interest: string) {
+    if (
+      !draftProfile.interests.includes(interest) &&
+      draftProfile.interests.length >= 10
+    ) {
+      setProfileSaveError("ניתן לבחור עד 10 תחומי עניין.");
+      return;
+    }
+    setDraftProfile((current) => ({
+      ...current,
+      interests: current.interests.includes(interest)
+        ? current.interests.filter((item) => item !== interest)
+        : [...current.interests, interest],
+    }));
+    setProfileSaveError("");
+  }
 
   async function handlePhotoSelection(
     event: ChangeEvent<HTMLInputElement>,
@@ -363,22 +410,69 @@ export default function Profile() {
       const imageUrl = pendingProfileImage
         ? await uploadProfileImage(pendingProfileImage)
         : draftProfile.imageUrl;
-      const updatedUser = await persistProfile({
-        name: draftProfile.name.trim(),
-        ...(normalizedAge ? { age: Number(normalizedAge) } : {}),
-        tripLocation: draftProfile.tripLocation,
-        tripDates: draftProfile.dates.trim(),
-        budget: draftProfile.budget.trim(),
-        travelStyle: draftProfile.travelStyle.trim(),
-        interests: draftProfile.interests,
-        bio: draftProfile.aboutMe.trim(),
-        ...(pendingProfileImage
-          ? {
-              photoURL: imageUrl,
-              photos: replacePrimaryPhoto(user?.photos, imageUrl),
-            }
-          : {}),
+      const payload: ProfileUpdatePayload = {};
+      const normalizedName = draftProfile.name.trim();
+      const normalizedBio = draftProfile.aboutMe.trim();
+      const normalizedDates = draftProfile.dates.trim();
+      const normalizedDuration = draftProfile.duration.trim();
+      const normalizedBudget = draftProfile.budget.trim();
+      const normalizedTravelStyle = draftProfile.travelStyle.trim();
+      if (normalizedName !== profile.name.trim()) payload.name = normalizedName;
+      if (normalizedAge && normalizedAge !== profile.age.trim()) {
+        payload.age = Number(normalizedAge);
+      }
+      if (
+        location.pathname === "/profile/setup" ||
+        JSON.stringify(draftProfile.tripLocation) !==
+        JSON.stringify(profile.tripLocation)
+      ) {
+        if (draftProfile.tripLocation) {
+          payload.tripLocation = draftProfile.tripLocation;
+        }
+      }
+      if (normalizedDates !== profile.dates.trim()) payload.tripDates = normalizedDates;
+      if (normalizedDuration !== profile.duration.trim()) {
+        payload.tripDuration = normalizedDuration;
+      }
+      if (normalizedBudget !== profile.budget.trim()) payload.budget = normalizedBudget;
+      if (normalizedTravelStyle !== profile.travelStyle.trim()) {
+        payload.travelStyle = normalizedTravelStyle;
+      }
+      if (draftProfile.preferredDestination !== profile.preferredDestination) {
+        payload.preferredDestinations = draftProfile.preferredDestination
+          ? [draftProfile.preferredDestination]
+          : [];
+      }
+      if (JSON.stringify(draftProfile.interests) !== JSON.stringify(profile.interests)) {
+        payload.interests = draftProfile.interests;
+      }
+      if (normalizedBio !== profile.aboutMe.trim()) payload.bio = normalizedBio;
+      const questionnaireChanges: NonNullable<ProfileUpdatePayload["questionnaire"]> = {};
+      const questionnaireFields = [
+        "planningStyle",
+        "accommodationPreference",
+        "companionScope",
+        "companionPriority",
+        "dealBreaker",
+      ] as const;
+      questionnaireFields.forEach((field) => {
+        const nextValue = draftProfile[field].trim();
+        if (nextValue !== profile[field].trim()) questionnaireChanges[field] = nextValue;
       });
+      if (Object.keys(questionnaireChanges).length > 0) {
+        payload.questionnaire = questionnaireChanges;
+      }
+      if (pendingProfileImage) {
+        payload.photoURL = imageUrl;
+        payload.photos = replacePrimaryPhoto(user?.photos, imageUrl);
+      }
+
+      if (Object.keys(payload).length === 0) {
+        setIsEditing(false);
+        return;
+      }
+
+      const updatedUser = await persistProfile(payload);
       setProfile(profileFromUser(updatedUser));
       setPendingProfileImage(null);
       setIsEditing(false);
@@ -585,6 +679,26 @@ export default function Profile() {
                   </div>
                 </div>
 
+                {profile.duration && (
+                  <div className="profile-info-item">
+                    <CalendarDays size={22} />
+                    <div>
+                      <span>משך</span>
+                      <strong>{profile.duration}</strong>
+                    </div>
+                  </div>
+                )}
+
+                {profile.preferredDestination && (
+                  <div className="profile-info-item">
+                    <MapPin size={22} />
+                    <div>
+                      <span>אזור מועדף</span>
+                      <strong>{profile.preferredDestination}</strong>
+                    </div>
+                  </div>
+                )}
+
                 <div className="profile-info-item">
                   <Wallet size={22} />
                   <div>
@@ -620,11 +734,41 @@ export default function Profile() {
             </section>
 
             <section className="profile-section">
-              <h3>מה חשוב לי בשותף לטיול</h3>
+              <h3>העדפות הטיול שלי</h3>
 
-              <div className="profile-tags">
-                <span>{profile.companionPriority}</span>
+              <div className="profile-preferences-grid">
+                {[
+                  ["סגנון תכנון", profile.planningStyle],
+                  ["לינה מועדפת", profile.accommodationPreference],
+                  ["שותפות לטיול", profile.companionScope],
+                  ["מה חשוב לי בשותפ/ה", profile.companionPriority],
+                  ["קו אדום מבחינתי", profile.dealBreaker],
+                ].map(([label, value]) =>
+                  value ? (
+                    <div key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </div>
+                  ) : null,
+                )}
               </div>
+              {[
+                profile.duration,
+                profile.preferredDestination,
+                profile.planningStyle,
+                profile.accommodationPreference,
+                profile.companionScope,
+                profile.companionPriority,
+                profile.dealBreaker,
+              ].some((value) => !value) && (
+                <button
+                  type="button"
+                  className="profile-complete-preferences"
+                  onClick={openEditModal}
+                >
+                  השלמת העדפות חסרות תעזור לדייק את ההתאמות
+                </button>
+              )}
             </section>
 
             <section className="profile-safe-box">

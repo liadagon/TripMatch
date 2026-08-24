@@ -5,9 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { createSwipe, getSwipes, type SwipeAction } from "../services/swipeService";
 import { getUsers } from "../services/userService";
 import type { DestinationInfo, DiscoverUser } from "../services/userService";
-import type { TripLocation } from "../types/tripLocation";
 import { getConversationWithUser } from "../services/conversationService";
-import { getDemoDiscoverProfiles } from "../data/demoProfiles";
 import {
   MapPin,
   Plane,
@@ -102,35 +100,6 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
   };
 }
 
-const DEMO_DISTANCES_KM = [3.4, 18.7, 76.2];
-
-function getDemoProfiles(currentLocation?: TripLocation): DiscoverProfile[] {
-  const profiles = getDemoDiscoverProfiles();
-  const currentDestinationLabel = currentLocation
-    ? Array.from(
-        new Set(
-          [currentLocation.city, currentLocation.state, currentLocation.country]
-            .map((part) => part?.trim() || "")
-            .filter(Boolean),
-        ),
-      ).join(", ")
-    : "";
-
-  return profiles.map((profile, index) => ({
-    ...profile,
-    ...(currentDestinationLabel
-      ? {
-          destinationInfo: {
-            label: index < 2 ? currentDestinationLabel : profile.destination,
-            distanceKm: DEMO_DISTANCES_KM[index] ?? 76.2,
-            sameCity: index === 0,
-            nearby: index < 2,
-          },
-        }
-      : {}),
-  }));
-}
-
 function getDestinationTitle(destinationInfo: DestinationInfo) {
   if (destinationInfo.sameCity) {
     const city = destinationInfo.label.split(",")[0]?.trim();
@@ -174,13 +143,11 @@ export default function Discover() {
         .filter(isUsableDiscoverProfile)
         .map(mapUserToProfile);
 
-      setProfiles(
-        realProfiles.length ? realProfiles : getDemoProfiles(user?.tripLocation),
-      );
+      setProfiles(realProfiles);
     } catch (error) {
-      console.warn("[Discover] Backend profiles unavailable; using demo fallback.", error);
-      setProfiles(getDemoProfiles(user?.tripLocation));
-      setSwipeError("לא הצלחנו לטעון התאמות מהשרת. מוצגות התאמות לדוגמה");
+      console.warn("[Discover] Backend profiles unavailable.", error);
+      setProfiles([]);
+      setSwipeError("לא הצלחנו לטעון התאמות מהשרת. נסי שוב בעוד רגע");
     } finally {
       setIsLoading(false);
     }

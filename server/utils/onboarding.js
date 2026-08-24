@@ -25,6 +25,14 @@ const hasCompletedQuestionnaire = (user) =>
   hasText(user?.travelStyle) &&
   QUESTIONNAIRE_FIELDS.every((field) => hasText(user?.questionnaire?.[field]));
 
+const hasCompletedCurrentQuestionnaire = (user) =>
+  hasCompletedQuestionnaire(user) && hasText(user?.tripDuration);
+const hasCompletedPersonalProfile = (user) =>
+  Number.isInteger(user?.age) &&
+  user.age >= 18 &&
+  user.age <= 120 &&
+  Array.isArray(user?.interests) &&
+  user.interests.some(hasText);
 function hasTripDestination(user) {
   const destination = user?.tripLocation;
   return Boolean(
@@ -64,7 +72,11 @@ function getRegistrationState(user) {
     };
   }
 
-  if (!hasCompletedQuestionnaire(user)) {
+  if (
+    !hasCompletedQuestionnaire(user) ||
+    (user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
+      !hasCompletedCurrentQuestionnaire(user))
+  ) {
     return {
       registrationComplete: false,
       registrationInProgress: true,
@@ -74,7 +86,11 @@ function getRegistrationState(user) {
     };
   }
 
-  if (!hasTripDestination(user)) {
+  if (
+    !hasTripDestination(user) ||
+    (user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
+      !hasCompletedPersonalProfile(user))
+  ) {
     return {
       registrationComplete: false,
       registrationInProgress: true,
@@ -100,7 +116,8 @@ function markRegistrationCompleteIfEligible(user, now = new Date()) {
     !user?.registrationCompletedAt &&
     user?.registrationFlowVersion === CURRENT_REGISTRATION_FLOW_VERSION &&
     hasRequiredPhoto(user) &&
-    hasCompletedQuestionnaire(user) &&
+    hasCompletedCurrentQuestionnaire(user) &&
+    hasCompletedPersonalProfile(user) &&
     hasTripDestination(user)
   ) {
     user.registrationCompletedAt = now;
@@ -132,6 +149,8 @@ module.exports = {
   getOnboardingState,
   getRegistrationState,
   hasCompletedQuestionnaire,
+  hasCompletedCurrentQuestionnaire,
+  hasCompletedPersonalProfile,
   hasLegacyRegistrationCompletion,
   hasRequiredPhoto,
   hasTripDestination,

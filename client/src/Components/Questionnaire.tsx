@@ -17,52 +17,58 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import "./Questionnaire.css";
+import { PROFILE_OPTIONS } from "../data/profileOptions";
 
 const questions = [
   {
     icon: Globe2,
     text: "לאן את רוצה לטוס?",
-    answers: ["דרום אמריקה", "תאילנד וויאטנם", "הודו", "אוסטרליה", "אירופה", "עוד לא החלטתי"],
+    answers: PROFILE_OPTIONS.destinations,
   },
   {
     icon: CalendarDays,
     text: "מתי את מתכננת לצאת?",
-    answers: ["בעוד חודש או חודשיים", "בעוד חצי שנה", "בתחילת הקיץ", "סוף הקיץ", "חורף", "גמיש לגמרי"],
+    answers: PROFILE_OPTIONS.tripDates,
+  },
+  {
+    icon: CalendarDays,
+    text: "כמה זמן תרצי לטייל?",
+    answers: PROFILE_OPTIONS.tripDurations,
   },
   {
     icon: Wallet,
     text: "מה התקציב שלך לטיול?",
-    answers: ["חסכוני", "בינוני", "נוח", "גמיש, תלוי בחוויה"],
+    answers: PROFILE_OPTIONS.budgets,
   },
   {
     icon: Backpack,
     text: "איזה סגנון טיול הכי מתאים לך?",
-    answers: ["תרמילאות ואורח חיים מקומי", "טרקים והרפתקאות טבע", "סיורים תרבותיים וערים", "חוף ים ומנוחה", "שילוב של הכול"],
+    answers: PROFILE_OPTIONS.travelStyles,
   },
   {
     icon: Map,
     text: "כמה חשוב לך לתכנן מראש?",
-    answers: ["אני חייבת הכול מתוכנן", "אוהבת מסגרת בסיסית", "מינימום תכנון", "ממש ספונטנית"],
+    answers: PROFILE_OPTIONS.planningStyles,
   },
   {
     icon: Hotel,
     text: "איזה סוג לינה מועדף עלייך?",
-    answers: ["הוסטל", "Airbnb או דירה משותפת", "בית מלון סביר", "אוהל וקמפינג", "תלוי ביעד ובתקציב"],
+    answers: PROFILE_OPTIONS.accommodationPreferences,
   },
   {
     icon: Users,
     text: "את מחפשת שותף לכל הטיול או רק לחלק?",
-    answers: ["לכל הטיול", "רק לחלק מהמסלול", "גמישה, נראה איך זה מסתדר"],
+    answers: PROFILE_OPTIONS.companionScopes,
   },
   {
     icon: Sparkles,
     text: "מה הכי חשוב לך בשותף לטיול?",
-    answers: ["תאימות לסגנון נסיעה", "אמינות ואחריות", "כימיה אישית טובה", "גמישות ורוח טובה", "כולם חשובים"],
+    answers: PROFILE_OPTIONS.companionPriorities,
   },
   {
     icon: TriangleAlert,
     text: "מה יכול להרוס לך טיול משותף?",
-    answers: ["חוסר גמישות", "בזבזנות או קמצנות קיצונית", "חוסר כבוד לגבולות", "מריבות על החלטות קטנות", "לוח זמנים לא מסונכרן"],
+    answers: PROFILE_OPTIONS.dealBreakers,
   },
 ];
 
@@ -75,6 +81,7 @@ export default function Questionnaire() {
       const persistedAnswers = [
         user?.preferredDestinations?.[0],
         user?.tripDates,
+        user?.tripDuration,
         user?.budget,
         user?.travelStyle,
         user?.questionnaire?.planningStyle,
@@ -85,7 +92,9 @@ export default function Questionnaire() {
       ];
 
       return questions.map((question, index) => {
-        const answerIndex = question.answers.indexOf(persistedAnswers[index] || "");
+        const answerIndex = (question.answers as readonly string[]).indexOf(
+          persistedAnswers[index] || "",
+        );
         return answerIndex >= 0 ? answerIndex : null;
       });
     },
@@ -121,14 +130,15 @@ export default function Questionnaire() {
         const updatedUser = await updateProfile({
           preferredDestinations: answers[0] ? [answers[0]] : [],
           tripDates: answers[1],
-          budget: answers[2],
-          travelStyle: answers[3],
+          tripDuration: answers[2],
+          budget: answers[3],
+          travelStyle: answers[4],
           questionnaire: {
-            planningStyle: answers[4],
-            accommodationPreference: answers[5],
-            companionScope: answers[6],
-            companionPriority: answers[7],
-            dealBreaker: answers[8],
+            planningStyle: answers[5],
+            accommodationPreference: answers[6],
+            companionScope: answers[7],
+            companionPriority: answers[8],
+            dealBreaker: answers[9],
           },
         });
         navigate(getProfileCompletionPath(updatedUser), { replace: true });

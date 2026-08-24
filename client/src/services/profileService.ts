@@ -6,12 +6,11 @@ type FileUploadResponse = {
   url: string;
 };
 
-export type ProfileUpdatePayload = Partial<
+type EditableProfileFields = Partial<
   Pick<
     AuthUser,
     | "name"
     | "age"
-    | "location"
     | "tripLocation"
     | "bio"
     | "interests"
@@ -19,12 +18,16 @@ export type ProfileUpdatePayload = Partial<
     | "travelStyle"
     | "budget"
     | "tripDates"
-    | "questionnaire"
+    | "tripDuration"
     | "photo"
     | "photoURL"
     | "photos"
   >
 >;
+
+export type ProfileUpdatePayload = EditableProfileFields & {
+  questionnaire?: Partial<NonNullable<AuthUser["questionnaire"]>>;
+};
 
 type ProfileUpdateResponse = {
   success: true;

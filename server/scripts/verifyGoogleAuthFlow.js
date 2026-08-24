@@ -177,6 +177,7 @@ async function verifyGoogleAuthFlow() {
     bio: "Persisted Google profile",
     preferredDestinations: ["Europe"],
     tripDates: "summer",
+    tripDuration: "two-weeks",
     budget: "medium",
     travelStyle: "cities",
     questionnaire: {

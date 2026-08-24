@@ -83,12 +83,12 @@ export function ProfilePreviewView({
     setFailedPhotos(new Set());
   }, [user]);
 
-  const destinations = Array.from(
+  const tripDestination = user.tripLocation
+    ? getTripLocationLabel(user.tripLocation)
+    : meaningful(user.location);
+  const preferredDestinations = Array.from(
     new Set(
-      (user.tripLocation
-        ? [getTripLocationLabel(user.tripLocation)]
-        : user.preferredDestinations || []
-      )
+      (user.preferredDestinations || [])
         .map((destination) => destination.trim())
         .filter(Boolean),
     ),
@@ -101,8 +101,15 @@ export function ProfilePreviewView({
     ),
   );
   const travelDetails: DetailItem[] = [
-    destinations.length
-      ? { label: "יעד", value: destinations.join(" · "), icon: Plane }
+    tripDestination
+      ? { label: "יעד הטיול", value: tripDestination, icon: Plane }
+      : null,
+    preferredDestinations.length
+      ? {
+          label: "אזור מועדף",
+          value: preferredDestinations.join(" · "),
+          icon: MapPin,
+        }
       : null,
     meaningful(user.tripDates)
       ? { label: "מועד", value: meaningful(user.tripDates), icon: CalendarDays }
