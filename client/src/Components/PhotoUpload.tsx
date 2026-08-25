@@ -306,6 +306,7 @@ const PhotoUpload = () => {
                       src={photo.previewUrl}
                       alt={`תמונה ${index + 1}`}
                       className="photo-upload-preview"
+                      loading="lazy"
                     />
 
                     <div className="photo-upload-image-overlay">

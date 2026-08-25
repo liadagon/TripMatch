@@ -40,6 +40,7 @@ function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
       className="blocked-user-avatar"
       src={image}
       alt=""
+      loading="lazy"
       onError={() => setImageFailed(true)}
     />
   );
@@ -62,6 +63,7 @@ function DemoBlockedUserAvatar({ user }: { user: Conversation }) {
       className="blocked-user-avatar"
       src={image}
       alt=""
+      loading="lazy"
       onError={() => setImageFailed(true)}
     />
   );

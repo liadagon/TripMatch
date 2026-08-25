@@ -1178,6 +1178,7 @@ export default function Profile() {
                   <img
                     src={draftProfile.imageUrl}
                     alt="תצוגה מקדימה של תמונת הפרופיל"
+                    loading="lazy"
                   />
                   <input
                     ref={modalPhotoInputRef}

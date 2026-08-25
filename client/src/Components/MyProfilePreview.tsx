@@ -314,6 +314,7 @@ export function ProfilePreviewView({
                     <img
                       src={photo}
                       alt=""
+                      loading="lazy"
                       onError={() =>
                         setFailedPhotos((current) =>
                           new Set(current).add(photo),
@@ -581,7 +582,11 @@ export default function MyProfilePreview() {
             <div className="profile-photo-editor-grid">
               {editablePhotos.map((photo, index) => (
                 <figure key={photo.id}>
-                  <img src={photo.url} alt={`תמונת פרופיל ${index + 1}`} />
+                  <img
+                    src={photo.url}
+                    alt={`תמונת פרופיל ${index + 1}`}
+                    loading="lazy"
+                  />
                   {index === 0 && <span>תמונה ראשית</span>}
                   <button
                     type="button"

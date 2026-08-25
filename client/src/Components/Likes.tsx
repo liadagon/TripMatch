@@ -463,7 +463,7 @@ export default function Likes() {
 
                   return (
                     <article className="likes-received-card" key={like._id}>
-                      <img src={image} alt={admirer.name} />
+                      <img src={image} alt={admirer.name} loading="lazy" />
                       <div>
                         <h2>
                           {admirer.name}

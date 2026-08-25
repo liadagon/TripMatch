@@ -250,7 +250,7 @@ export default function Matches() {
                 onClick={() => void openMatchConversation(match)}
               >
                 <div className="matches-story-ring">
-                  <img src={match.image} alt={match.name} />
+                  <img src={match.image} alt={match.name} loading="lazy" />
                 </div>
                 <span>{match.name}</span>
               </button>
@@ -274,7 +274,7 @@ export default function Matches() {
                   aria-label={`פתיחת הפרופיל של ${chat.name}`}
                   onClick={() => openConversationProfile(chat)}
                 >
-                  <img src={chat.image} alt={chat.name} />
+                  <img src={chat.image} alt={chat.name} loading="lazy" />
                 </button>
 
                 <button

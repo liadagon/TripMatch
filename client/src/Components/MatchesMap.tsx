@@ -202,6 +202,7 @@ const MatchPhotoMarker = memo(function MatchPhotoMarker({
             <img
               src={match.photoURL}
               alt={`תמונת הפרופיל של ${match.name}`}
+              loading="lazy"
               onError={(event) => {
                 event.currentTarget.hidden = true;
               }}
