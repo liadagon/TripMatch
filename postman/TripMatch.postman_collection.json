@@ -1,0 +1,733 @@
+{
+  "info": {
+    "_postman_id": "63bb6b8d-9f14-4df6-b84a-3408f16a2e08",
+    "name": "TripMatch API",
+    "description": "Safe final-project API demonstration using TripMatch's real Express routes. Run Auth first. Relationship folders require a fully onboarded disposable account and the IDs described in the local environment template.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Register and login with a disposable local account, then prove Bearer access. Requires baseUrl, name, email, and password; Login saves token. Expected success statuses: 201, 200, and 200.",
+      "item": [
+        {
+          "name": "Register Disposable User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('email') || pm.environment.get('email') === 'tripmatch.postman@example.com') {",
+                  "  pm.environment.set('email', `tripmatch.postman.${Date.now()}@example.com`);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Registration returns 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Registration returns JSON', () => pm.response.to.be.json);",
+                  "const body = pm.response.json();",
+                  "pm.test('Registration succeeds with user data', () => {",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('object');",
+                  "});",
+                  "if (body.data?._id) pm.environment.set('userId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "CREATE evidence. No auth. Expected 201. Requires name, email, and password; the example.com placeholder is made unique before registration."
+          }
+        },
+        {
+          "name": "Login and Save JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Login returns JSON', () => pm.response.to.be.json);",
+                  "const body = pm.response.json();",
+                  "pm.test('JWT exists in the actual response shape', () => {",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (body.token) pm.environment.set('token', body.token);",
+                  "if (body.data?._id) pm.environment.set('userId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Authenticates the disposable account. No auth; expected 200. Requires email and password. The test saves response.token as token."
+          }
+        },
+        {
+          "name": "Get Authenticated Identity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Protected identity returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Authenticated user data exists', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('object');",
+                  "  pm.expect(body.data._id).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Protected READ evidence. Bearer auth required; expected 200. Requires baseUrl and token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users - Profile",
+      "description": "Safe profile update and user reads. Bearer auth required; expected 200. Requires baseUrl and token, plus profileBio or otherUserId where shown; discovery routes require completed onboarding.",
+      "item": [
+        {
+          "name": "Update My Bio Safely",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Profile update returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Updated profile is returned', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"{{profileBio}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/users/me",
+            "description": "UPDATE evidence. Bearer auth required; expected 200. Requires baseUrl, token, and profileBio; updates only the disposable account bio."
+          }
+        },
+        {
+          "name": "List Discovery Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User list returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('User list has data and pagination', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data).to.be.an('array');",
+                  "  pm.expect(body.pagination).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users?page=1&limit=10",
+            "description": "Protected collection READ. Requires a fully onboarded disposable account. Expected 200."
+          }
+        },
+        {
+          "name": "Get My Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statistics return 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Statistics data exists', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/me/stats",
+            "description": "Protected statistics READ for a fully onboarded disposable account. Expected 200."
+          }
+        },
+        {
+          "name": "Get User Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('User detail returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('User detail exists', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/users/{{otherUserId}}",
+            "description": "Protected single-resource READ. Set otherUserId to a disposable user's real MongoDB ObjectId. Expected 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Swipes",
+      "description": "Persist and read swipes. Bearer auth and completed onboarding required; expected 200. Requires baseUrl and token; creation also requires otherUserId and swipeAction.",
+      "item": [
+        {
+          "name": "Create or Update Swipe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Swipe is saved', () => pm.response.to.have.status(200));",
+                  "pm.test('Swipe response succeeds', () => pm.expect(pm.response.json().success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toUser\": \"{{otherUserId}}\",\n  \"action\": \"{{swipeAction}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/swipes",
+            "description": "CREATE evidence for persisted interaction data. Bearer auth and completed onboarding required; expected 200. Requires baseUrl, token, otherUserId, and swipeAction."
+          }
+        },
+        {
+          "name": "List My Swipes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Swipe list returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Swipe list is an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/swipes",
+            "description": "Lists swipe decisions persisted by the authenticated user. Expected 200."
+          }
+        },
+        {
+          "name": "List Received Likes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Received likes return 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Visibility metadata exists', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.locked).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/swipes/received",
+            "description": "Reads received-like visibility without assuming a paid entitlement. Expected 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "description": "Read match data. Bearer auth and completed onboarding required; expected 200. Requires baseUrl and token; profile detail also requires a matched otherUserId.",
+      "item": [
+        {
+          "name": "List My Matches",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Match list returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Match list is an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/matches",
+            "description": "Lists active, unblocked matches for the authenticated user. Expected 200."
+          }
+        },
+        {
+          "name": "Get Matches Map Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Map data returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Map payload exists', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/matches/map",
+            "description": "Returns privacy-safe map data for current matches. Expected 200."
+          }
+        },
+        {
+          "name": "Get Matched Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Matched profile returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Matched profile data exists', () => pm.expect(body.data?.profile).to.be.an('object'));",
+                  "if (body.data?.conversationId) pm.environment.set('conversationId', body.data.conversationId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/matches/with/{{otherUserId}}/profile",
+            "description": "Reads an authorized matched user's expanded profile and stores its conversationId. Requires a real matched otherUserId. Expected 200."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Conversations",
+      "description": "Read conversations, send a test message, and clear history locally. Bearer auth, completed onboarding, and a match are required; expected 200/201. Requires baseUrl, token, otherUserId or conversationId, and messageText where shown.",
+      "item": [
+        {
+          "name": "List Conversations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Conversation list returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Conversation list is an array', () => pm.expect(body.data).to.be.an('array'));",
+                  "if (!pm.environment.get('conversationId') && body.data?.[0]?._id) pm.environment.set('conversationId', body.data[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/conversations",
+            "description": "Lists visible conversations and stores the first conversationId when one exists. Expected 200."
+          }
+        },
+        {
+          "name": "Get Conversation With Matched User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Matched conversation returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Conversation data exists', () => pm.expect(body.data).to.be.an('object'));",
+                  "if (body.data?._id) pm.environment.set('conversationId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/conversations/with/{{otherUserId}}",
+            "description": "Gets the conversation for a real match, creating its backing conversation if absent, and saves conversationId. Expected 200."
+          }
+        },
+        {
+          "name": "Get Conversation Messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Messages return 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Messages are returned', () => pm.expect(pm.response.json().data?.messages).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/conversations/{{conversationId}}/messages",
+            "description": "Reads visible messages for an authorized real conversationId. Expected 200."
+          }
+        },
+        {
+          "name": "Send Disposable Message",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Message creation returns 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Created message exists', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"{{messageText}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/conversations/{{conversationId}}/messages",
+            "description": "CREATE evidence for a disposable matched conversation. Bearer auth required; expected 201. Requires baseUrl, token, conversationId, and messageText."
+          }
+        },
+        {
+          "name": "Clear Conversation for Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Conversation clear returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Clear succeeds', () => pm.expect(pm.response.json().success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/conversations/{{conversationId}}",
+            "description": "DELETE evidence using a safe user-local clear. Bearer auth required; expected 200. Requires baseUrl, token, and conversationId; it does not delete the match or the other participant's history."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blocks",
+      "description": "Exercise a reversible block lifecycle. Bearer auth, completed onboarding, and a match are required; expected 200. Requires baseUrl, token, and otherUserId. Run Block followed by Unblock.",
+      "item": [
+        {
+          "name": "List Blocked Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Block list returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Block list is an array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/blocks",
+            "description": "Lists users blocked by the authenticated account. Expected 200."
+          }
+        },
+        {
+          "name": "Block Matched User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Block returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Block succeeds', () => pm.expect(pm.response.json().blockStatus?.blocked).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/blocks/{{otherUserId}}",
+            "description": "Creates a reversible block for an existing disposable match. Expected 200. Always follow with Unblock Matched User."
+          }
+        },
+        {
+          "name": "Unblock Matched User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unblock returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Relationship is unblocked', () => pm.expect(pm.response.json().blockStatus?.blocked).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/blocks/{{otherUserId}}",
+            "description": "DELETE evidence. Bearer auth required; expected 200. Requires baseUrl, token, and otherUserId; reverses the disposable block without deleting an account or match."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Cases",
+      "description": "Deterministic negative tests requiring baseUrl only: unauthenticated Joi validation expects 400, and a protected identity request with auth disabled expects 401.",
+      "item": [
+        {
+          "name": "400 - Invalid Registration Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validation failure returns 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation failure is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Failure response is unsuccessful', () => pm.expect(pm.response.json().success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"valid-length-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Calls the real Joi-validated register route with deliberately invalid input. No auth; expected 400. Requires baseUrl only."
+          }
+        },
+        {
+          "name": "401 - Authenticated Identity Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing token returns 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Unauthorized response is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Unauthorized response is unsuccessful', () => pm.expect(pm.response.json().success).to.eql(false));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Calls a real protected endpoint with Authorization explicitly disabled. Expected 401. Requires baseUrl only."
+          }
+        }
+      ]
+    }
+  ]
+}
