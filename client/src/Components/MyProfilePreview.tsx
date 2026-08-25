@@ -38,6 +38,7 @@ import { filterCanonicalInterests } from "../data/profileOptions";
 import { uploadProfileImage } from "../services/profileService";
 import { getGenderedQuestionnaireOptionLabel } from "../utils/genderedHebrew";
 import "./MyProfilePreview.css";
+import SafeImage from "./SafeImage";
 
 const MAX_PROFILE_PHOTOS = 6;
 const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -582,7 +583,7 @@ export default function MyProfilePreview() {
             <div className="profile-photo-editor-grid">
               {editablePhotos.map((photo, index) => (
                 <figure key={photo.id}>
-                  <img
+                  <SafeImage
                     src={photo.url}
                     alt={`תמונת פרופיל ${index + 1}`}
                     loading="lazy"

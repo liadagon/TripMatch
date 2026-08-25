@@ -7,7 +7,7 @@ db.on("error", (error) => {
 });
 
 db.once("open", () => {
-  console.log("MongoDB connected successfully");
+  console.info("MongoDB connected successfully");
 });
 
 const connectDB = async () => {

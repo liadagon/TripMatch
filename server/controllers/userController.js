@@ -58,6 +58,7 @@ const PROFILE_FIELDS = [
   "photos",
 ];
 
+/** Returns eligible discovery profiles for the authenticated user. */
 const getUsers = async (req, res, next) => {
   try {
     const blockedUserIds = await getBlockedUserIds(req.user._id);
@@ -195,6 +196,7 @@ const getUsers = async (req, res, next) => {
   }
 };
 
+/** Returns a public user profile by identifier. */
 const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select(
@@ -220,6 +222,7 @@ const getUserById = async (req, res, next) => {
   }
 };
 
+/** Computes match, like, and conversation statistics for the current user. */
 const getCurrentUserStats = async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -270,6 +273,7 @@ const getCurrentUserStats = async (req, res, next) => {
   }
 };
 
+/** Validates and persists allowed profile updates for the current user. */
 const updateCurrentUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -367,6 +371,7 @@ const updateCurrentUser = async (req, res, next) => {
   }
 };
 
+/** Permanently deletes the authenticated account and its owned data. */
 const deleteCurrentUser = async (req, res, next) => {
   try {
     await deleteUserAccount(req.user);
@@ -376,6 +381,7 @@ const deleteCurrentUser = async (req, res, next) => {
   }
 };
 
+/** Rejects deprecated unauthenticated user mutation endpoints. */
 const rejectLegacyMutation = (req, res) =>
   res.status(403).json({
     success: false,

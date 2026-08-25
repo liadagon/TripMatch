@@ -35,6 +35,7 @@ function normalizeBaseUrl(baseUrl) {
   return baseUrl.replace(/\/+$/, "");
 }
 
+/** Returns the availability of required PayPal API credentials. */
 function getPayPalConfigurationStatus() {
   const baseUrl = process.env.PAYPAL_BASE_URL?.trim() || "";
 
@@ -93,6 +94,7 @@ function getProviderError(responseBody, fallback) {
   return issue || fallback;
 }
 
+/** Requests a short-lived OAuth access token from PayPal. */
 async function requestPayPalAccessToken() {
   const { baseUrl, clientId, clientSecret } = getPayPalConfiguration();
   const basicAuthorization = Buffer.from(
@@ -265,6 +267,7 @@ async function listAllPayPalResources(accessToken, path, query) {
   });
 }
 
+/** Lists PayPal products using the supplied access token. */
 function listPayPalProducts(accessToken) {
   return listAllPayPalResources(
     accessToken,
@@ -273,6 +276,7 @@ function listPayPalProducts(accessToken) {
   );
 }
 
+/** Fetches one PayPal product by identifier. */
 function getPayPalProduct(accessToken, productId) {
   return requestPayPalApi({
     accessToken,
@@ -280,6 +284,7 @@ function getPayPalProduct(accessToken, productId) {
   });
 }
 
+/** Creates an idempotent PayPal product request. */
 function createPayPalProduct(accessToken, product, requestId) {
   return requestPayPalApi({
     accessToken,
@@ -290,6 +295,7 @@ function createPayPalProduct(accessToken, product, requestId) {
   });
 }
 
+/** Lists PayPal billing plans, optionally filtered by product. */
 function listPayPalPlans(accessToken, productId) {
   return listAllPayPalResources(
     accessToken,
@@ -298,6 +304,7 @@ function listPayPalPlans(accessToken, productId) {
   );
 }
 
+/** Fetches one PayPal billing plan by identifier. */
 function getPayPalPlan(accessToken, planId) {
   return requestPayPalApi({
     accessToken,
@@ -305,6 +312,7 @@ function getPayPalPlan(accessToken, planId) {
   });
 }
 
+/** Creates an idempotent PayPal billing plan request. */
 function createPayPalPlan(accessToken, plan, requestId) {
   return requestPayPalApi({
     accessToken,
@@ -315,6 +323,7 @@ function createPayPalPlan(accessToken, plan, requestId) {
   });
 }
 
+/** Activates an existing PayPal billing plan. */
 function activatePayPalPlan(accessToken, planId) {
   return requestPayPalApi({
     accessToken,
@@ -323,6 +332,7 @@ function activatePayPalPlan(accessToken, planId) {
   });
 }
 
+/** Creates an idempotent PayPal subscription request. */
 function createPayPalSubscription(accessToken, subscription, requestId) {
   return requestPayPalApi({
     accessToken,
@@ -333,6 +343,7 @@ function createPayPalSubscription(accessToken, subscription, requestId) {
   });
 }
 
+/** Fetches one PayPal subscription by identifier. */
 function getPayPalSubscription(accessToken, subscriptionId) {
   return requestPayPalApi({
     accessToken,
@@ -340,6 +351,7 @@ function getPayPalSubscription(accessToken, subscriptionId) {
   });
 }
 
+/** Cancels a PayPal subscription with the supplied audit reason. */
 function cancelPayPalSubscription(accessToken, subscriptionId, reason) {
   return requestPayPalApi({
     accessToken,
@@ -349,6 +361,7 @@ function cancelPayPalSubscription(accessToken, subscriptionId, reason) {
   });
 }
 
+/** Verifies PayPal webhook signature metadata with the provider API. */
 function verifyPayPalWebhookSignature(
   accessToken,
   { headers, webhookEvent, webhookId },

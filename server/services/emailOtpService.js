@@ -89,6 +89,7 @@ function buildOtpEmail(code) {
   };
 }
 
+/** Requests, stores, and emails a rate-limited OTP for a normalized address. */
 async function requestEmailOtp(email) {
   const code = generateOtp();
   const now = new Date();
@@ -144,6 +145,7 @@ async function requestEmailOtp(email) {
   };
 }
 
+/** Validates and consumes a single-use email OTP, returning its normalized email. */
 async function consumeEmailOtp(email, code) {
   const record = await EmailOtp.findOne({ email }).select("+codeHash");
   const now = new Date();

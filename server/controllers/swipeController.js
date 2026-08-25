@@ -7,6 +7,7 @@ const getBlockStatus = require("../utils/blockRelationship");
 const { getBlockedUserIds } = require("../utils/blockRelationship");
 const { hasBoostAccess } = require("../utils/subscriptionEntitlement");
 
+/** Records an authenticated swipe and creates a match when likes are mutual. */
 const createSwipe = async (req, res, next) => {
   try {
     const fromUser = req.user._id;
@@ -89,6 +90,7 @@ const createSwipe = async (req, res, next) => {
   }
 };
 
+/** Lists swipe decisions made by the authenticated user. */
 const getCurrentUserSwipes = async (req, res, next) => {
   try {
     const swipes = await Swipe.find({ fromUser: req.user._id }).sort({
@@ -105,6 +107,7 @@ const getCurrentUserSwipes = async (req, res, next) => {
   }
 };
 
+/** Returns received-like visibility and records for the authenticated user. */
 const getReceivedLikes = async (req, res, next) => {
   try {
     const blockedUserIds = await getBlockedUserIds(req.user._id);

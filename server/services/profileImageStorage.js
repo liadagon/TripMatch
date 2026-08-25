@@ -11,6 +11,7 @@ const extensionByMimeType = {
   "image/gif": ".gif",
 };
 
+/** Returns the configured GridFS bucket for profile images. */
 function getProfileImageBucket() {
   if (!mongoose.connection.db) {
     const error = new Error("MongoDB file storage is unavailable");
@@ -23,6 +24,7 @@ function getProfileImageBucket() {
   });
 }
 
+/** Parses and validates a GridFS profile-image identifier. */
 function parseProfileImageId(fileId) {
   if (typeof fileId !== "string" || !/^[a-f\d]{24}$/i.test(fileId)) {
     return null;
@@ -31,6 +33,7 @@ function parseProfileImageId(fileId) {
   return new mongoose.Types.ObjectId(fileId);
 }
 
+/** Extracts a valid app-owned profile-image ID from a stored URL. */
 function getProfileImageIdFromUrl(value) {
   if (typeof value !== "string" || !value.trim()) return null;
 
@@ -43,6 +46,7 @@ function getProfileImageIdFromUrl(value) {
   }
 }
 
+/** Stores an authenticated user's image buffer and returns its GridFS metadata. */
 async function storeProfileImage({ buffer, contentType, ownerId }) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
     throw new TypeError("Uploaded image content is required");
@@ -77,18 +81,22 @@ async function storeProfileImage({ buffer, contentType, ownerId }) {
   };
 }
 
+/** Finds profile-image metadata by validated GridFS identifier. */
 async function findProfileImage(fileId) {
   return getProfileImageBucket().find({ _id: fileId }).next();
 }
 
+/** Opens a GridFS download stream for a validated profile-image identifier. */
 function openProfileImageDownloadStream(fileId) {
   return getProfileImageBucket().openDownloadStream(fileId);
 }
 
+/** Deletes one GridFS profile image by identifier. */
 async function deleteProfileImage(fileId) {
   await getProfileImageBucket().delete(fileId);
 }
 
+/** Resolves app-owned image IDs belonging to a user from stored photo URLs. */
 async function getOwnedProfileImageIds(ownerId, photoUrls) {
   const requestedIds = photoUrls
     .map(getProfileImageIdFromUrl)
@@ -106,12 +114,14 @@ async function getOwnedProfileImageIds(ownerId, photoUrls) {
   return files.map(({ _id }) => _id);
 }
 
+/** Deletes the user's app-owned profile images referenced by URL. */
 async function deleteOwnedProfileImagesByUrls(ownerId, photoUrls) {
   const ownedIds = await getOwnedProfileImageIds(ownerId, photoUrls);
   await Promise.all(ownedIds.map((fileId) => deleteProfileImage(fileId)));
   return ownedIds.length;
 }
 
+/** Deletes every profile image owned by a user, optionally in a DB session. */
 async function deleteProfileImagesByOwner(ownerId, { session } = {}) {
   if (!mongoose.connection.db) {
     const error = new Error("MongoDB file storage is unavailable");

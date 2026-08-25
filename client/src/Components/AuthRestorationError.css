@@ -1,0 +1,81 @@
+.auth-restoration-error {
+  width: 100%;
+  min-height: 100dvh;
+  padding: 32px 20px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  font-family: "Assistant", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(45, 224, 210, 0.28), transparent 28%),
+    radial-gradient(circle at 88% 86%, rgba(126, 87, 255, 0.32), transparent 34%),
+    linear-gradient(145deg, #075ec7 0%, #3156d7 50%, #6d3cce 100%);
+}
+
+.auth-restoration-error-card {
+  width: min(100%, 460px);
+  padding: 42px 34px;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  color: #172033;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 26px 64px rgba(8, 23, 67, 0.22);
+  text-align: center;
+}
+
+.auth-restoration-error-icon {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: #075ec7;
+  background: linear-gradient(145deg, rgba(45, 212, 191, 0.2), rgba(74, 113, 255, 0.14));
+}
+
+.auth-restoration-error-card h1,
+.auth-restoration-error-card p {
+  margin: 0;
+}
+
+.auth-restoration-error-card h1 {
+  color: #172033;
+  font-size: clamp(28px, 5vw, 38px);
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.auth-restoration-error-card p {
+  max-width: 360px;
+  color: #667085;
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.auth-restoration-error-card button {
+  min-height: 52px;
+  margin-top: 6px;
+  padding: 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #075ec7, #703be2);
+  box-shadow: 0 16px 30px rgba(49, 86, 215, 0.26);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.auth-restoration-error-card button:focus-visible {
+  outline: 3px solid #2de0d2;
+  outline-offset: 4px;
+}

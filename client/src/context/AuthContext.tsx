@@ -30,6 +30,7 @@ import { clearDemoConversationState } from "../services/demoConversationState";
 import { clearBoostPromoSnooze } from "../utils/boostPromoSnooze";
 import { wasDocumentRestoredThroughHistory } from "../utils/browserHistorySession";
 import LoadingState from "../Components/LoadingState";
+import AuthRestorationError from "../Components/AuthRestorationError";
 import type { AuthenticationIntent } from "../utils/authNavigation";
 
 type AuthContextValue = {
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [authRestorationFailed, setAuthRestorationFailed] = useState(false);
   const [isDocumentTransitionPending, setIsDocumentTransitionPending] =
     useState(requiresInitialHistoryReauthentication);
 
@@ -114,6 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isActive) {
             setUser(null);
           }
+        } else if (isActive) {
+          setAuthRestorationFailed(true);
         }
       } finally {
         if (isActive) setIsInitializing(false);
@@ -269,7 +273,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         deleteAccount,
       }}
     >
-      {isDocumentTransitionPending ? (
+      {authRestorationFailed ? (
+        <AuthRestorationError />
+      ) : isDocumentTransitionPending ? (
         <LoadingState message="מאבטחים את החיבור שלך..." fullScreen />
       ) : (
         children

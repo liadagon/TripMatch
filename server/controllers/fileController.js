@@ -13,6 +13,7 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/gif",
 ]);
 
+/** Multer middleware that validates and buffers one profile image upload. */
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -27,6 +28,7 @@ const upload = multer({
   },
 });
 
+/** Stores an authenticated profile image and returns its app-owned URL. */
 const uploadFile = async (req, res, next) => {
   if (!req.file) {
     return res.status(400).json({
@@ -52,6 +54,7 @@ const uploadFile = async (req, res, next) => {
   }
 };
 
+/** Streams a stored profile image with safe response metadata and caching. */
 const getUploadedFile = async (req, res, next) => {
   const fileId = parseProfileImageId(req.params.fileId);
 

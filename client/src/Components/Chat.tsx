@@ -23,6 +23,7 @@ import {
 import { isConversationRequestError } from "../store/conversationsSlice";
 import LoadingState from "./LoadingState";
 import "./Chat.css";
+import SafeImage from "./SafeImage";
 
 type ChatMessage = {
   id: string;
@@ -379,10 +380,11 @@ export default function Chat() {
             disabled={!isDemo && !otherUser}
             onClick={openMatchedProfile}
           >
-            <img
+            <SafeImage
               className="chat-avatar"
               src={displayImage}
               alt={displayName}
+              fallbackClassName="chat-avatar"
             />
           </button>
 

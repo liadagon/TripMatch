@@ -918,6 +918,10 @@
   object-fit: cover;
 }
 
+.likes-received-image-fallback {
+  height: 250px;
+}
+
 .likes-received-card > div {
   display: grid;
   gap: 8px;

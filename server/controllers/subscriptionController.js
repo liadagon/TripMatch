@@ -17,7 +17,13 @@ function hasUnexpectedBody(body) {
   return Boolean(body && Object.keys(body).length > 0);
 }
 
+/**
+ * Builds subscription route handlers around the supplied operations.
+ * @param {typeof subscriptionService} operations Subscription business operations.
+ * @returns {object} Express handlers for create, read, cancel, and webhook routes.
+ */
 function createSubscriptionHandlers(operations = subscriptionService) {
+  /** Creates or reuses a PayPal subscription for the authenticated user. */
   const createPayPalSubscription = async (req, res, next) => {
     try {
       if (hasUnexpectedBody(req.body)) {
@@ -40,6 +46,7 @@ function createSubscriptionHandlers(operations = subscriptionService) {
     }
   };
 
+  /** Refreshes and returns the authenticated user's subscription state. */
   const getMySubscription = async (req, res, next) => {
     try {
       const data = await operations.refreshForUser(req.user);
@@ -49,6 +56,7 @@ function createSubscriptionHandlers(operations = subscriptionService) {
     }
   };
 
+  /** Cancels the authenticated user's current PayPal subscription. */
   const cancelMyPayPalSubscription = async (req, res, next) => {
     try {
       if (hasUnexpectedBody(req.body)) {
@@ -69,6 +77,7 @@ function createSubscriptionHandlers(operations = subscriptionService) {
     }
   };
 
+  /** Verifies and processes an incoming PayPal subscription webhook. */
   const receivePayPalWebhook = async (req, res, next) => {
     try {
       const result = await operations.handleWebhook(req.headers, req.body);

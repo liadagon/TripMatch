@@ -35,6 +35,7 @@ const EXPANDED_MATCH_PROFILE_FIELDS = [
 ].join(" ");
 const MAP_PROFILE_FIELDS = "name photo photoURL tripLocation";
 
+/** Lists active, unblocked matches for the authenticated user. */
 const getCurrentUserMatches = async (req, res, next) => {
   try {
     const blockedUserIds = await getBlockedUserIds(req.user._id);
@@ -57,6 +58,7 @@ const getCurrentUserMatches = async (req, res, next) => {
   }
 };
 
+/** Returns map-safe locations for the authenticated user's matches. */
 const getMatchesMap = async (req, res, next) => {
   try {
     const currentLocation = req.user.tripLocation;
@@ -146,6 +148,7 @@ const getMatchesMap = async (req, res, next) => {
   }
 };
 
+/** Returns the public profile of an authorized matched user. */
 const getMatchedUserProfile = async (req, res, next) => {
   try {
     const currentUserId = req.user._id;

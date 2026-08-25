@@ -61,6 +61,7 @@ function getRequiredConfiguration(name) {
   return value;
 }
 
+/** Extracts the approval URL from a PayPal subscription response. */
 function getApprovalUrl(subscription) {
   const link = subscription?.links?.find((candidate) => candidate?.rel === "approve");
   return typeof link?.href === "string" ? link.href : "";
@@ -73,6 +74,7 @@ function getCurrentPeriodEnd(subscription) {
   return Number.isNaN(value.getTime()) ? undefined : value;
 }
 
+/** Returns the client-safe subscription fields for a user document. */
 function getSafeSubscriptionState(user) {
   return {
     plan: user?.subscriptionPlan || "free",
@@ -104,6 +106,7 @@ function buildSubscriptionPayload(user, planId) {
   return payload;
 }
 
+/** Synchronizes persisted subscription state from a PayPal representation. */
 async function synchronizeUserFromPayPal(
   user,
   subscription,
@@ -154,6 +157,7 @@ async function synchronizeUserFromPayPal(
   return user;
 }
 
+/** Extracts the related subscription identifier from a PayPal webhook event. */
 function extractWebhookSubscriptionId(event) {
   const resource = event?.resource || {};
 
@@ -174,6 +178,11 @@ function extractWebhookCustomId(event) {
     : "";
 }
 
+/**
+ * Creates subscription operations with injectable PayPal and persistence clients.
+ * @param {object} dependencies Optional test or runtime dependency overrides.
+ * @returns {object} Subscription lifecycle and webhook operations.
+ */
 function createSubscriptionOperations(dependencies = {}) {
   const deps = {
     UserModel: User,
@@ -186,6 +195,7 @@ function createSubscriptionOperations(dependencies = {}) {
     ...dependencies,
   };
 
+  /** Creates or reuses a configured Boost subscription for a user. */
   async function createForUser(user) {
     const planId = getRequiredConfiguration("PAYPAL_PLAN_ID_BOOST");
     const { accessToken } = await deps.requestAccessToken();
@@ -239,6 +249,7 @@ function createSubscriptionOperations(dependencies = {}) {
     };
   }
 
+  /** Refreshes a user's stored subscription state from PayPal. */
   async function refreshForUser(user) {
     if (!user.paypalSubscriptionId) return getSafeSubscriptionState(user);
     const { accessToken } = await deps.requestAccessToken();
@@ -250,6 +261,7 @@ function createSubscriptionOperations(dependencies = {}) {
     return getSafeSubscriptionState(user);
   }
 
+  /** Cancels a user's active PayPal subscription and persists the result. */
   async function cancelForUser(user) {
     if (!user.paypalSubscriptionId) {
       throw new SubscriptionServiceError(
@@ -281,6 +293,7 @@ function createSubscriptionOperations(dependencies = {}) {
     return getSafeSubscriptionState(user);
   }
 
+  /** Safely cancels or verifies termination before account deletion. */
   async function cancelForAccountDeletion(user) {
     const subscriptionId = user?.paypalSubscriptionId?.trim();
 
@@ -360,6 +373,7 @@ function createSubscriptionOperations(dependencies = {}) {
     return user;
   }
 
+  /** Applies a previously verified PayPal webhook to the matching user. */
   async function processVerifiedWebhook(event, accessToken) {
     const eventType = event.event_type;
     const subscriptionId = extractWebhookSubscriptionId(event);
@@ -391,6 +405,7 @@ function createSubscriptionOperations(dependencies = {}) {
     return { ignored: false, subscriptionId };
   }
 
+  /** Verifies, deduplicates, and processes a PayPal webhook event. */
   async function handleWebhook(headers, event) {
     const webhookId = getRequiredConfiguration("PAYPAL_WEBHOOK_ID");
     const missingHeader = REQUIRED_WEBHOOK_HEADERS.find(

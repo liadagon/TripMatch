@@ -8,6 +8,7 @@ const BLOCKED_USER_FIELDS = "name photo photoURL";
 const findMatch = (currentUserId, otherUserId) =>
   Match.exists({ users: { $all: [currentUserId, otherUserId] } });
 
+/** Lists profiles blocked by the authenticated user. */
 const getBlockedUsers = async (req, res, next) => {
   try {
     const blocks = await Block.find({ blocker: req.user._id })
@@ -32,6 +33,7 @@ const getBlockedUsers = async (req, res, next) => {
   }
 };
 
+/** Blocks a matched user and removes access to the shared match. */
 const blockMatchedUser = async (req, res, next) => {
   try {
     const blocker = req.user._id;
@@ -68,6 +70,7 @@ const blockMatchedUser = async (req, res, next) => {
   }
 };
 
+/** Removes the authenticated user's block for a previously matched user. */
 const unblockMatchedUser = async (req, res, next) => {
   try {
     const blocker = req.user._id;

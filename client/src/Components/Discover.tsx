@@ -14,6 +14,7 @@ import {
   setDemoUserBlocked,
 } from "../services/demoConversationState";
 import { calculateProfileCompatibility } from "../utils/profileCompatibility";
+import SafeImage from "./SafeImage";
 import {
   MapPin,
   Plane,
@@ -399,7 +400,11 @@ export default function Discover() {
             onPointerCancel={handlePointerCancel}
           >
             <div className="discover-image-wrap">
-              <img src={currentImage} alt={profile.name} draggable="false" />
+              <SafeImage
+                src={currentImage}
+                alt={profile.name}
+                draggable="false"
+              />
 
               <div className="discover-progress-bars">
                 {profile.images.map((_, index) => (

@@ -14,6 +14,10 @@ const realConversationActions = {
   clear: clearRealConversation,
 };
 
+/**
+ * Exposes conversation Redux state together with the typed dispatcher and actions.
+ * @returns Conversation state, dispatch, and real-conversation action creators.
+ */
 export default function useConversations() {
   const dispatch = useDispatch<AppDispatch>();
   const conversationState = useSelector(

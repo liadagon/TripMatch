@@ -20,6 +20,7 @@ class EmailDeliveryError extends Error {
   }
 }
 
+/** Returns whether the required Brevo email configuration is present. */
 function getEmailConfigurationStatus() {
   return {
     apiKeyConfigured: Boolean(process.env.BREVO_API_KEY?.trim()),
@@ -101,6 +102,7 @@ function createDeliveryError(response, responseBody) {
   );
 }
 
+/** Sends a transactional email through Brevo or throws a typed delivery error. */
 async function sendTransactionalEmail({
   to,
   subject,

@@ -57,6 +57,7 @@ const hasIncomingMessageAfterClear = (conversation, userId) => {
   );
 };
 
+/** Lists conversations visible to the authenticated user. */
 const listConversations = async (req, res, next) => {
   try {
     const [matches, blockStatuses] = await Promise.all([
@@ -111,6 +112,7 @@ const listConversations = async (req, res, next) => {
   }
 };
 
+/** Gets or establishes the authorized conversation with a matched user. */
 const getConversationWithUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -140,6 +142,7 @@ const getConversationWithUser = async (req, res, next) => {
   }
 };
 
+/** Returns visible messages from an authorized conversation. */
 const getMessages = async (req, res, next) => {
   try {
     const { conversationId } = req.params;
@@ -196,6 +199,7 @@ const getMessages = async (req, res, next) => {
   }
 };
 
+/** Hides existing conversation history for the authenticated user only. */
 const clearConversationForCurrentUser = async (req, res, next) => {
   try {
     const result = await findAuthorizedConversation(
@@ -239,6 +243,7 @@ const clearConversationForCurrentUser = async (req, res, next) => {
   }
 };
 
+/** Persists a message in an authorized, unblocked conversation. */
 const sendMessage = async (req, res, next) => {
   try {
     const { conversationId } = req.params;

@@ -32,6 +32,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import SafeImage from "./SafeImage";
 import { getAuthenticatedIdentity } from "../utils/authenticatedIdentity";
 import { demoProfiles } from "../data/demoProfiles";
 import {
@@ -245,7 +246,11 @@ export default function Likes() {
             <small>צפה בפרופיל</small>
           </span>
           {identity.photoURL ? (
-            <img src={identity.photoURL} alt={`תמונת הפרופיל של ${identity.name}`} />
+            <SafeImage
+              src={identity.photoURL}
+              alt={`תמונת הפרופיל של ${identity.name}`}
+              fallbackClassName="likes-profile-placeholder"
+            />
           ) : (
             <span className="likes-profile-placeholder" aria-hidden="true">
               <CircleUserRound size={40} />
@@ -463,7 +468,12 @@ export default function Likes() {
 
                   return (
                     <article className="likes-received-card" key={like._id}>
-                      <img src={image} alt={admirer.name} loading="lazy" />
+                      <SafeImage
+                        src={image}
+                        alt={admirer.name}
+                        loading="lazy"
+                        fallbackClassName="likes-received-image-fallback"
+                      />
                       <div>
                         <h2>
                           {admirer.name}

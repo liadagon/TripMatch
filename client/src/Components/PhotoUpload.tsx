@@ -15,6 +15,7 @@ import {
 } from "../utils/authNavigation";
 
 import "./PhotoUpload.css";
+import SafeImage from "./SafeImage";
 
 const MAX_PHOTOS = 6;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -302,11 +303,12 @@ const PhotoUpload = () => {
 
                 {photo ? (
                   <>
-                    <img
+                    <SafeImage
                       src={photo.previewUrl}
                       alt={`תמונה ${index + 1}`}
                       className="photo-upload-preview"
                       loading="lazy"
+                      fallbackClassName="photo-upload-preview"
                     />
 
                     <div className="photo-upload-image-overlay">

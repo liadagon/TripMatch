@@ -27,6 +27,7 @@ import {
 import TripLocationPicker, {
   getTripLocationLabel,
 } from "./TripLocationPicker";
+import SafeImage from "./SafeImage";
 import type { TripLocation } from "../types/tripLocation";
 import {
   getProfileStatistics,
@@ -289,6 +290,7 @@ export default function Profile() {
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [statistics, setStatistics] = useState<ProfileStatistics | null>(null);
+  const [statisticsError, setStatisticsError] = useState(false);
   const [hasPrivateBoostBadge, setHasPrivateBoostBadge] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -301,12 +303,14 @@ export default function Profile() {
     setPendingProfileImage(null);
     setIsEditing(false);
     setStatistics(null);
+    setStatisticsError(false);
     setHasPrivateBoostBadge(false);
   }, [user]);
 
   useEffect(() => {
     if (!user?.registrationComplete) {
       setStatistics(null);
+      setStatisticsError(false);
       return;
     }
 
@@ -314,11 +318,13 @@ export default function Profile() {
 
     async function loadStatistics() {
       setStatistics(null);
+      setStatisticsError(false);
 
       try {
         const nextStatistics = await getProfileStatistics();
         if (isActive) setStatistics(nextStatistics);
       } catch (error) {
+        if (isActive) setStatisticsError(true);
         console.warn(
           "[Profile] Failed to load account statistics",
           error instanceof Error ? error.message : "Unknown error",
@@ -749,10 +755,11 @@ export default function Profile() {
 
           <div className="profile-avatar-wrap">
             {profile.imageUrl ? (
-              <img
+              <SafeImage
                 className="profile-avatar"
                 src={profile.imageUrl}
                 alt={`תמונת הפרופיל של ${profile.name}`}
+                fallbackClassName="profile-avatar profile-avatar-empty"
               />
             ) : (
               <div className="profile-avatar profile-avatar-empty" aria-hidden="true">
@@ -829,6 +836,11 @@ export default function Profile() {
                 <span>שיחות</span>
               </div>
             </div>
+            {statisticsError && (
+              <p className="profile-stats-error" role="status">
+                נתוני הפעילות אינם זמינים כרגע. הפרופיל שלך עדיין זמין כרגיל.
+              </p>
+            )}
 
             <section className="profile-section">
               <h3>הטיול שלי</h3>
@@ -1175,10 +1187,11 @@ export default function Profile() {
               >
                 <span>תמונת פרופיל</span>
                 <div className="profile-photo-picker-content">
-                  <img
+                  <SafeImage
                     src={draftProfile.imageUrl}
                     alt="תצוגה מקדימה של תמונת הפרופיל"
                     loading="lazy"
+                    fallbackClassName="profile-photo-picker-fallback"
                   />
                   <input
                     ref={modalPhotoInputRef}

@@ -8,7 +8,7 @@ const startServer = async () => {
   await connectDB();
 
   app.listen(PORT, () => {
-    console.log(`Server running at http://${DOMAIN_BASE}:${PORT}`);
+    console.info(`Server running at http://${DOMAIN_BASE}:${PORT}`);
   });
 };
 

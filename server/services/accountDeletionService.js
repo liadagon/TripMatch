@@ -20,6 +20,7 @@ class AccountDeletionError extends Error {
 
 let transactionSupportPromise;
 
+/** Determines whether the connected MongoDB deployment supports transactions. */
 function supportsMongoTransactions() {
   if (!transactionSupportPromise) {
     transactionSupportPromise = mongoose.connection.db
@@ -30,6 +31,11 @@ function supportsMongoTransactions() {
   return transactionSupportPromise;
 }
 
+/**
+ * Creates an account-deletion service with injectable persistence dependencies.
+ * @param {object} dependencies Optional test or runtime dependency overrides.
+ * @returns {{deleteUserAccount: Function}} Account deletion operations.
+ */
 function createAccountDeletionService(dependencies = {}) {
   const deps = {
     mongooseInstance: mongoose,
@@ -46,6 +52,7 @@ function createAccountDeletionService(dependencies = {}) {
     ...dependencies,
   };
 
+  /** Deletes an authenticated user and all owned or related application data. */
   async function deleteUserAccount(authenticatedUser) {
     const authenticatedUserId = authenticatedUser?._id;
     if (!authenticatedUserId) {

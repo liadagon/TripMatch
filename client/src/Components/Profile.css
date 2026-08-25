@@ -340,6 +340,20 @@
   font-weight: 900;
 }
 
+.profile-stats-error {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px auto 0;
+  padding: 8px 13px;
+  border-radius: 999px;
+  color: #8a5a00;
+  background: rgba(255, 247, 214, 0.92);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 800;
+  text-align: center;
+}
+
 .profile-preferences-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -712,6 +726,15 @@
   border-color: rgba(20, 92, 255, 0.55);
   background: #ffffff;
   box-shadow: 0 0 0 4px rgba(20, 92, 255, 0.1);
+}
+
+.profile-photo-picker-fallback {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
 }
 
 .profile-general-validation {

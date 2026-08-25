@@ -49,6 +49,7 @@ const sendAccountAlreadyExists = (res) =>
     message: "A TripMatch account already exists for this identity",
   });
 
+/** Registers a local account and returns its authenticated session payload. */
 const register = async (req, res, next) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
@@ -77,6 +78,7 @@ const register = async (req, res, next) => {
   }
 };
 
+/** Authenticates an existing local account and returns a signed session token. */
 const login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email }).select(
@@ -108,6 +110,7 @@ const login = async (req, res, next) => {
   }
 };
 
+/** Verifies a Google identity and resolves the corresponding TripMatch account. */
 const googleLogin = async (req, res, next) => {
   let firebaseAuth;
 
@@ -258,6 +261,7 @@ const googleLogin = async (req, res, next) => {
   }
 };
 
+/** Sends a one-time email code for the requested authentication intent. */
 const requestEmailCode = async (req, res, next) => {
   try {
     const result = await requestEmailOtp(req.body.email);
@@ -333,6 +337,7 @@ async function resolveVerifiedEmailUser(email, intent) {
   return { user, isNewUser: true };
 }
 
+/** Consumes an email OTP and returns the resulting authenticated account. */
 const verifyEmailCode = async (req, res, next) => {
   try {
     await consumeEmailOtp(req.body.email, req.body.code);
@@ -367,6 +372,7 @@ const verifyEmailCode = async (req, res, next) => {
   }
 };
 
+/** Returns the normalized profile for the authenticated request user. */
 const getCurrentUser = (req, res) =>
   res.status(200).json({
     success: true,
