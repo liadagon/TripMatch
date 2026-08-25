@@ -1,0 +1,127 @@
+.error-boundary-page {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 42px 24px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  color: #172033;
+  font-family: "Assistant", Arial, sans-serif;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(45, 212, 191, 0.3), transparent 26%),
+    radial-gradient(circle at 88% 86%, rgba(126, 87, 255, 0.32), transparent 32%),
+    linear-gradient(145deg, #075ec7 0%, #3156d7 48%, #6d3cce 100%);
+}
+
+.error-boundary-brand {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1.3px;
+  text-shadow: 0 12px 28px rgba(8, 23, 67, 0.25);
+}
+
+.error-boundary-brand span {
+  color: #2de0d2;
+}
+
+.error-boundary-card {
+  width: min(100%, 560px);
+  padding: 52px 44px 46px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 30px 80px rgba(8, 23, 67, 0.24);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  text-align: center;
+}
+
+.error-boundary-icon {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: #087bcb;
+  background: linear-gradient(145deg, rgba(45, 212, 191, 0.2), rgba(74, 113, 255, 0.14));
+  font-size: 40px;
+  font-weight: 900;
+}
+
+.error-boundary-card h1 {
+  margin: 10px 0 0;
+  color: #172033;
+  font-size: clamp(30px, 5vw, 42px);
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+}
+
+.error-boundary-card p {
+  max-width: 430px;
+  margin: 20px auto 0;
+  color: #667085;
+  font-size: 18px;
+  line-height: 1.65;
+  font-weight: 600;
+}
+
+.error-boundary-action {
+  width: min(100%, 310px);
+  min-height: 56px;
+  margin: 34px auto 0;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #075ec7 0%, #703be2 100%);
+  box-shadow: 0 18px 34px rgba(49, 86, 215, 0.28);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.error-boundary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 40px rgba(49, 86, 215, 0.34);
+}
+
+.error-boundary-action:active {
+  transform: scale(0.98);
+}
+
+.error-boundary-action:focus-visible {
+  outline: 3px solid #2de0d2;
+  outline-offset: 4px;
+}
+
+@media (max-width: 560px) {
+  .error-boundary-page {
+    padding: 84px 16px 28px;
+  }
+
+  .error-boundary-brand {
+    top: 24px;
+    font-size: 27px;
+  }
+
+  .error-boundary-card {
+    padding: 40px 22px 34px;
+    border-radius: 26px;
+  }
+
+  .error-boundary-card p {
+    font-size: 16px;
+  }
+}
