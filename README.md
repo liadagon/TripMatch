@@ -234,6 +234,160 @@ Both packages also expose targeted `verify:*` scripts for implemented flows such
 
 ## API and Postman
 
-The Express API is grouped under `/api/auth`, `/api/users`, `/api/file`, `/api/swipes`, `/api/matches`, `/api/conversations`, `/api/blocks`, and `/api/subscriptions`.
+The Express API is grouped under `/api/auth`, `/api/users`, `/api/file`, `/api/swipes`, `/api/matches`, `/api/conversations`, `/api/blocks`, and `/api/subscriptions`. The following representative endpoints cover the main application flow and demonstrate GET, POST, PUT, and DELETE operations.
+
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| POST | `/api/auth/register` | No | Register a local account and return its JWT session payload. |
+| POST | `/api/auth/login` | No | Authenticate a local account and return its JWT session payload. |
+| GET | `/api/auth/me` | Bearer JWT | Return the normalized current-user identity and registration state. |
+| PUT | `/api/users/me` | Bearer JWT | Update allowed fields on the authenticated user's profile. |
+| GET | `/api/users` | Bearer JWT + onboarding | List ranked discovery profiles with filters and pagination. |
+| GET | `/api/users/me/stats` | Bearer JWT + onboarding | Return the current user's like, match, and conversation statistics. |
+| GET | `/api/users/:id` | Bearer JWT + onboarding | Return one public user profile. |
+| POST | `/api/swipes` | Bearer JWT + onboarding | Persist a `like` or `skip` and create a reciprocal match when applicable. |
+| GET | `/api/swipes` | Bearer JWT + onboarding | List swipe decisions made by the current user. |
+| GET | `/api/swipes/received` | Bearer JWT + onboarding | Return received-like visibility and records according to entitlement. |
+| GET | `/api/matches` | Bearer JWT + onboarding | List the current user's active, unblocked matches. |
+| GET | `/api/matches/map` | Bearer JWT + onboarding | Return privacy-safe trip-location data for the matches map. |
+| GET | `/api/matches/with/:userId/profile` | Bearer JWT + onboarding | Return the expanded profile and conversation ID for an existing match. |
+| GET | `/api/conversations` | Bearer JWT + onboarding | List visible conversations for the current user. |
+| GET | `/api/conversations/with/:userId` | Bearer JWT + onboarding | Get or establish the conversation for an existing match. |
+| GET | `/api/conversations/:conversationId/messages` | Bearer JWT + onboarding | Return visible messages from an authorized conversation. |
+| POST | `/api/conversations/:conversationId/messages` | Bearer JWT + onboarding | Add a text message to an authorized, unblocked conversation. |
+| DELETE | `/api/conversations/:conversationId` | Bearer JWT + onboarding | Clear existing conversation history for the current user only. |
+| GET | `/api/blocks` | Bearer JWT + onboarding | List users blocked by the current user. |
+| POST | `/api/blocks/:userId` | Bearer JWT + onboarding | Block an existing matched user. |
+| DELETE | `/api/blocks/:userId` | Bearer JWT + onboarding | Remove the current user's block for a matched user. |
+| POST | `/api/file` | Bearer JWT | Upload one validated profile image as multipart field `file`. |
+| GET | `/api/file/:fileId` | No | Stream a profile image from GridFS by its validated identifier. |
+
+## API Examples
+
+The response samples below are abbreviated for documentation clarity. Placeholder identifiers and tokens are not real account data.
+
+### 1. Register a local account
+
+`POST /api/auth/register`
+
+Request body:
+
+```json
+{
+  "name": "Example Traveler",
+  "email": "user@example.com",
+  "password": "Disposable-Example-123!"
+}
+```
+
+Representative `201 Created` response:
+
+```json
+{
+  "success": true,
+  "message": "Registration started successfully",
+  "token": "<JWT_TOKEN>",
+  "data": {
+    "_id": "<USER_ID>",
+    "name": "Example Traveler",
+    "email": "user@example.com",
+    "authProvider": "local",
+    "registrationComplete": false,
+    "registrationInProgress": true,
+    "nextRegistrationStep": "photos",
+    "onboardingComplete": false,
+    "nextOnboardingStep": "photos"
+  },
+  "authenticated": true,
+  "registrationComplete": false,
+  "registrationInProgress": true,
+  "nextRegistrationStep": "photos",
+  "accountState": "new_registration",
+  "onboardingComplete": false,
+  "nextOnboardingStep": "photos"
+}
+```
+
+### 2. Restore the authenticated identity
+
+`GET /api/auth/me`
+
+Request metadata:
+
+```json
+{
+  "headers": {
+    "Authorization": "Bearer <JWT_TOKEN>"
+  }
+}
+```
+
+Representative `200 OK` response for a completed profile:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "<USER_ID>",
+    "name": "Example Traveler",
+    "email": "user@example.com",
+    "authProvider": "local",
+    "registrationComplete": true,
+    "registrationInProgress": false,
+    "nextRegistrationStep": null,
+    "onboardingComplete": true,
+    "nextOnboardingStep": null
+  },
+  "authenticated": true,
+  "registrationComplete": true,
+  "registrationInProgress": false,
+  "nextRegistrationStep": null,
+  "accountState": "registered",
+  "onboardingComplete": true,
+  "nextOnboardingStep": null
+}
+```
+
+### 3. Update the current profile
+
+`PUT /api/users/me`
+
+Request metadata and body:
+
+```json
+{
+  "headers": {
+    "Authorization": "Bearer <JWT_TOKEN>"
+  },
+  "body": {
+    "bio": "Planning a relaxed food and culture trip."
+  }
+}
+```
+
+Representative `200 OK` response:
+
+```json
+{
+  "success": true,
+  "message": "User updated successfully",
+  "data": {
+    "_id": "<USER_ID>",
+    "name": "Example Traveler",
+    "email": "user@example.com",
+    "bio": "Planning a relaxed food and culture trip.",
+    "registrationComplete": true,
+    "registrationInProgress": false,
+    "nextRegistrationStep": null,
+    "onboardingComplete": true,
+    "nextOnboardingStep": null
+  },
+  "registrationComplete": true,
+  "registrationInProgress": false,
+  "nextRegistrationStep": null,
+  "onboardingComplete": true,
+  "nextOnboardingStep": null
+}
+```
 
 The `postman/` directory contains a Postman Collection v2.1, a safe local environment template, and import/run instructions. Use disposable local accounts, run Register and Login first, and never place real tokens or provider secrets in exported Postman files.
