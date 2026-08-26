@@ -54,20 +54,47 @@ body {
   margin: 0 auto;
   padding: 12px 0 36px;
   display: grid;
-  grid-template-columns: minmax(420px, 520px) minmax(560px, 620px);
+  grid-template-columns: minmax(420px, 700px) minmax(560px, 620px);
   align-items: center;
   justify-content: center;
-  gap: 72px;
+  gap: 48px;
 }
 
 .image-side {
   width: 100%;
-  max-width: 620px;
-  height: 600px;
-  border-radius: 38px;
+  max-width: 700px;
+  height: auto;
+  aspect-ratio: 5 / 4;
+  position: relative;
+  border-radius: 34px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 34px 90px rgba(16, 24, 40, 0.22);
+  background: #cfe9f6;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 34px 78px rgba(3, 53, 112, 0.28),
+    0 10px 28px rgba(14, 116, 144, 0.16);
+}
+
+.image-side::before,
+.image-side::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.image-side::before {
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2, 23, 55, 0.03) 50%, rgba(2, 32, 68, 0.24) 100%),
+    linear-gradient(105deg, rgba(14, 116, 144, 0.08), transparent 48%);
+}
+
+.image-side::after {
+  z-index: 2;
+  inset: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
 }
 
 .hero-image {
@@ -223,12 +250,12 @@ body {
 
 @media (max-width: 1220px) {
   .welcome-screen {
-    grid-template-columns: minmax(380px, 480px) minmax(500px, 560px);
+    grid-template-columns: minmax(380px, 620px) minmax(500px, 560px);
     gap: 48px;
   }
 
   .image-side {
-    height: 560px;
+    height: auto;
   }
 
   .login-card {
@@ -262,7 +289,8 @@ body {
     order: 2;
     width: min(100%, 620px);
     height: auto;
-    aspect-ratio: 1 / 1;
+    min-height: 0;
+    aspect-ratio: 5 / 4;
     margin: 0 auto;
   }
 
