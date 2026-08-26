@@ -12,6 +12,9 @@ const {
   hasBoostAccess,
   normalizePayPalSubscriptionStatus,
 } = require("../utils/subscriptionEntitlement");
+const {
+  paypalWebhookEventSchema,
+} = require("../validation/subscriptionValidation");
 
 const TERMINAL_STATUSES = new Set(["cancelled", "expired"]);
 const EXISTING_SUBSCRIPTION_STATUSES = new Set([
@@ -435,7 +438,13 @@ function createSubscriptionOperations(dependencies = {}) {
       );
     }
 
-    if (!event?.id || !event?.event_type) {
+    // Validate only after PayPal has verified the original, unmodified event.
+    // Unknown provider fields remain accepted and the signed object is not replaced.
+    const { error: webhookValidationError } = paypalWebhookEventSchema.validate(
+      event,
+      { abortEarly: false, convert: false, stripUnknown: false },
+    );
+    if (webhookValidationError) {
       throw new SubscriptionServiceError(
         "INVALID_PAYPAL_WEBHOOK",
         "PayPal webhook event metadata is incomplete",

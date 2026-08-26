@@ -24,6 +24,7 @@ router.put("/me", validate(updateProfileSchema), updateCurrentUser);
 router.delete("/me", deleteCurrentUser);
 router.use(requireOnboardingComplete);
 router.get("/me/stats", getCurrentUserStats);
+// Legacy mutation URLs have no accepted body contract and always return 403.
 router.put("/:id", rejectLegacyMutation);
 router.delete("/:id", rejectLegacyMutation);
 router.get("/", validateQuery(userListQuerySchema), getUsers);

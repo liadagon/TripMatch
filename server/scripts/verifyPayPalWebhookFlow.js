@@ -33,6 +33,7 @@ const userC = createUser(userCId);
 const users = [userA, userB, userC];
 const eventClaims = new Map();
 let verificationStatus = "SUCCESS";
+let verificationCalls = 0;
 let remoteStatus = "ACTIVE";
 let getShouldFail = false;
 const validHeaders = {
@@ -83,6 +84,7 @@ const operations = createSubscriptionOperations({
     return { accessToken: "mock-token-never-printed" };
   },
   async verifyWebhook() {
+    verificationCalls += 1;
     return { verification_status: verificationStatus };
   },
   async getSubscription(_token, subscriptionId) {
@@ -150,6 +152,21 @@ async function run() {
   assert.equal(userA.subscriptionPlan, "free");
 
   verificationStatus = "SUCCESS";
+  const verificationCallsBeforeInvalidEvent = verificationCalls;
+  await assert.rejects(
+    () =>
+      operations.handleWebhook(validHeaders, {
+        id: "evt-invalid-metadata",
+        resource: { id: "I-USER-A" },
+      }),
+    (error) =>
+      error instanceof SubscriptionServiceError &&
+      error.code === "INVALID_PAYPAL_WEBHOOK" &&
+      error.statusCode === 400,
+  );
+  assert.equal(verificationCalls, verificationCallsBeforeInvalidEvent + 1);
+  assert.equal(eventClaims.has("evt-invalid-metadata"), false);
+
   await runEvent("evt-active", "BILLING.SUBSCRIPTION.ACTIVATED");
   assert.equal(userA.subscriptionStatus, "active");
   assert.equal(userA.subscriptionPlan, "boost");
@@ -250,6 +267,7 @@ async function run() {
     failedProcessingRemainsRetryable: true,
     missingSignatureHeadersRejected: true,
     missingWebhookIdFailsClosed: true,
+    signedEventJoiValidatedAfterSignature: true,
   });
 }
 
