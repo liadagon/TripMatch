@@ -1,11 +1,15 @@
 :root {
-  --tripmatch-nav-space: 118px;
+  --tripmatch-nav-height: 74px;
+  --tripmatch-nav-bottom-offset: max(18px, env(safe-area-inset-bottom));
+  --tripmatch-nav-space: calc(
+    var(--tripmatch-nav-height) + var(--tripmatch-nav-bottom-offset) + 26px
+  );
 }
 
 .tripmatch-nav {
   position: fixed;
   right: 0;
-  bottom: max(18px, env(safe-area-inset-bottom));
+  bottom: var(--tripmatch-nav-bottom-offset);
   left: 0;
   z-index: 1000;
   display: flex;
@@ -15,7 +19,7 @@
 
 .tripmatch-nav-inner {
   width: min(440px, calc(100% - 32px));
-  height: 74px;
+  height: var(--tripmatch-nav-height);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
@@ -67,16 +71,17 @@
 
 @media (max-width: 520px) {
   :root {
-    --tripmatch-nav-space: 104px;
+    --tripmatch-nav-height: 66px;
+    --tripmatch-nav-bottom-offset: max(12px, env(safe-area-inset-bottom));
   }
 
   .tripmatch-nav {
-    bottom: max(12px, env(safe-area-inset-bottom));
+    bottom: var(--tripmatch-nav-bottom-offset);
   }
 
   .tripmatch-nav-inner {
     width: min(380px, calc(100% - 24px));
-    height: 66px;
+    height: var(--tripmatch-nav-height);
     gap: 7px;
     padding: 8px;
     border-radius: 26px;

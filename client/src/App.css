@@ -16,7 +16,10 @@ body,
 body {
   font-family: "Assistant", Arial, sans-serif;
   direction: rtl;
-  background: #b11b1b;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(45, 224, 210, 0.28), transparent 28%),
+    radial-gradient(circle at 88% 86%, rgba(126, 87, 255, 0.32), transparent 34%),
+    linear-gradient(145deg, #075ec7 0%, #3156d7 50%, #6d3cce 100%);
 }
 
 button,

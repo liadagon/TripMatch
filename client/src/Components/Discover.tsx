@@ -15,6 +15,7 @@ import {
 } from "../services/demoConversationState";
 import { calculateProfileCompatibility } from "../utils/profileCompatibility";
 import SafeImage from "./SafeImage";
+import LoadingState from "./LoadingState";
 import {
   MapPin,
   Plane,
@@ -199,6 +200,10 @@ export default function Discover() {
 
   const profile = profiles[0];
 
+  if (!profile && isLoading) {
+    return <LoadingState message="טוענים התאמות..." fullScreen />;
+  }
+
   if (!profile) {
     return (
       <div className="discover-page" dir="rtl">
@@ -211,10 +216,10 @@ export default function Discover() {
 
           <section className="discover-empty">
             <Sparkles size={44} />
-            <h2>{isLoading ? "טוענים התאמות..." : "אין עוד התאמות כרגע"}</h2>
+            <h2>אין עוד התאמות כרגע</h2>
             <p>{swipeError || "נסי לחזור מאוחר יותר כדי לראות התאמות חדשות"}</p>
 
-            <button onClick={() => void loadProfiles()} disabled={isLoading}>
+            <button onClick={() => void loadProfiles()}>
               נסי שוב
             </button>
           </section>
@@ -376,11 +381,6 @@ export default function Discover() {
           </h1>
 
           <div className="discover-categories">
-            <button className="discover-category" aria-label="יעדים">
-              <MapPin size={23} />
-            </button>
-
-
             <button className="discover-category active" aria-label="הכי מתאים">
               <Sparkles size={23} />
             </button>

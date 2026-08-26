@@ -12,9 +12,19 @@
 }
 
 .discover-layout {
+  --discover-nav-height: var(--tripmatch-nav-height, 74px);
+  --discover-nav-bottom-offset: var(
+    --tripmatch-nav-bottom-offset,
+    max(18px, env(safe-area-inset-bottom))
+  );
+  --discover-nav-gap: 64px;
+
   width: 100%;
   min-height: 100vh;
-  padding: 28px 24px var(--tripmatch-nav-space);
+  padding: 28px 24px calc(
+    var(--discover-nav-height) + var(--discover-nav-bottom-offset) +
+      var(--discover-nav-gap)
+  );
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 22px;
@@ -75,7 +85,7 @@
 }
 
 .discover-main {
-  width: min(620px, 100%);
+  width: min(760px, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -352,8 +362,8 @@
 .discover-actions {
   display: grid;
   grid-template-columns: 0.8fr 1fr 1.15fr;
-  gap: 14px;
-  padding: 18px 0 0;
+  gap: 18px;
+  padding: 22px 0 0;
 }
 
 .discover-actions button {
@@ -432,7 +442,16 @@
 
 @media (max-width: 768px) {
   .discover-layout {
-    padding: 24px 14px var(--tripmatch-nav-space);
+    --discover-nav-height: var(--tripmatch-nav-height, 66px);
+    --discover-nav-bottom-offset: var(
+      --tripmatch-nav-bottom-offset,
+      max(12px, env(safe-area-inset-bottom))
+    );
+
+    padding: 24px 14px calc(
+      var(--discover-nav-height) + var(--discover-nav-bottom-offset) +
+        var(--discover-nav-gap)
+    );
     gap: 14px;
   }
 
@@ -500,6 +519,7 @@
 
   .discover-actions {
     gap: 9px;
+    padding-top: 18px;
   }
 
   .discover-actions button {
