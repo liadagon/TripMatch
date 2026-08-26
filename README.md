@@ -150,6 +150,19 @@ Authenticated clients upload one `file` using `multipart/form-data` to `POST /ap
 - Responsive CSS breakpoints cover phone, tablet, and desktop layouts, with reduced-motion handling in relevant screens.
 - Protected routes enforce authentication and onboarding state, while an explicit wildcard route renders the 404 page.
 
+## Screenshots / Demo
+
+### Demo Video
+
+[https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing](https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing)
+
+This video provides a walkthrough of the final TripMatch application and its core user experience.
+
+## Team
+
+- Project type: Solo project
+- Role: Full-stack development
+
 ## Prerequisites
 
 - Node.js and npm
