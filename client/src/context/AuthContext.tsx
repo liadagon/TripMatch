@@ -81,6 +81,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function establishAuthenticatedSession(token: string) {
+    localStorage.setItem(TRIPMATCH_TOKEN_KEY, token);
+
+    try {
+      const currentUserResponse = await getCurrentUser();
+      const authoritativeUser = currentUserResponse.data.data;
+      setUser(authoritativeUser);
+      return authoritativeUser;
+    } catch (error) {
+      localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+      setUser(null);
+      throw error;
+    }
+  }
+
   useEffect(() => {
     let isActive = true;
 
@@ -160,18 +175,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string) {
     const response = await emailLogin(email, password);
-
-    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    setUser(response.data.data);
-    return response.data.data;
+    return establishAuthenticatedSession(response.data.token);
   }
 
   async function register(payload: RegisterPayload) {
     const response = await registerUser(payload);
-
-    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    setUser(response.data.data);
-    return response.data.data;
+    return establishAuthenticatedSession(response.data.token);
   }
 
   async function authenticateWithGoogle(
@@ -202,10 +211,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("Unexpected Google authentication response");
     }
 
-    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    const currentUserResponse = await getCurrentUser();
-    const authoritativeUser = currentUserResponse.data.data;
-    setUser(authoritativeUser);
+    const authoritativeUser = await establishAuthenticatedSession(
+      response.data.token,
+    );
     return {
       user: authoritativeUser,
       isNewUser: response.data.isNewUser,
@@ -219,10 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) {
     const response = await verifyEmailOtp(email, code, intent);
 
-    localStorage.setItem(TRIPMATCH_TOKEN_KEY, response.data.token);
-    const currentUserResponse = await getCurrentUser();
-    const authoritativeUser = currentUserResponse.data.data;
-    setUser(authoritativeUser);
+    const authoritativeUser = await establishAuthenticatedSession(
+      response.data.token,
+    );
 
     return {
       user: authoritativeUser,

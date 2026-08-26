@@ -215,11 +215,23 @@ assert.match(emailOtpVerifySource, /window\.clearTimeout/);
 assert.match(authContextSource, /getCurrentUser\(\)/);
 assert.match(
   authContextSource,
-  /authenticateWithGoogle[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY,[\s\S]*await getCurrentUser\(\)[\s\S]*user: authoritativeUser/,
+  /async function establishAuthenticatedSession\(token: string\)[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY, token\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)/,
 );
 assert.match(
   authContextSource,
-  /authenticateWithEmailCode[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY,[\s\S]*await getCurrentUser\(\)[\s\S]*user: authoritativeUser/,
+  /async function login\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+);
+assert.match(
+  authContextSource,
+  /async function register\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+);
+assert.match(
+  authContextSource,
+  /authenticateWithGoogle[\s\S]*await establishAuthenticatedSession\([\s\S]*user: authoritativeUser/,
+);
+assert.match(
+  authContextSource,
+  /authenticateWithEmailCode[\s\S]*await establishAuthenticatedSession\([\s\S]*user: authoritativeUser/,
 );
 assert.match(
   authContextSource,
@@ -312,6 +324,7 @@ console.log("Authentication and onboarding navigation verification passed", {
   truthfulIncompleteAuthenticationMessage: true,
   jwtRestorationUsesNormalizedUser: true,
   postAuthenticationUsesFreshAuthMeState: true,
+  passwordAndOtpEmailUseSameAuthMeState: true,
   googleBackHierarchy: true,
   emailBackHierarchy: true,
   persistedProgressReused: true,

@@ -102,11 +102,23 @@ assert.match(
 );
 assert.match(
   authContextSource,
-  /authenticateWithGoogle[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)/,
+  /async function establishAuthenticatedSession\(token: string\)[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY, token\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)[\s\S]*setUser\(null\)/,
 );
 assert.match(
   authContextSource,
-  /authenticateWithEmailCode[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)/,
+  /async function login\([\s\S]*emailLogin\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+);
+assert.match(
+  authContextSource,
+  /async function register\([\s\S]*registerUser\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+);
+assert.match(
+  authContextSource,
+  /authenticateWithGoogle[\s\S]*await establishAuthenticatedSession\([\s\S]*response\.data\.token/,
+);
+assert.match(
+  authContextSource,
+  /authenticateWithEmailCode[\s\S]*await establishAuthenticatedSession\([\s\S]*response\.data\.token/,
 );
 
 console.log("Authenticated identity verification passed", {
@@ -117,6 +129,7 @@ console.log("Authenticated identity verification passed", {
   logoutPreservesUserScopedDemoState: true,
   deletionClearsOnlyDeletedUserDemoState: true,
   refreshUsesAuthoritativeCurrentUser: true,
+  everyAuthenticationMethodUsesAuthoritativeCurrentUser: true,
   providerAvatarIgnored: true,
   hardcodedNoaRegevRemovedFromAuthenticatedPath: true,
 });
