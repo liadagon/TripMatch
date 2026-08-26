@@ -77,6 +77,32 @@ state.appendDemoMessage(accountA, "noa", {
 }, storage);
 assert.equal(state.getDemoMessages(accountA, "noa", storage)[0].text, "hello");
 
+state.setDemoUserBlocked(accountA, "noa", true, storage);
+assert.deepEqual(state.getDemoMatchedUserIds(accountA, storage), ["noa"]);
+assert.deepEqual(state.getDemoConversationUserIds(accountA, storage), ["noa"]);
+assert.equal(state.isDemoConversationAvailable(accountA, "noa", storage), true);
+assert.equal(state.getDemoMessages(accountA, "noa", storage)[0].text, "hello");
+assert.throws(
+  () => state.appendDemoMessage(accountA, "noa", {
+    id: "blocked-message",
+    from: "me",
+    text: "must not be sent",
+    time: "10:01",
+  }, storage),
+  /Messages are disabled/,
+);
+state.setDemoUserBlocked(accountA, "noa", false, storage);
+state.appendDemoMessage(accountA, "noa", {
+  id: "message-2",
+  from: "me",
+  text: "after unblock",
+  time: "10:02",
+}, storage);
+assert.deepEqual(
+  state.getDemoMessages(accountA, "noa", storage).map((message) => message.text),
+  ["hello", "after unblock"],
+);
+
 assert.equal(state.recordDemoSwipe(accountA, "maya", "like", false, storage), false);
 assert.equal(
   state.getDemoConversationUserIds(accountA, storage).includes("maya"),

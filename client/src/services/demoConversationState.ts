@@ -177,10 +177,7 @@ export function getDemoConversationUserIds(
 ) {
   const state = getDemoInteractionState(userId, storage);
   const hidden = new Set(state.hiddenConversations);
-  const blocked = new Set(state.blocked);
-  return state.conversations.filter(
-    (demoId) => !hidden.has(demoId) && !blocked.has(demoId),
-  );
+  return state.conversations.filter((demoId) => !hidden.has(demoId));
 }
 
 export function getDemoMessages(
@@ -200,6 +197,9 @@ export function appendDemoMessage(
 ) {
   if (!isDemoConversationAvailable(userId, demoUserId, storage)) {
     throw new Error("Demo conversation is not available");
+  }
+  if (isDemoUserBlocked(userId, demoUserId, storage)) {
+    throw new Error("Messages are disabled for this blocked relationship");
   }
   const state = getDemoInteractionState(userId, storage);
   state.messages[demoUserId] = [...(state.messages[demoUserId] || []), message];

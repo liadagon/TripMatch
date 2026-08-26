@@ -33,7 +33,7 @@ const getBlockedUsers = async (req, res, next) => {
   }
 };
 
-/** Blocks a matched user and removes access to the shared match. */
+/** Blocks interaction with a matched user without changing Match or Conversation. */
 const blockMatchedUser = async (req, res, next) => {
   try {
     const blocker = req.user._id;

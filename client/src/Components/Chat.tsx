@@ -476,8 +476,8 @@ export default function Chat() {
           {relationshipBlocked && (
             <div className="chat-relationship-state" role="status">
               {blockedByCurrentUser
-                ? "חסמת את המשתמש הזה"
-                : "לא ניתן לשלוח הודעות בשיחה זו"}
+                ? "המשתמש חסום. השיחה וההודעות נשמרות, אך לא ניתן לשלוח הודעות חדשות."
+                : "השיחה נשמרת וניתנת לקריאה, אך לא ניתן לשלוח הודעות כל עוד החסימה פעילה."}
               {blockedByCurrentUser && (
                 <button
                   type="button"
