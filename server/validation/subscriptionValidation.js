@@ -1,5 +1,9 @@
 const Joi = require("joi");
 
+// Subscription commands derive the plan and subscription identity from
+// server configuration and req.user. Reject every client-supplied field.
+const emptySubscriptionCommandSchema = Joi.object({}).unknown(false);
+
 // PayPal signs the complete webhook event, so this schema is intentionally
 // non-mutating and permits provider fields outside TripMatch's core metadata.
 const paypalWebhookEventSchema = Joi.object({
@@ -8,4 +12,7 @@ const paypalWebhookEventSchema = Joi.object({
   resource: Joi.object().unknown(true).optional(),
 }).unknown(true);
 
-module.exports = { paypalWebhookEventSchema };
+module.exports = {
+  emptySubscriptionCommandSchema,
+  paypalWebhookEventSchema,
+};

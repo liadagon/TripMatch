@@ -9,6 +9,11 @@ type ApiError = {
   message?: string;
 };
 
+type LoginFieldErrors = {
+  email?: string;
+  password?: string;
+};
+
 export default function EmailLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -16,6 +21,7 @@ export default function EmailLogin() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,6 +29,20 @@ export default function EmailLogin() {
     if (isSubmitting) return;
 
     setErrorMessage("");
+    const validationErrors: LoginFieldErrors = {};
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      validationErrors.email = "יש להזין כתובת אימייל תקינה.";
+    }
+    if (password.length < 8) {
+      validationErrors.password = "הסיסמה חייבת להכיל לפחות 8 תווים.";
+    }
+    setFieldErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrorMessage("יש לתקן את הפרטים המסומנים לפני הכניסה.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -94,28 +114,53 @@ export default function EmailLogin() {
           <p className="phone-subtitle">התחברו עם כתובת האימייל והסיסמה</p>
 
           <form className="phone-form email-auth-form" onSubmit={handleSubmit}>
-            <label className="email-auth-field">
+            <label className="email-auth-field" htmlFor="login-email">
               <span>כתובת אימייל</span>
               <input
+                id="login-email"
                 type="email"
                 autoComplete="email"
                 dir="ltr"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setFieldErrors((current) => ({ ...current, email: undefined }));
+                  setErrorMessage("");
+                }}
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
                 required
               />
+              {fieldErrors.email && (
+                <small id="login-email-error" className="email-auth-field-error">
+                  {fieldErrors.email}
+                </small>
+              )}
             </label>
 
-            <label className="email-auth-field">
+            <label className="email-auth-field" htmlFor="login-password">
               <span>סיסמה</span>
               <input
+                id="login-password"
                 type="password"
                 autoComplete="current-password"
                 dir="ltr"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setFieldErrors((current) => ({ ...current, password: undefined }));
+                  setErrorMessage("");
+                }}
+                minLength={8}
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
                 required
               />
+              {fieldErrors.password && (
+                <small id="login-password-error" className="email-auth-field-error">
+                  {fieldErrors.password}
+                </small>
+              )}
             </label>
 
             {errorMessage && (

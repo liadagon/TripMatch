@@ -508,8 +508,9 @@ export default function Chat() {
             type="button"
             onClick={() => void sendMessage()}
             disabled={isLoading || isSending || !text.trim() || relationshipBlocked}
+            aria-busy={isSending}
           >
-            שליחה
+            {isSending ? "שולחת..." : "שליחה"}
           </button>
         </footer>
 

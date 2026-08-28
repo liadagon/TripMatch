@@ -40,6 +40,16 @@
     0 0 0 4px rgba(0, 92, 255, 0.1);
 }
 
+.email-auth-field-error {
+  color: #b42318;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.email-auth-field input[aria-invalid="true"] {
+  border-color: #d92d20;
+}
+
 .email-auth-error {
   margin: 0;
   padding: 12px 14px;

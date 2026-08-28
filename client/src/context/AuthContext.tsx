@@ -20,7 +20,10 @@ import {
   verifyEmailOtp,
   type RegisterPayload,
 } from "../services/authService";
-import { TRIPMATCH_TOKEN_KEY } from "../services/api";
+import {
+  TRIPMATCH_AUTH_EXPIRED_EVENT,
+  TRIPMATCH_TOKEN_KEY,
+} from "../services/api";
 import { signOutFromFirebase } from "../firebase";
 import {
   updateCurrentProfile,
@@ -145,6 +148,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive = false;
     };
   }, [navigate, requiresInitialHistoryReauthentication]);
+
+  useEffect(() => {
+    function handleExpiredSession() {
+      localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+      setUser(null);
+      navigate("/", { replace: true });
+    }
+
+    window.addEventListener(TRIPMATCH_AUTH_EXPIRED_EVENT, handleExpiredSession);
+    return () => {
+      window.removeEventListener(TRIPMATCH_AUTH_EXPIRED_EVENT, handleExpiredSession);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     function handlePageHide() {

@@ -160,6 +160,7 @@ export default function Discover() {
   const [dragX, setDragX] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isOpeningConversation, setIsOpeningConversation] = useState(false);
 
   const startXRef = useRef(0);
   const dragXRef = useRef(0);
@@ -345,6 +346,7 @@ export default function Discover() {
   }
 
   async function handleMessage() {
+    if (isOpeningConversation) return;
     setSwipeError("");
 
     if (profile.isDemo) {
@@ -352,11 +354,14 @@ export default function Discover() {
       return;
     }
 
+    setIsOpeningConversation(true);
     try {
       const conversation = await getConversationWithUser(profile.userId);
       navigate(`/chat/${conversation._id}`);
     } catch {
       setSwipeError("אפשר לשלוח הודעה רק אחרי שנוצרה התאמה הדדית");
+    } finally {
+      setIsOpeningConversation(false);
     }
   }
 
@@ -523,9 +528,11 @@ export default function Discover() {
             <button
               className="discover-message-btn"
               onClick={handleMessage}
+              disabled={isOpeningConversation}
+              aria-busy={isOpeningConversation}
             >
               <MessageCircle size={20} />
-              שלחי הודעה
+              {isOpeningConversation ? "פותחים שיחה..." : "שלחי הודעה"}
             </button>
           </div>
         </section>

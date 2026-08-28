@@ -93,12 +93,12 @@ export default function Register() {
           <section className="register-section">
             <div className="register-section-title">פרטי החשבון</div>
             <div className={fieldErrors.email ? "register-field error" : "register-field"}>
-              <label>כתובת אימייל *</label>
-              <input type="email" autoComplete="email" dir="ltr" placeholder="name@example.com" value={form.email} onChange={(event) => updateField("email", event.target.value)} />
+              <label htmlFor="register-email">כתובת אימייל *</label>
+              <input id="register-email" type="email" autoComplete="email" dir="ltr" placeholder="name@example.com" value={form.email} aria-label="כתובת האימייל" aria-invalid={Boolean(fieldErrors.email)} onChange={(event) => updateField("email", event.target.value)} />
             </div>
             <div className={fieldErrors.password ? "register-field error" : "register-field"}>
-              <label>סיסמה *</label>
-              <input type="password" autoComplete="new-password" dir="ltr" placeholder="לפחות 8 תווים" value={form.password} onChange={(event) => updateField("password", event.target.value)} />
+              <label htmlFor="register-password">סיסמה *</label>
+              <input id="register-password" type="password" autoComplete="new-password" dir="ltr" placeholder="לפחות 8 תווים" value={form.password} minLength={8} aria-label="סיסמה" aria-invalid={Boolean(fieldErrors.password)} onChange={(event) => updateField("password", event.target.value)} />
             </div>
           </section>
 

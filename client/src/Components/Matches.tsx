@@ -128,6 +128,7 @@ export default function Matches() {
   const [matches, setMatches] = useState<DisplayMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [openingMatchId, setOpeningMatchId] = useState("");
   const realConversations = mapRealConversations(
     conversationSummaries,
     user?._id,
@@ -201,16 +202,22 @@ export default function Matches() {
   }, [conversationActions, dispatch, user?._id]);
 
   async function openMatchConversation(match: DisplayMatch) {
+    if (openingMatchId) return;
+
     if (match.isDemo) {
       navigate(`/chat/${match.userId}`);
       return;
     }
 
+    setOpeningMatchId(match.id);
+    setLoadError("");
     try {
       const conversation = await getConversationWithUser(match.userId);
       navigate(`/chat/${conversation._id}`);
     } catch {
       setLoadError("לא הצלחנו לפתוח את השיחה");
+    } finally {
+      setOpeningMatchId("");
     }
   }
 
@@ -249,6 +256,8 @@ export default function Matches() {
                 key={match.id}
                 className="matches-story"
                 onClick={() => void openMatchConversation(match)}
+                disabled={Boolean(openingMatchId)}
+                aria-busy={openingMatchId === match.id}
               >
                 <div className="matches-story-ring">
                   <SafeImage
@@ -257,7 +266,7 @@ export default function Matches() {
                     loading="lazy"
                   />
                 </div>
-                <span>{match.name}</span>
+                <span>{openingMatchId === match.id ? "פותחים שיחה..." : match.name}</span>
               </button>
             ))}
           </div>

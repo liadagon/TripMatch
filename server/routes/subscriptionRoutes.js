@@ -7,6 +7,10 @@ const {
 } = require("../controllers/subscriptionController");
 const protect = require("../middleware/auth");
 const requireOnboardingComplete = require("../middleware/requireOnboardingComplete");
+const validate = require("../middleware/validate");
+const {
+  emptySubscriptionCommandSchema,
+} = require("../validation/subscriptionValidation");
 
 const router = express.Router();
 
@@ -18,8 +22,16 @@ router.post("/paypal/webhook", receivePayPalWebhook);
 router.use(protect, requireOnboardingComplete);
 // These commands intentionally accept {} only. The controller rejects any
 // client-supplied fields because plan and subscription identity are server-owned.
-router.post("/paypal", createPayPalSubscription);
+router.post(
+  "/paypal",
+  validate(emptySubscriptionCommandSchema),
+  createPayPalSubscription,
+);
 router.get("/me", getMySubscription);
-router.post("/paypal/cancel", cancelMyPayPalSubscription);
+router.post(
+  "/paypal/cancel",
+  validate(emptySubscriptionCommandSchema),
+  cancelMyPayPalSubscription,
+);
 
 module.exports = router;

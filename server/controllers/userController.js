@@ -36,7 +36,8 @@ const {
   getOwnedProfileImageIds,
   getProfileImageIdFromUrl,
 } = require("../services/profileImageStorage");
-const { getBlockedUserIds } = require("../utils/blockRelationship");
+const getBlockStatus = require("../utils/blockRelationship");
+const { getBlockedUserIds } = getBlockStatus;
 
 const DISCOVER_INTERNAL_FIELDS =
   "tripLocation.latitude tripLocation.longitude registrationCompletedAt registrationFlowVersion subscriptionPlan subscriptionStatus paypalSubscriptionId paypalPlanId";
@@ -199,6 +200,15 @@ const getUsers = async (req, res, next) => {
 /** Returns a public user profile by identifier. */
 const getUserById = async (req, res, next) => {
   try {
+    const blockStatus = await getBlockStatus(req.user._id, req.params.id);
+
+    if (blockStatus.blocked) {
+      return res.status(403).json({
+        success: false,
+        message: "This user profile is unavailable",
+      });
+    }
+
     const user = await User.findById(req.params.id).select(
       PUBLIC_PROFILE_FIELDS
     );

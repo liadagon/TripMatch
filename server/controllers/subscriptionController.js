@@ -13,11 +13,7 @@ function forwardSubscriptionError(error, next) {
   return next(error);
 }
 
-/**
- * Enforces the empty JSON-body contract used by subscription commands.
- * Plan, price, and subscription identity are resolved from server configuration
- * and the authenticated user, so these routes have no client fields for Joi.
- */
+// Keep a controller-level guard behind the route's empty-body Joi schema.
 function hasUnexpectedBody(body) {
   return Boolean(body && Object.keys(body).length > 0);
 }
