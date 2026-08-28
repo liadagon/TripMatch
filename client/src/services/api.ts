@@ -1,6 +1,6 @@
 import axios from "axios";
+import { getAuthToken, removeAuthToken } from "./authTokenStorage";
 
-export const TRIPMATCH_TOKEN_KEY = "tripmatch_token";
 export const TRIPMATCH_AUTH_EXPIRED_EVENT = "tripmatch:auth-expired";
 
 const AUTH_ENDPOINTS_HANDLED_BY_CALLER = new Set([
@@ -20,10 +20,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TRIPMATCH_TOKEN_KEY);
+  const token = getAuthToken();
   const isGoogleAuthenticationRequest = config.url === "/api/auth/google";
 
-  if (token && !isGoogleAuthenticationRequest) {
+  if (token && !isGoogleAuthenticationRequest && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
@@ -34,12 +34,18 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const requestPath = String(error.config?.url || "").split("?")[0];
+    const currentToken = getAuthToken();
+    const requestAuthorization = String(
+      error.config?.headers?.Authorization || "",
+    );
     const shouldExpireSession =
       error.response?.status === 401 &&
-      !AUTH_ENDPOINTS_HANDLED_BY_CALLER.has(requestPath);
+      !AUTH_ENDPOINTS_HANDLED_BY_CALLER.has(requestPath) &&
+      Boolean(currentToken) &&
+      requestAuthorization === `Bearer ${currentToken}`;
 
     if (shouldExpireSession) {
-      localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+      removeAuthToken();
       window.dispatchEvent(new Event(TRIPMATCH_AUTH_EXPIRED_EVENT));
     }
 

@@ -2,11 +2,13 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import axios from "axios";
 import { flushSync } from "react-dom";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   type AuthUser,
@@ -22,8 +24,13 @@ import {
 } from "../services/authService";
 import {
   TRIPMATCH_AUTH_EXPIRED_EVENT,
-  TRIPMATCH_TOKEN_KEY,
 } from "../services/api";
+import {
+  getAuthToken,
+  removeAuthToken,
+  removeLegacyLocalAuthToken,
+  setAuthToken,
+} from "../services/authTokenStorage";
 import { signOutFromFirebase } from "../firebase";
 import {
   updateCurrentProfile,
@@ -35,6 +42,8 @@ import { wasDocumentRestoredThroughHistory } from "../utils/browserHistorySessio
 import LoadingState from "../Components/LoadingState";
 import AuthRestorationError from "../Components/AuthRestorationError";
 import type { AuthenticationIntent } from "../utils/authNavigation";
+import { resetConversations } from "../store/conversationsSlice";
+import type { AppDispatch } from "../store/store";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -58,8 +67,16 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+class AuthenticationSupersededError extends Error {
+  constructor() {
+    super("A newer authentication attempt replaced this request");
+    this.name = "AuthenticationSupersededError";
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [requiresInitialHistoryReauthentication] = useState(
     wasDocumentRestoredThroughHistory,
   );
@@ -68,41 +85,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authRestorationFailed, setAuthRestorationFailed] = useState(false);
   const [isDocumentTransitionPending, setIsDocumentTransitionPending] =
     useState(requiresInitialHistoryReauthentication);
+  const authRevisionRef = useRef(0);
+  const previousAuthenticatedUserIdRef = useRef<string | null>(null);
 
-  function clearLocalAuthenticatedSession() {
-    localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-    setUser(null);
+  function resetUserSpecificState(userId = user?._id) {
+    dispatch(resetConversations());
+    clearDemoConversationState(userId);
+    clearBoostPromoSnooze();
   }
 
-  async function clearAuthenticatedSession() {
-    clearLocalAuthenticatedSession();
+  function clearLocalAuthenticatedSession() {
+    removeAuthToken();
+    setUser(null);
+    resetUserSpecificState();
+  }
 
+  function beginAuthenticationAttempt() {
+    authRevisionRef.current += 1;
+    clearLocalAuthenticatedSession();
+    return authRevisionRef.current;
+  }
+
+  function isCurrentAuthenticationAttempt(revision: number, token?: string) {
+    return authRevisionRef.current === revision &&
+      (token === undefined || getAuthToken() === token);
+  }
+
+  async function signOutFirebaseForAccountReplacement() {
     try {
       await signOutFromFirebase();
     } catch (error) {
-      console.error("[Logout] Firebase session cleanup failed", error);
+      console.error("[Authentication] Firebase session cleanup failed", error);
     }
   }
 
-  async function establishAuthenticatedSession(token: string) {
-    localStorage.setItem(TRIPMATCH_TOKEN_KEY, token);
+  async function clearAuthenticatedSession() {
+    beginAuthenticationAttempt();
+    await signOutFirebaseForAccountReplacement();
+  }
+
+  async function establishAuthenticatedSession(token: string, revision: number) {
+    if (!isCurrentAuthenticationAttempt(revision)) {
+      throw new AuthenticationSupersededError();
+    }
+
+    setAuthToken(token);
 
     try {
-      const currentUserResponse = await getCurrentUser();
+      const currentUserResponse = await getCurrentUser(token);
+
+      if (!isCurrentAuthenticationAttempt(revision, token)) {
+        throw new AuthenticationSupersededError();
+      }
+
       const authoritativeUser = currentUserResponse.data.data;
       setUser(authoritativeUser);
       return authoritativeUser;
     } catch (error) {
-      localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-      setUser(null);
+      if (isCurrentAuthenticationAttempt(revision, token)) {
+        removeAuthToken();
+        setUser(null);
+        dispatch(resetConversations());
+      }
       throw error;
     }
   }
 
   useEffect(() => {
     let isActive = true;
+    const revision = ++authRevisionRef.current;
 
     async function restoreUser() {
+      removeLegacyLocalAuthToken();
+
       if (requiresInitialHistoryReauthentication) {
         await clearAuthenticatedSession();
 
@@ -114,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const token = localStorage.getItem(TRIPMATCH_TOKEN_KEY);
+      const token = getAuthToken();
 
       if (!token) {
         if (isActive) setIsInitializing(false);
@@ -122,19 +177,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const response = await getCurrentUser();
+        const response = await getCurrentUser(token);
 
-        if (isActive && response.status === 200) {
+        if (
+          isActive &&
+          response.status === 200 &&
+          isCurrentAuthenticationAttempt(revision, token)
+        ) {
           setUser(response.data.data);
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 401 &&
+          isCurrentAuthenticationAttempt(revision, token)
+        ) {
+          removeAuthToken();
 
           if (isActive) {
             setUser(null);
+            dispatch(resetConversations());
           }
-        } else if (isActive) {
+        } else if (
+          isActive &&
+          isCurrentAuthenticationAttempt(revision, token)
+        ) {
           setAuthRestorationFailed(true);
         }
       } finally {
@@ -147,12 +214,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isActive = false;
     };
-  }, [navigate, requiresInitialHistoryReauthentication]);
+  }, [dispatch, navigate, requiresInitialHistoryReauthentication]);
 
   useEffect(() => {
     function handleExpiredSession() {
-      localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
-      setUser(null);
+      beginAuthenticationAttempt();
       navigate("/", { replace: true });
     }
 
@@ -161,6 +227,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.removeEventListener(TRIPMATCH_AUTH_EXPIRED_EVENT, handleExpiredSession);
     };
   }, [navigate]);
+
+  useEffect(() => {
+    const authenticatedUserId = user?._id ?? null;
+
+    if (previousAuthenticatedUserIdRef.current !== authenticatedUserId) {
+      dispatch(resetConversations());
+      previousAuthenticatedUserIdRef.current = authenticatedUserId;
+    }
+  }, [dispatch, user?._id]);
 
   useEffect(() => {
     function handlePageHide() {
@@ -190,19 +265,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   async function login(email: string, password: string) {
+    const revision = beginAuthenticationAttempt();
+    await signOutFirebaseForAccountReplacement();
+    if (!isCurrentAuthenticationAttempt(revision)) {
+      throw new AuthenticationSupersededError();
+    }
     const response = await emailLogin(email, password);
-    return establishAuthenticatedSession(response.data.token);
+    return establishAuthenticatedSession(response.data.token, revision);
   }
 
   async function register(payload: RegisterPayload) {
+    const revision = beginAuthenticationAttempt();
+    await signOutFirebaseForAccountReplacement();
+    if (!isCurrentAuthenticationAttempt(revision)) {
+      throw new AuthenticationSupersededError();
+    }
     const response = await registerUser(payload);
-    return establishAuthenticatedSession(response.data.token);
+    return establishAuthenticatedSession(response.data.token, revision);
   }
 
   async function authenticateWithGoogle(
     idToken: string,
     intent: AuthenticationIntent,
   ) {
+    const revision = beginAuthenticationAttempt();
     let response;
 
     try {
@@ -220,15 +306,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("[Google auth] TripMatch token exchange failed", error);
       }
 
+      if (isCurrentAuthenticationAttempt(revision)) {
+        await signOutFirebaseForAccountReplacement();
+      }
       throw error;
     }
 
     if (response.status !== 200) {
+      await signOutFirebaseForAccountReplacement();
       throw new Error("Unexpected Google authentication response");
     }
 
     const authoritativeUser = await establishAuthenticatedSession(
       response.data.token,
+      revision,
     );
     return {
       user: authoritativeUser,
@@ -241,10 +332,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     code: string,
     intent: AuthenticationIntent,
   ) {
+    const revision = beginAuthenticationAttempt();
+    await signOutFirebaseForAccountReplacement();
+    if (!isCurrentAuthenticationAttempt(revision)) {
+      throw new AuthenticationSupersededError();
+    }
     const response = await verifyEmailOtp(email, code, intent);
 
     const authoritativeUser = await establishAuthenticatedSession(
       response.data.token,
+      revision,
     );
 
     return {
@@ -254,8 +351,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateProfile(payload: ProfileUpdatePayload) {
+    const revision = authRevisionRef.current;
+    const token = getAuthToken();
+    const authenticatedUserId = user?._id;
+
+    if (!token || !authenticatedUserId) {
+      throw new Error("An authenticated session is required");
+    }
+
     await updateCurrentProfile(payload);
-    const currentUserResponse = await getCurrentUser();
+    const currentUserResponse = await getCurrentUser(token);
+
+    if (
+      !isCurrentAuthenticationAttempt(revision, token) ||
+      user?._id !== authenticatedUserId
+    ) {
+      throw new AuthenticationSupersededError();
+    }
+
     const authoritativeUser = currentUserResponse.data.data;
     setUser(authoritativeUser);
     return authoritativeUser;
@@ -269,16 +382,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const deletedUserId = user?._id;
     await deleteCurrentAccount();
 
-    localStorage.removeItem(TRIPMATCH_TOKEN_KEY);
+    authRevisionRef.current += 1;
+    removeAuthToken();
     clearDemoConversationState(deletedUserId);
     clearBoostPromoSnooze();
+    dispatch(resetConversations());
     setUser(null);
 
-    try {
-      await signOutFromFirebase();
-    } catch (error) {
-      console.error("[Account deletion] Firebase session cleanup failed", error);
-    }
+    await signOutFirebaseForAccountReplacement();
   }
 
   return (

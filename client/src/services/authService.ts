@@ -184,8 +184,10 @@ export const emailLogin = (email: string, password: string) =>
 export const registerUser = (payload: RegisterPayload) =>
   api.post<EmailLoginResponse>("/api/auth/register", payload);
 
-export const getCurrentUser = () =>
-  api.get<CurrentUserResponse>("/api/auth/me");
+export const getCurrentUser = (token?: string) =>
+  api.get<CurrentUserResponse>("/api/auth/me", {
+    ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  });
 
 export const deleteCurrentAccount = () =>
   api.delete<{ success: true }>("/api/users/me");

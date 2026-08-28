@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from "react";
+import { Fragment, lazy, Suspense, type ReactNode } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./App.css";
 
@@ -56,7 +56,7 @@ export default function App() {
     location.pathname.startsWith("/chat/");
 
   return (
-    <>
+    <Fragment key={user?._id ?? "anonymous-session"}>
       <Suspense
         fallback={<LoadingState message="טוענים את העמוד..." fullScreen />}
       >
@@ -130,6 +130,6 @@ export default function App() {
       {isAuthenticated && user?.registrationComplete && isApplicationScreen && (
         <NavigationBar />
       )}
-    </>
+    </Fragment>
   );
 }

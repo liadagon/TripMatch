@@ -212,18 +212,18 @@ assert.match(
 assert.match(emailOtpVerifySource, /LOGIN_SUCCESS_TRANSITION_MS = 1350/);
 assert.match(emailOtpVerifySource, /window\.setTimeout/);
 assert.match(emailOtpVerifySource, /window\.clearTimeout/);
-assert.match(authContextSource, /getCurrentUser\(\)/);
+assert.match(authContextSource, /getCurrentUser\(token\)/);
 assert.match(
   authContextSource,
-  /async function establishAuthenticatedSession\(token: string\)[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY, token\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)/,
+  /async function establishAuthenticatedSession\(token: string, revision: number\)[\s\S]*setAuthToken\(token\)[\s\S]*await getCurrentUser\(token\)[\s\S]*setUser\(authoritativeUser\)/,
 );
 assert.match(
   authContextSource,
-  /async function login\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+  /async function login\([\s\S]*establishAuthenticatedSession\(response\.data\.token, revision\)/,
 );
 assert.match(
   authContextSource,
-  /async function register\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+  /async function register\([\s\S]*establishAuthenticatedSession\(response\.data\.token, revision\)/,
 );
 assert.match(
   authContextSource,
@@ -235,12 +235,12 @@ assert.match(
 );
 assert.match(
   authContextSource,
-  /async function updateProfile[\s\S]*await updateCurrentProfile\(payload\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*return authoritativeUser/,
+  /async function updateProfile[\s\S]*await updateCurrentProfile\(payload\)[\s\S]*await getCurrentUser\(token\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*return authoritativeUser/,
 );
-assert.match(authContextSource, /localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)/);
+assert.match(authContextSource, /removeAuthToken\(\)/);
 assert.match(authContextSource, /authenticateWithEmailCode/);
 assert.match(authContextSource, /await signOutFromFirebase\(\)/);
-assert.match(firebaseSource, /await signOut\(auth\)/);
+assert.match(firebaseSource, /await signOut\(getFirebaseAuth\(\)\)/);
 assert.match(welcomeSource, /await logout\(\)/);
 assert.match(emailOtpVerifySource, /await logout\(\)/);
 assert.match(authContextSource, /deleteAccount/);

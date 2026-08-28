@@ -1,7 +1,9 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  browserSessionPersistence,
   getAuth,
   GoogleAuthProvider,
+  setPersistence,
   signInWithPopup,
   signOut,
   type Auth,
@@ -26,6 +28,7 @@ const requiredConfigKeys = [
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let sessionPersistencePromise: Promise<void> | null = null;
 
 function getMissingConfigKeys() {
   return requiredConfigKeys.filter((key) => !firebaseConfig[key]);
@@ -55,6 +58,20 @@ export function getFirebaseAuth() {
   return auth;
 }
 
+export function ensureFirebaseSessionPersistence() {
+  if (!sessionPersistencePromise) {
+    sessionPersistencePromise = setPersistence(
+      getFirebaseAuth(),
+      browserSessionPersistence,
+    ).catch((error) => {
+      sessionPersistencePromise = null;
+      throw error;
+    });
+  }
+
+  return sessionPersistencePromise;
+}
+
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
@@ -62,6 +79,7 @@ export async function signInWithGoogle() {
   let user;
 
   try {
+    await ensureFirebaseSessionPersistence();
     const result = await signInWithPopup(getFirebaseAuth(), googleProvider);
     user = result.user;
   } catch (error) {
@@ -85,9 +103,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signOutFromFirebase() {
-  if (auth) {
-    await signOut(auth);
-  }
+  await signOut(getFirebaseAuth());
 }
 
 function getErrorCode(error: unknown) {

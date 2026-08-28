@@ -86,11 +86,11 @@ assert.match(
 
 assert.match(
   authContextSource,
-  /function clearLocalAuthenticatedSession\(\)[\s\S]*localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)[\s\S]*setUser\(null\)/,
+  /function clearLocalAuthenticatedSession\(\)[\s\S]*removeAuthToken\(\)[\s\S]*setUser\(null\)/,
 );
-assert.doesNotMatch(
+assert.match(
   authContextSource,
-  /function clearLocalAuthenticatedSession\(\)\s*\{[^}]*clearDemoConversationState/,
+  /function resetUserSpecificState[\s\S]*clearDemoConversationState\(userId\)[\s\S]*function clearLocalAuthenticatedSession[\s\S]*resetUserSpecificState\(\)/,
 );
 assert.match(
   authContextSource,
@@ -102,15 +102,15 @@ assert.match(
 );
 assert.match(
   authContextSource,
-  /async function establishAuthenticatedSession\(token: string\)[\s\S]*localStorage\.setItem\(TRIPMATCH_TOKEN_KEY, token\)[\s\S]*await getCurrentUser\(\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*localStorage\.removeItem\(TRIPMATCH_TOKEN_KEY\)[\s\S]*setUser\(null\)/,
+  /async function establishAuthenticatedSession\(token: string, revision: number\)[\s\S]*setAuthToken\(token\)[\s\S]*await getCurrentUser\(token\)[\s\S]*setUser\(authoritativeUser\)[\s\S]*removeAuthToken\(\)[\s\S]*setUser\(null\)/,
 );
 assert.match(
   authContextSource,
-  /async function login\([\s\S]*emailLogin\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+  /async function login\([\s\S]*emailLogin\([\s\S]*establishAuthenticatedSession\(response\.data\.token, revision\)/,
 );
 assert.match(
   authContextSource,
-  /async function register\([\s\S]*registerUser\([\s\S]*establishAuthenticatedSession\(response\.data\.token\)/,
+  /async function register\([\s\S]*registerUser\([\s\S]*establishAuthenticatedSession\(response\.data\.token, revision\)/,
 );
 assert.match(
   authContextSource,
@@ -126,7 +126,7 @@ console.log("Authenticated identity verification passed", {
   navigationAndProfileShareAuthenticatedUser: true,
   googleToEmailSwitchIsolated: true,
   emailToGoogleSwitchIsolated: true,
-  logoutPreservesUserScopedDemoState: true,
+  logoutClearsUserScopedClientState: true,
   deletionClearsOnlyDeletedUserDemoState: true,
   refreshUsesAuthoritativeCurrentUser: true,
   everyAuthenticationMethodUsesAuthoritativeCurrentUser: true,

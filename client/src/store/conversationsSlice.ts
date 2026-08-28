@@ -42,9 +42,13 @@ type ConversationsState = {
   activeError: string | null;
   sendError: string | null;
   clearError: string | null;
+  listRequestId: string | null;
+  activeRequestId: string | null;
+  sendRequestId: string | null;
+  clearRequestId: string | null;
 };
 
-const initialState: ConversationsState = {
+const createInitialState = (): ConversationsState => ({
   summaries: [],
   activeConversation: null,
   activeConversationId: null,
@@ -56,7 +60,13 @@ const initialState: ConversationsState = {
   activeError: null,
   sendError: null,
   clearError: null,
-};
+  listRequestId: null,
+  activeRequestId: null,
+  sendRequestId: null,
+  clearRequestId: null,
+});
+
+const initialState = createInitialState();
 
 function getRequestError(error: unknown): ConversationRequestError {
   return {
@@ -150,52 +160,71 @@ export const clearRealConversation = createAsyncThunk<
 const conversationsSlice = createSlice({
   name: "conversations",
   initialState,
-  reducers: {},
+  reducers: {
+    resetConversations: () => createInitialState(),
+  },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchRealConversations.pending, (state) => {
+      .addCase(fetchRealConversations.pending, (state, action) => {
         state.listStatus = "loading";
         state.listError = null;
         state.summaries = [];
+        state.listRequestId = action.meta.requestId;
       })
       .addCase(fetchRealConversations.fulfilled, (state, action) => {
+        if (state.listRequestId !== action.meta.requestId) return;
         state.listStatus = "succeeded";
         state.summaries = action.payload;
+        state.listRequestId = null;
       })
       .addCase(fetchRealConversations.rejected, (state, action) => {
+        if (state.listRequestId !== action.meta.requestId) return;
         state.listStatus = "failed";
         state.listError =
           action.payload?.message || action.error.message || "Request failed";
+        state.listRequestId = null;
       })
       .addCase(fetchRealConversation.pending, (state, action) => {
         state.activeStatus = "loading";
         state.activeError = null;
         state.activeConversation = null;
         state.activeConversationId = action.meta.arg.conversationId;
+        state.activeRequestId = action.meta.requestId;
       })
       .addCase(fetchRealConversation.fulfilled, (state, action) => {
-        if (state.activeConversationId !== action.meta.arg.conversationId) {
+        if (
+          state.activeRequestId !== action.meta.requestId ||
+          state.activeConversationId !== action.meta.arg.conversationId
+        ) {
           return;
         }
 
         state.activeStatus = "succeeded";
         state.activeConversation = action.payload;
+        state.activeRequestId = null;
       })
       .addCase(fetchRealConversation.rejected, (state, action) => {
-        if (state.activeConversationId !== action.meta.arg.conversationId) {
+        if (
+          state.activeRequestId !== action.meta.requestId ||
+          state.activeConversationId !== action.meta.arg.conversationId
+        ) {
           return;
         }
 
         state.activeStatus = "failed";
         state.activeError =
           action.payload?.message || action.error.message || "Request failed";
+        state.activeRequestId = null;
       })
-      .addCase(sendRealMessage.pending, (state) => {
+      .addCase(sendRealMessage.pending, (state, action) => {
         state.sendStatus = "loading";
         state.sendError = null;
+        state.sendRequestId = action.meta.requestId;
       })
       .addCase(sendRealMessage.fulfilled, (state, action) => {
+        if (state.sendRequestId !== action.meta.requestId) return;
         state.sendStatus = "succeeded";
+        state.sendRequestId = null;
 
         if (state.activeConversation?._id === action.payload.conversationId) {
           state.activeConversation.messages.push(action.payload.message);
@@ -213,16 +242,21 @@ const conversationsSlice = createSlice({
         }
       })
       .addCase(sendRealMessage.rejected, (state, action) => {
+        if (state.sendRequestId !== action.meta.requestId) return;
         state.sendStatus = "failed";
         state.sendError =
           action.payload?.message || action.error.message || "Request failed";
+        state.sendRequestId = null;
       })
-      .addCase(clearRealConversation.pending, (state) => {
+      .addCase(clearRealConversation.pending, (state, action) => {
         state.clearStatus = "loading";
         state.clearError = null;
+        state.clearRequestId = action.meta.requestId;
       })
       .addCase(clearRealConversation.fulfilled, (state, action) => {
+        if (state.clearRequestId !== action.meta.requestId) return;
         state.clearStatus = "succeeded";
+        state.clearRequestId = null;
         state.summaries = state.summaries.filter(
           (conversation) => conversation._id !== action.payload.conversationId,
         );
@@ -233,11 +267,14 @@ const conversationsSlice = createSlice({
         }
       })
       .addCase(clearRealConversation.rejected, (state, action) => {
+        if (state.clearRequestId !== action.meta.requestId) return;
         state.clearStatus = "failed";
         state.clearError =
           action.payload?.message || action.error.message || "Request failed";
+        state.clearRequestId = null;
       });
   },
 });
 
+export const { resetConversations } = conversationsSlice.actions;
 export default conversationsSlice.reducer;

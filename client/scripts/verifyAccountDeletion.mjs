@@ -14,7 +14,7 @@ const [profile, authContext, authService, demoState] = await Promise.all([
 assert.match(authService, /api\.delete<\{ success: true \}>\("\/api\/users\/me"\)/);
 assert.doesNotMatch(authService, /deleteCurrentAccount\s*=\s*\([^)]*(?:id|email|subscription)/i);
 assert.match(authContext, /await deleteCurrentAccount\(\)/);
-assert.match(authContext, /removeItem\(TRIPMATCH_TOKEN_KEY\)/);
+assert.match(authContext, /removeAuthToken\(\)/);
 assert.match(authContext, /const deletedUserId = user\?\._id/);
 assert.match(authContext, /clearDemoConversationState\(deletedUserId\)/);
 assert.match(authContext, /clearBoostPromoSnooze\(\)/);
