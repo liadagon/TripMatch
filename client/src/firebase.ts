@@ -39,7 +39,7 @@ function getFirebaseApp() {
 
   if (missingKeys.length > 0) {
     throw new Error(
-      `Missing Firebase config values: ${missingKeys.join(", ")}. Add them to your Vite .env file.`,
+      `Missing Firebase config values: ${missingKeys.join(", ")}. Configure them in the application environment.`,
     );
   }
 
@@ -122,7 +122,7 @@ export function getGoogleAuthErrorMessage(error: unknown) {
   const suffix = code ? `\n\nקוד שגיאה: ${code}` : "";
 
   if (message.includes("Missing Firebase config values")) {
-    return "חסר קובץ .env עם הגדרות Firebase. צריך למלא את ערכי VITE_FIREBASE_* ולהפעיל מחדש את שרת הפיתוח.";
+    return "הגדרות Firebase חסרות. יש לוודא שכל ערכי VITE_FIREBASE_* הנדרשים מוגדרים בסביבת ההרצה של היישום, ולאחר עדכון ההגדרות לטעון אותו מחדש.";
   }
 
   if (code === "auth/configuration-not-found") {
@@ -134,7 +134,12 @@ export function getGoogleAuthErrorMessage(error: unknown) {
   }
 
   if (code === "auth/unauthorized-domain") {
-    return `הדומיין localhost לא מורשה ב-Firebase Authentication. צריך להוסיף את localhost ל-Authorized domains.${suffix}`;
+    const currentHostname =
+      typeof window !== "undefined" && window.location.hostname
+        ? window.location.hostname
+        : "הדומיין הנוכחי";
+
+    return `הדומיין ${currentHostname} אינו מורשה ב-Firebase Authentication. יש להוסיף את ${currentHostname} לרשימת Authorized domains.${suffix}`;
   }
 
   if (code === "auth/invalid-api-key") {

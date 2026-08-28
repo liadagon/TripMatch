@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { API_UPLOAD_TIMEOUT_MS } from "./api";
 import type { AuthUser } from "./authService";
 
 type FileUploadResponse = {
@@ -41,6 +41,7 @@ export const uploadProfileImage = async (file: File) => {
 
   const uploadResponse = await api.post<FileUploadResponse>("/api/file", formData, {
     headers: { "Content-Type": "multipart/form-data" },
+    timeout: API_UPLOAD_TIMEOUT_MS,
   });
 
   return uploadResponse.data.url;
