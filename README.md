@@ -2,16 +2,19 @@
 
 ## Live Demo
 
-- Frontend: [https://tripmatch-pi.vercel.app](https://tripmatch-pi.vercel.app)
-- Backend: [https://tripmatch-backend.onrender.com](https://tripmatch-backend.onrender.com)
+- Frontend: https://tripmatch-pi.vercel.app/ 
+
+- Backend: https://tripmatch-backend.onrender.com 
+
 
 ## Repository
 
-- GitHub: [https://github.com/liadagon/TripMatch](https://github.com/liadagon/TripMatch)
+- GitHub: https://github.com/liadagon/TripMatch.git 
+
 
 ## Demo Video
 
-- [TripMatch project walkthrough](https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing)
+- https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing 
 
 ## Project Overview
 
