@@ -166,13 +166,7 @@ Authenticated clients upload one `file` using `multipart/form-data` to `POST /ap
 - Responsive CSS breakpoints cover phone, tablet, and desktop layouts, with reduced-motion handling in relevant screens.
 - Protected routes enforce authentication and onboarding state, while an explicit wildcard route renders the 404 page.
 
-## Screenshots / Demo
 
-### Demo Video
-
-[https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing](https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing)
-
-This video provides a walkthrough of the final TripMatch application and its core user experience.
 
 ## Team
 
@@ -184,8 +178,9 @@ This video provides a walkthrough of the final TripMatch application and its cor
 - Frontend: Vercel
 - Backend: Render
 - Database: MongoDB Atlas
-- Frontend URL: [https://tripmatch-pi.vercel.app](https://tripmatch-pi.vercel.app)
-- Backend URL: [https://tripmatch-backend.onrender.com](https://tripmatch-backend.onrender.com)
+- Frontend URL: https://tripmatch-pi.vercel.app/ 
+- Backend URL: https://tripmatch-backend.onrender.com 
+
 
 ## Prerequisites
 
