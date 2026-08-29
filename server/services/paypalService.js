@@ -155,6 +155,12 @@ async function requestPayPalAccessToken() {
   return { accessToken, tokenType, expiresIn };
 }
 
+/**
+ * Performs an authenticated PayPal request with timeout, idempotency, and typed provider errors.
+ * @param {{accessToken: string, method?: string, path: string, body?: object, requestId?: string}} options Request contract.
+ * @returns {Promise<object>} Parsed provider response, or an empty object for HTTP 204.
+ * @throws {PayPalConfigurationError|PayPalApiError} When credentials, transport, or provider validation fails.
+ */
 async function requestPayPalApi({
   accessToken,
   method = "GET",
@@ -237,6 +243,14 @@ function buildPagePath(path, page, query = {}) {
   return `${path}?${searchParams.toString()}`;
 }
 
+/**
+ * Traverses a PayPal products or plans listing while enforcing a 100-page safety cap.
+ * @param {string} accessToken Short-lived PayPal OAuth token.
+ * @param {string} path Provider collection path.
+ * @param {Record<string, string>} query Additional provider query parameters.
+ * @returns {Promise<object[]>} Combined resources from every provider page.
+ * @throws {PayPalApiError} When PayPal fails or pagination exceeds the safety cap.
+ */
 async function listAllPayPalResources(accessToken, path, query) {
   const resources = [];
 
@@ -361,7 +375,13 @@ function cancelPayPalSubscription(accessToken, subscriptionId, reason) {
   });
 }
 
-/** Verifies PayPal webhook signature metadata with the provider API. */
+/**
+ * Sends the untouched webhook event and PayPal-generated signature metadata for verification.
+ * @param {string} accessToken Short-lived PayPal OAuth token.
+ * @param {{headers: object, webhookEvent: object, webhookId: string}} input Signed request data and configured webhook ID.
+ * @returns {Promise<object>} PayPal's signature-verification response.
+ * @throws {PayPalConfigurationError|PayPalApiError} When metadata is incomplete or verification cannot be requested.
+ */
 function verifyPayPalWebhookSignature(
   accessToken,
   { headers, webhookEvent, webhookId },

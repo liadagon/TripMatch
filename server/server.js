@@ -1,6 +1,7 @@
 const app = require("./app");
 const connectDB = require("./config/db");
 const validateEnvironment = require("./config/env");
+const logger = require("./utils/logger");
 
 const PORT = process.env.PORT || 5000;
 const DOMAIN_BASE = process.env.DOMAIN_BASE || "127.0.0.1";
@@ -10,14 +11,15 @@ const startServer = async () => {
   await connectDB();
 
   app.listen(PORT, () => {
-    console.info(`Server running at http://${DOMAIN_BASE}:${PORT}`);
+    logger.info("Server started", {
+      host: DOMAIN_BASE,
+      port: Number(PORT),
+      environment: process.env.NODE_ENV || "development",
+    });
   });
 };
 
 startServer().catch((error) => {
-  console.error("Server startup failed", {
-    code: error.code,
-    message: error.message,
-  });
+  logger.error("Server startup failed", { error });
   process.exitCode = 1;
 });

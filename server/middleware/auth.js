@@ -1,6 +1,13 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+/**
+ * Verifies the Bearer JWT, loads its current MongoDB user, and assigns `req.user`.
+ * @param {import("express").Request} req Incoming protected request.
+ * @param {import("express").Response} res Express response.
+ * @param {import("express").NextFunction} next Passes non-authentication errors onward.
+ * @returns {Promise<import("express").Response|void>} A 401 response or the next middleware result.
+ */
 const protect = async (req, res, next) => {
   try {
     const authorization = req.headers.authorization;

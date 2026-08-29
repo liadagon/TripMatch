@@ -46,7 +46,12 @@ function getProfileImageIdFromUrl(value) {
   }
 }
 
-/** Stores an authenticated user's image buffer and returns its GridFS metadata. */
+/**
+ * Streams a validated image buffer into GridFS with ownership metadata.
+ * @param {{buffer: Buffer, contentType: string, ownerId: unknown}} input Upload content and authenticated owner.
+ * @returns {Promise<{fileId: import("mongoose").Types.ObjectId, filename: string}>} Stored file identity.
+ * @throws {TypeError} When content is empty or its MIME type is unsupported.
+ */
 async function storeProfileImage({ buffer, contentType, ownerId }) {
   if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
     throw new TypeError("Uploaded image content is required");
@@ -96,7 +101,12 @@ async function deleteProfileImage(fileId) {
   await getProfileImageBucket().delete(fileId);
 }
 
-/** Resolves app-owned image IDs belonging to a user from stored photo URLs. */
+/**
+ * Filters parsed photo URLs through GridFS ownership and purpose metadata.
+ * @param {unknown} ownerId Authenticated owner identifier.
+ * @param {string[]} photoUrls Candidate app-owned image URLs.
+ * @returns {Promise<import("mongoose").Types.ObjectId[]>} IDs verified as owned profile images.
+ */
 async function getOwnedProfileImageIds(ownerId, photoUrls) {
   const requestedIds = photoUrls
     .map(getProfileImageIdFromUrl)
@@ -121,7 +131,13 @@ async function deleteOwnedProfileImagesByUrls(ownerId, photoUrls) {
   return ownedIds.length;
 }
 
-/** Deletes every profile image owned by a user, optionally in a DB session. */
+/**
+ * Deletes both GridFS file metadata and chunks for every image owned by a user.
+ * @param {unknown} ownerId Owner whose complete image set is removed.
+ * @param {{session?: import("mongoose").ClientSession}} [options] Optional transaction session.
+ * @returns {Promise<number>} Number of GridFS file records deleted.
+ * @throws {Error} When MongoDB file storage is unavailable.
+ */
 async function deleteProfileImagesByOwner(ownerId, { session } = {}) {
   if (!mongoose.connection.db) {
     const error = new Error("MongoDB file storage is unavailable");

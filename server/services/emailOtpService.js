@@ -89,7 +89,12 @@ function buildOtpEmail(code) {
   };
 }
 
-/** Requests, stores, and emails a rate-limited OTP for a normalized address. */
+/**
+ * Replaces any eligible OTP, stores only its hash, and sends the new code by email.
+ * @param {string} email Normalized recipient address used as the OTP identity.
+ * @returns {Promise<{expiresInSeconds: number, cooldownSeconds: number, recordId: import("mongoose").Types.ObjectId}>} Public timing metadata and the stored record ID.
+ * @throws {EmailOtpError} When the address is still inside the resend cooldown.
+ */
 async function requestEmailOtp(email) {
   const code = generateOtp();
   const now = new Date();
@@ -145,7 +150,13 @@ async function requestEmailOtp(email) {
   };
 }
 
-/** Validates and consumes a single-use email OTP, returning its normalized email. */
+/**
+ * Compares an OTP in constant time and atomically removes the matching record.
+ * @param {string} email Normalized address used when the code was requested.
+ * @param {string} code Six-digit plaintext code supplied by the user.
+ * @returns {Promise<void>} Resolves only after the code has been consumed.
+ * @throws {EmailOtpError} When the code is missing, expired, reused, or exceeds the attempt limit.
+ */
 async function consumeEmailOtp(email, code) {
   const record = await EmailOtp.findOne({ email }).select("+codeHash");
   const now = new Date();

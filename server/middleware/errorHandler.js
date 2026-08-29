@@ -1,3 +1,5 @@
+const logger = require("../utils/logger");
+
 const errorHandler = (err, req, res, next) => {
   let message = err.message || "Internal server error";
 
@@ -31,6 +33,15 @@ const errorHandler = (err, req, res, next) => {
 
   if (statusCode === 500) {
     message = "Internal server error";
+  }
+
+  if (statusCode >= 500) {
+    logger.error("Unhandled request error", {
+      method: req.method,
+      path: req.path,
+      statusCode,
+      error: err,
+    });
   }
 
   const response = {

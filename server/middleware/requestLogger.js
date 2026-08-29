@@ -1,3 +1,5 @@
+const logger = require("../utils/logger");
+
 const requestLogger = (req, res, next) => {
   const startedAt = process.hrtime.bigint();
   const requestPath = req.path;
@@ -5,9 +7,12 @@ const requestLogger = (req, res, next) => {
   res.once("finish", () => {
     const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
 
-    console.info(
-      `${req.method} ${requestPath} ${res.statusCode} ${durationMs.toFixed(1)}ms`
-    );
+    logger.info("HTTP request completed", {
+      method: req.method,
+      path: requestPath,
+      statusCode: res.statusCode,
+      durationMs: Number(durationMs.toFixed(1)),
+    });
   });
 
   next();

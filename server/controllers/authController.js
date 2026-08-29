@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const getFirebaseAdminAuth = require("../config/firebaseAdmin");
 const User = require("../models/User");
+const logger = require("../utils/logger");
 const {
   EmailOtpError,
   consumeEmailOtp,
@@ -117,10 +118,7 @@ const googleLogin = async (req, res, next) => {
   try {
     firebaseAuth = getFirebaseAdminAuth();
   } catch (error) {
-    console.error("[Google auth] Firebase Admin initialization failed", {
-      code: error.code,
-      message: error.message,
-    });
+    logger.error("Google auth Firebase Admin initialization failed", { error });
     return res.status(500).json({
       success: false,
       code: "FIREBASE_ADMIN_INIT_FAILED",
@@ -133,10 +131,6 @@ const googleLogin = async (req, res, next) => {
   try {
     verifiedToken = await firebaseAuth.verifyIdToken(req.body.idToken);
   } catch (error) {
-    console.error("[Google auth] Firebase ID token verification failed", {
-      code: error.code,
-      message: error.message,
-    });
     const invalidTokenCodes = new Set([
       "auth/argument-error",
       "auth/id-token-expired",
@@ -152,6 +146,7 @@ const googleLogin = async (req, res, next) => {
       });
     }
 
+    logger.error("Google auth Firebase ID token verification failed", { error });
     return res.status(500).json({
       success: false,
       code: "FIREBASE_TOKEN_VERIFICATION_FAILED",
@@ -232,10 +227,6 @@ const googleLogin = async (req, res, next) => {
     try {
       token = createToken(user._id);
     } catch (error) {
-      console.error("[Google auth] TripMatch JWT creation failed", {
-        code: error.code,
-        message: error.message,
-      });
       error.authStage = "jwt_creation";
       throw error;
     }
@@ -250,13 +241,6 @@ const googleLogin = async (req, res, next) => {
       isNewUser: isRegisterIntent,
     });
   } catch (error) {
-    if (error.authStage !== "jwt_creation") {
-      console.error("[Google auth] MongoDB user lookup/create failed", {
-        code: error.code,
-        name: error.name,
-        message: error.message,
-      });
-    }
     return next(error);
   }
 };
@@ -289,6 +273,7 @@ const requestEmailCode = async (req, res, next) => {
       error?.name === "EmailConfigurationError" ||
       error?.name === "EmailDeliveryError"
     ) {
+      logger.error("Email OTP delivery unavailable", { error });
       return res.status(503).json({
         success: false,
         code: "OTP_DELIVERY_UNAVAILABLE",

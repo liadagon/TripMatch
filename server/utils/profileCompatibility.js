@@ -24,6 +24,12 @@ const compareDestinations = (first, second) => {
   );
 };
 
+/**
+ * Scores only preference fields supplied by both profiles, so missing data is not a mismatch.
+ * @param {object} firstUser First profile's travel preferences and questionnaire.
+ * @param {object} secondUser Second profile's travel preferences and questionnaire.
+ * @returns {{percentage: number, matchedCriteria: number, comparedCriteria: number}} Compatibility summary.
+ */
 const calculateProfileCompatibility = (firstUser, secondUser) => {
   const comparisons = [
     compareDestinations(

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "63bb6b8d-9f14-4df6-b84a-3408f16a2e08",
     "name": "TripMatch API",
-    "description": "Safe final-project API demonstration using TripMatch's real Express routes. Run Auth first. Relationship folders require a fully onboarded disposable account and the IDs described in the local environment template.",
+    "description": "Safe final-project API demonstration using TripMatch's real Express routes. Run Auth first. Relationship folders require a fully onboarded disposable account and the IDs described in the selected environment template. Requests that mutate PayPal state or delete data are skipped unless their explicit safety variable is enabled.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -18,7 +18,7 @@
   "item": [
     {
       "name": "Auth",
-      "description": "Register and login with a disposable local account, then prove Bearer access. Requires baseUrl, name, email, and password; Login saves token. Expected success statuses: 201, 200, and 200.",
+      "description": "Register and login with disposable credentials, exercise Google or email OTP authentication when manually configured, then prove Bearer access. Successful login, Google authentication, and OTP verification save token and userId.",
       "item": [
         {
           "name": "Register Disposable User",
@@ -71,7 +71,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/register",
+            "url": "{{baseUrl}}/api/auth/register",
             "description": "CREATE evidence. No auth. Expected 201. Requires name, email, and password; the example.com placeholder is made unique before registration."
           }
         },
@@ -116,7 +116,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/login",
+            "url": "{{baseUrl}}/api/auth/login",
             "description": "Authenticates the disposable account. No auth; expected 200. Requires email and password. The test saves response.token as token."
           }
         },
@@ -142,8 +142,128 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/auth/me",
+            "url": "{{baseUrl}}/api/auth/me",
             "description": "Protected READ evidence. Bearer auth required; expected 200. Requires baseUrl and token."
+          }
+        },
+        {
+          "name": "Google Authentication and Save JWT (Manual Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Google authentication returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('TripMatch JWT is returned', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "if (body.token) pm.environment.set('token', body.token);",
+                  "if (body.data?._id) pm.environment.set('userId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{firebaseIdToken}}\",\n  \"intent\": \"{{authIntent}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/google",
+            "description": "Manual Firebase integration request. Obtain a fresh Firebase ID token through the real Google sign-in flow and place it in firebaseIdToken. Set authIntent to login for an existing TripMatch account or register for a disposable new account. Expected 200; saves the returned TripMatch JWT. Never store a real Firebase token in the exported environment."
+          }
+        },
+        {
+          "name": "Request Email OTP (Manual Email Delivery)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OTP request returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('OTP response is intentionally non-enumerating', () => pm.expect(pm.response.json().success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"intent\": \"{{authIntent}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/email/request-code",
+            "description": "Requests a real six-digit email OTP. Requires configured email delivery, a disposable inbox, and authIntent set to login or register. Rate limits and a resend cooldown apply; run manually rather than repeatedly in a collection runner."
+          }
+        },
+        {
+          "name": "Verify Email OTP and Save JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('OTP verification returns 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('TripMatch JWT is returned', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "if (body.token) pm.environment.set('token', body.token);",
+                  "if (body.data?._id) pm.environment.set('userId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"code\": \"{{otpCode}}\",\n  \"intent\": \"{{authIntent}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/email/verify-code",
+            "description": "Enter the fresh six-digit code delivered by Request Email OTP. email and authIntent must match the request. Expected 200; saves token and userId. OTPs expire and are single-use."
           }
         }
       ]
@@ -187,7 +307,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/users/me",
+            "url": "{{baseUrl}}/api/users/me",
             "description": "UPDATE evidence. Bearer auth required; expected 200. Requires baseUrl, token, and profileBio; updates only the disposable account bio."
           }
         },
@@ -213,7 +333,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/users?page=1&limit=10",
+            "url": "{{baseUrl}}/api/users?page=1&limit=10",
             "description": "Protected collection READ. Requires a fully onboarded disposable account. Expected 200."
           }
         },
@@ -234,7 +354,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/users/me/stats",
+            "url": "{{baseUrl}}/api/users/me/stats",
             "description": "Protected statistics READ for a fully onboarded disposable account. Expected 200."
           }
         },
@@ -255,7 +375,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/users/{{otherUserId}}",
+            "url": "{{baseUrl}}/api/users/{{otherUserId}}",
             "description": "Protected single-resource READ. Set otherUserId to a disposable user's real MongoDB ObjectId. Expected 200."
           }
         }
@@ -296,7 +416,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/swipes",
+            "url": "{{baseUrl}}/api/swipes",
             "description": "CREATE evidence for persisted interaction data. Bearer auth and completed onboarding required; expected 200. Requires baseUrl, token, otherUserId, and swipeAction."
           }
         },
@@ -317,7 +437,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/swipes",
+            "url": "{{baseUrl}}/api/swipes",
             "description": "Lists swipe decisions persisted by the authenticated user. Expected 200."
           }
         },
@@ -342,7 +462,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/swipes/received",
+            "url": "{{baseUrl}}/api/swipes/received",
             "description": "Reads received-like visibility without assuming a paid entitlement. Expected 200."
           }
         }
@@ -369,7 +489,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/matches",
+            "url": "{{baseUrl}}/api/matches",
             "description": "Lists active, unblocked matches for the authenticated user. Expected 200."
           }
         },
@@ -390,7 +510,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/matches/map",
+            "url": "{{baseUrl}}/api/matches/map",
             "description": "Returns privacy-safe map data for current matches. Expected 200."
           }
         },
@@ -413,7 +533,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/matches/with/{{otherUserId}}/profile",
+            "url": "{{baseUrl}}/api/matches/with/{{otherUserId}}/profile",
             "description": "Reads an authorized matched user's expanded profile and stores its conversationId. Requires a real matched otherUserId. Expected 200."
           }
         }
@@ -442,7 +562,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/conversations",
+            "url": "{{baseUrl}}/api/conversations",
             "description": "Lists visible conversations and stores the first conversationId when one exists. Expected 200."
           }
         },
@@ -465,7 +585,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/conversations/with/{{otherUserId}}",
+            "url": "{{baseUrl}}/api/conversations/with/{{otherUserId}}",
             "description": "Gets the conversation for a real match, creating its backing conversation if absent, and saves conversationId. Expected 200."
           }
         },
@@ -486,7 +606,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/conversations/{{conversationId}}/messages",
+            "url": "{{baseUrl}}/api/conversations/{{conversationId}}/messages",
             "description": "Reads visible messages for an authorized real conversationId. Expected 200."
           }
         },
@@ -521,13 +641,25 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/conversations/{{conversationId}}/messages",
+            "url": "{{baseUrl}}/api/conversations/{{conversationId}}/messages",
             "description": "CREATE evidence for a disposable matched conversation. Bearer auth required; expected 201. Requires baseUrl, token, conversationId, and messageText."
           }
         },
         {
           "name": "Clear Conversation for Current User",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('allowDestructiveRequests') !== 'true') {",
+                  "  console.warn('Skipped conversation clear: enable allowDestructiveRequests only for disposable conversation data.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -556,8 +688,8 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/conversations/{{conversationId}}",
-            "description": "DELETE evidence using a safe user-local clear. Bearer auth required; expected 200. Requires baseUrl, token, and conversationId; it does not delete the match or the other participant's history."
+            "url": "{{baseUrl}}/api/conversations/{{conversationId}}",
+            "description": "DELETE evidence using a user-local clear. Bearer auth required; expected 200. It does not delete the match or the other participant's history, but it is skipped unless allowDestructiveRequests=true because the current user's visible history is cleared. Use disposable data only."
           }
         }
       ]
@@ -583,7 +715,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/blocks",
+            "url": "{{baseUrl}}/api/blocks",
             "description": "Lists users blocked by the authenticated account. Expected 200."
           }
         },
@@ -618,7 +750,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/blocks/{{otherUserId}}",
+            "url": "{{baseUrl}}/api/blocks/{{otherUserId}}",
             "description": "Creates a reversible block for an existing disposable match. Expected 200. Always follow with Unblock Matched User."
           }
         },
@@ -653,15 +785,325 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/blocks/{{otherUserId}}",
+            "url": "{{baseUrl}}/api/blocks/{{otherUserId}}",
             "description": "DELETE evidence. Bearer auth required; expected 200. Requires baseUrl, token, and otherUserId; reverses the disposable block without deleting an account or match."
           }
         }
       ]
     },
     {
+      "name": "Account - Destructive (Manual Only)",
+      "description": "Permanent account deletion coverage. The request is skipped unless allowDestructiveRequests is explicitly set to true. Use only a disposable account and never enable this flag in a shared production environment export.",
+      "item": [
+        {
+          "name": "Delete My Disposable Account (Guarded)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('allowDestructiveRequests') !== 'true') {",
+                  "  console.warn('Skipped account deletion: set allowDestructiveRequests=true only for a disposable account.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Account deletion returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Account deletion succeeds', () => pm.expect(pm.response.json().success).to.eql(true));",
+                  "pm.environment.unset('token');",
+                  "pm.environment.unset('userId');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Permanently deletes the authenticated account and its owned data. Bearer auth required; expected 200. This request is skipped by default. Enable allowDestructiveRequests only after confirming token belongs to disposable test data, then disable it immediately."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files - GridFS",
+      "description": "Upload an authenticated profile image to GridFS and retrieve it from the public app-owned file route. Upload requires a local JPEG, PNG, WebP, or GIF no larger than 5MB.",
+      "item": [
+        {
+          "name": "Upload Profile Image to GridFS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Image upload returns 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('App-owned image URL is returned', () => pm.expect(body.url).to.be.a('string').and.not.empty);",
+                  "if (body.url) {",
+                  "  pm.environment.set('uploadedFileUrl', body.url);",
+                  "  const fileId = body.url.split('/').filter(Boolean).pop();",
+                  "  if (fileId) pm.environment.set('fileId', fileId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{uploadFilePath}}",
+                  "description": "Select one disposable image file manually if your Postman version does not resolve uploadFilePath."
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/file",
+            "description": "Authenticated multipart upload. The only accepted field is file; supported MIME types are JPEG, PNG, WebP, and GIF, up to 5MB. Expected 201. The test saves uploadedFileUrl and the final path segment as fileId."
+          }
+        },
+        {
+          "name": "Retrieve GridFS Profile Image",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Image retrieval returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an image', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('image/'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "image/*"
+              }
+            ],
+            "url": "{{baseUrl}}/api/file/{{fileId}}",
+            "description": "Public GridFS retrieval for an existing app-owned fileId. Expected 200 with an image Content-Type. Run the upload first or provide a disposable existing fileId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions - PayPal (Manual Setup)",
+      "description": "PayPal subscription coverage for a fully onboarded disposable account. Server-owned plan settings are used; command bodies must remain empty. Creation and cancellation are skipped by default. The webhook example is intentionally unsigned and can never demonstrate a successful provider signature.",
+      "item": [
+        {
+          "name": "Create PayPal Subscription (Guarded)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('allowPayPalMutations') !== 'true') {",
+                  "  console.warn('Skipped PayPal creation: enable allowPayPalMutations only for an approved sandbox test.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Subscription creation returns 200 or 201', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));",
+                  "const body = pm.response.json();",
+                  "pm.test('Subscription identity is returned', () => pm.expect(body.subscriptionId).to.be.a('string').and.not.empty);",
+                  "if (body.subscriptionId) pm.environment.set('paypalSubscriptionId', body.subscriptionId);",
+                  "if (body.approvalUrl) pm.environment.set('paypalApprovalUrl', body.approvalUrl);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/subscriptions/paypal",
+            "description": "Creates or reuses the server-configured PayPal subscription and returns an approval URL. Bearer auth and completed onboarding required. Skipped unless allowPayPalMutations=true. Use PayPal Sandbox and disposable data only; do not add plan IDs or prices to the body."
+          }
+        },
+        {
+          "name": "Get My Subscription Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Subscription status returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Safe subscription data exists', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/subscriptions/me",
+            "description": "Refreshes and returns the authenticated user's client-safe subscription state. Bearer auth and completed onboarding required; expected 200. A configured PayPal account may be contacted when a linked subscription exists."
+          }
+        },
+        {
+          "name": "Cancel My PayPal Subscription (Guarded)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.environment.get('allowDestructiveRequests') !== 'true') {",
+                  "  console.warn('Skipped PayPal cancellation: enable allowDestructiveRequests only for a disposable sandbox subscription.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Subscription cancellation returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cancellation succeeds', () => pm.expect(pm.response.json().success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/subscriptions/paypal/cancel",
+            "description": "Permanently cancels the authenticated user's linked PayPal subscription. Skipped by default. Enable allowDestructiveRequests only for a disposable Sandbox subscription, then disable it immediately. The server selects the subscription; keep the body empty."
+          }
+        },
+        {
+          "name": "PayPal Webhook - Unsigned Documentation Example",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unsigned webhook is never accepted', () => pm.expect(pm.response.code).to.be.oneOf([401, 503]));",
+                  "pm.test('No successful signed webhook is claimed', () => pm.expect(pm.response.code).to.not.eql(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"POSTMAN-UNSIGNED-DOCUMENTATION-ONLY\",\n  \"event_type\": \"BILLING.SUBSCRIPTION.ACTIVATED\",\n  \"resource\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/subscriptions/paypal/webhook",
+            "description": "Documentation-only unsigned example. It intentionally omits paypal-auth-algo, paypal-cert-url, paypal-transmission-id, paypal-transmission-sig, and paypal-transmission-time because only PayPal can generate valid signature metadata. A configured server should return 401; a server without PAYPAL_WEBHOOK_ID may return 503. Configure this exact URL in the PayPal Sandbox webhook dashboard and use PayPal's simulator or real Sandbox events to test a successful signed delivery. Never paste PayPal secrets into Postman."
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "description": "Unauthenticated operational endpoint coverage.",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health check returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('TripMatch API reports success', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.message).to.eql('TripMatch API is running');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health",
+            "description": "Public backend health endpoint. No auth; expected 200 with the TripMatch API status message."
+          }
+        }
+      ]
+    },
+    {
       "name": "Error Cases",
-      "description": "Deterministic negative tests requiring baseUrl only: unauthenticated Joi validation expects 400, and a protected identity request with auth disabled expects 401.",
+      "description": "Deterministic negative tests requiring baseUrl only: unauthenticated Joi validation expects 400, while missing and malformed Bearer credentials each expect 401.",
       "item": [
         {
           "name": "400 - Invalid Registration Email",
@@ -698,7 +1140,7 @@
                 }
               }
             },
-            "url": "{{baseUrl}}/auth/register",
+            "url": "{{baseUrl}}/api/auth/register",
             "description": "Calls the real Joi-validated register route with deliberately invalid input. No auth; expected 400. Requires baseUrl only."
           }
         },
@@ -723,8 +1165,44 @@
             },
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/auth/me",
+            "url": "{{baseUrl}}/api/auth/me",
             "description": "Calls a real protected endpoint with Authorization explicitly disabled. Expected 401. Requires baseUrl only."
+          }
+        },
+        {
+          "name": "401 - Authenticated Identity With Invalid JWT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid JWT returns 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Invalid JWT response is JSON', () => pm.response.to.be.json);",
+                  "pm.test('Invalid JWT is rejected explicitly', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.message).to.eql('Invalid or expired authentication token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{invalidToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": "Overrides collection auth with a deliberately malformed, non-secret invalidToken value. Expected 401 and does not alter the valid token environment variable."
           }
         }
       ]

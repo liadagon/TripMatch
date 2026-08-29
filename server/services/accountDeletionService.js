@@ -52,7 +52,12 @@ function createAccountDeletionService(dependencies = {}) {
     ...dependencies,
   };
 
-  /** Deletes an authenticated user and all owned or related application data. */
+  /**
+   * Cancels external subscription state before removing all account-owned records and images.
+   * @param {object} authenticatedUser Authenticated user whose `_id` defines the deletion scope.
+   * @returns {Promise<{success: true}>} Confirmation after every required deletion completes.
+   * @throws {AccountDeletionError} When identity is missing or the user cannot be deleted consistently.
+   */
   async function deleteUserAccount(authenticatedUser) {
     const authenticatedUserId = authenticatedUser?._id;
     if (!authenticatedUserId) {

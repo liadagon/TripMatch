@@ -56,6 +56,13 @@ export function getAuthenticationPath(result: AuthenticationResult) {
     : completionPath;
 }
 
+/**
+ * Resolves the safe redirect for incomplete registrations and onboarding-only pages.
+ * @param user Authoritative authenticated user.
+ * @param pathname Route currently being evaluated.
+ * @param options Controls whether completed steps or onboarding-only pages are allowed.
+ * @returns A replacement route, or null when the requested route is accessible.
+ */
 export function getOnboardingRouteRedirect(
   user: AuthUser,
   pathname: string,

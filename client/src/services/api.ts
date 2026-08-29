@@ -27,6 +27,11 @@ const api = axios.create({
   },
 });
 
+/**
+ * Maps response-less Axios failures to user-facing transport messages without masking API errors.
+ * @param error Rejected request value.
+ * @returns A localized timeout/network message, or null for handled HTTP responses.
+ */
 function getTransportErrorMessage(error: unknown) {
   if (!axios.isAxiosError(error) || error.response) return null;
 
@@ -69,6 +74,8 @@ api.interceptors.response.use(
       Boolean(currentToken) &&
       requestAuthorization === `Bearer ${currentToken}`;
 
+    // Expire only the session whose current token actually authorized this request;
+    // a delayed 401 from an older account must not sign out its replacement.
     if (shouldExpireSession) {
       removeAuthToken();
       window.dispatchEvent(new Event(TRIPMATCH_AUTH_EXPIRED_EVENT));

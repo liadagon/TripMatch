@@ -17,6 +17,12 @@ export function getDocumentNavigationType(
   return entry?.type || "unknown";
 }
 
+/**
+ * Detects history or back-forward-cache restoration that must not reuse rendered account state.
+ * @param navigationType Browser navigation classification.
+ * @param pageShowPersisted Whether `pageshow` restored a persisted document.
+ * @returns True when authentication should be re-established instead of trusted from memory.
+ */
 export function isDocumentHistoryRestoration(
   navigationType: DocumentNavigationType,
   pageShowPersisted = false,

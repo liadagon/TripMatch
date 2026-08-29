@@ -23,6 +23,10 @@ export type MatchesMapData = {
   radiusKm: number;
 };
 
+/**
+ * Loads the backend's privacy-reduced current-user and match marker data.
+ * @returns Map-ready data without exact matched-user coordinates.
+ */
 export const getMatchesMap = async () => {
   const response = await api.get<{
     success: true;

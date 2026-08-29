@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "TripMatch backend API",
   "main": "server.js",
+  "engines": {
+    "node": ">=22 <25"
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",

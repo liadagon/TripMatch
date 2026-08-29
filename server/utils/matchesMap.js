@@ -13,6 +13,12 @@ const hasValidCoordinates = (tripLocation) =>
   tripLocation.longitude >= -180 &&
   tripLocation.longitude <= 180;
 
+/**
+ * Calculates great-circle distance between two validated latitude/longitude pairs.
+ * @param {{latitude: number, longitude: number}} firstLocation Origin coordinates.
+ * @param {{latitude: number, longitude: number}} secondLocation Destination coordinates.
+ * @returns {number} Distance in kilometers.
+ */
 const calculateDistanceKm = (firstLocation, secondLocation) => {
   const latitudeDelta = toRadians(
     secondLocation.latitude - firstLocation.latitude
@@ -78,6 +84,12 @@ const hashIdentifier = (identifier) => {
 const clamp = (value, minimum, maximum) =>
   Math.min(maximum, Math.max(minimum, value));
 
+/**
+ * Produces a stable, privacy-reduced marker inside the destination's grid cell.
+ * @param {{latitude: number, longitude: number}} tripLocation Exact stored destination.
+ * @param {unknown} userId Stable identifier used only to derive the in-cell offset.
+ * @returns {{latitude: number, longitude: number}} Approximate coordinates safe for map output.
+ */
 const approximateCoordinates = (tripLocation, userId) => {
   const hash = hashIdentifier(userId);
   const angle = hash % 360 * Math.PI / 180;

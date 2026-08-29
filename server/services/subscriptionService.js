@@ -109,7 +109,14 @@ function buildSubscriptionPayload(user, planId) {
   return payload;
 }
 
-/** Synchronizes persisted subscription state from a PayPal representation. */
+/**
+ * Validates plan ownership and persists entitlement state from a PayPal subscription.
+ * @param {object} user Mutable Mongoose user document to synchronize.
+ * @param {object} subscription PayPal subscription representation.
+ * @param {{forcedStatus?: string, allowReplacement?: boolean}} [options] Trusted webhook override and replacement policy.
+ * @returns {Promise<object>} Saved user document.
+ * @throws {SubscriptionServiceError} When provider metadata, plan, or ownership is inconsistent.
+ */
 async function synchronizeUserFromPayPal(
   user,
   subscription,
@@ -296,7 +303,12 @@ function createSubscriptionOperations(dependencies = {}) {
     return getSafeSubscriptionState(user);
   }
 
-  /** Safely cancels or verifies termination before account deletion. */
+  /**
+   * Cancels a remote subscription or proves it is already terminal before account deletion.
+   * @param {object} user Stored user whose external subscription must not be orphaned.
+   * @returns {Promise<{cancelled: boolean, terminal: true}>} Confirmed remote termination state.
+   * @throws {Error} When termination cannot be confirmed safely.
+   */
   async function cancelForAccountDeletion(user) {
     const subscriptionId = user?.paypalSubscriptionId?.trim();
 
@@ -408,7 +420,13 @@ function createSubscriptionOperations(dependencies = {}) {
     return { ignored: false, subscriptionId };
   }
 
-  /** Verifies, deduplicates, and processes a PayPal webhook event. */
+  /**
+   * Verifies PayPal headers before validation, then deduplicates and applies the signed event.
+   * @param {object} headers Original lowercase Express request headers.
+   * @param {object} event Original, unmodified PayPal event body.
+   * @returns {Promise<{duplicate: boolean, ignored: boolean}>} Processing disposition.
+   * @throws {SubscriptionServiceError} When signature metadata or the verified event is invalid.
+   */
   async function handleWebhook(headers, event) {
     const webhookId = getRequiredConfiguration("PAYPAL_WEBHOOK_ID");
     const missingHeader = REQUIRED_WEBHOOK_HEADERS.find(

@@ -27,6 +27,12 @@ type DisplayMapMarker = MatchesMapMarker & {
 
 type CurrentUserMapMarker = MatchesMapData["me"];
 
+/**
+ * Converts matched demo profiles into the same marker contract returned by the API.
+ * @param me Current user's validated destination marker.
+ * @param currentUserId Account scope used for demo match and block state.
+ * @returns Visible demo markers with calculated great-circle distance.
+ */
 function createDemoMarkers(
   me: NonNullable<MatchesMapData["me"]>,
   currentUserId: string | undefined,
@@ -83,6 +89,11 @@ function getGeographicDestinationLabel(
   return fallbackParts.slice(-2).join(", ") || fallbackLabel;
 }
 
+/**
+ * Validates the authenticated user's destination before exposing it to Leaflet.
+ * @param tripLocation Stored profile destination.
+ * @returns A map marker or null when coordinates are absent or invalid.
+ */
 function createCurrentUserMapMarker(
   tripLocation: TripLocation | undefined,
 ): CurrentUserMapMarker {
@@ -144,6 +155,12 @@ function FitMapBounds({
   return null;
 }
 
+/**
+ * Builds an isolated DOM-backed Leaflet icon with an image-failure fallback.
+ * @param photoURL App-owned profile image URL.
+ * @param isCurrentUser Whether to add the accessible current-user treatment.
+ * @returns Configured Leaflet div icon.
+ */
 function createPhotoIcon(photoURL: string, isCurrentUser = false) {
   const marker = document.createElement("div");
   marker.className = isCurrentUser

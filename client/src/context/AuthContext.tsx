@@ -100,6 +100,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetUserSpecificState();
   }
 
+  /**
+   * Invalidates older auth work and clears every account-scoped client state store.
+   * @returns The revision that a subsequent async response must still match.
+   */
   function beginAuthenticationAttempt() {
     authRevisionRef.current += 1;
     clearLocalAuthenticatedSession();
@@ -124,6 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOutFirebaseForAccountReplacement();
   }
 
+  /**
+   * Stores a new JWT, reloads its authoritative user, and rejects stale account-switch responses.
+   * @param token TripMatch JWT returned by a successful authentication endpoint.
+   * @param revision Authentication attempt that owns the response.
+   * @returns The server-restored authenticated user.
+   * @throws AuthenticationSupersededError when a newer login or logout has won the race.
+   */
   async function establishAuthenticatedSession(token: string, revision: number) {
     if (!isCurrentAuthenticationAttempt(revision)) {
       throw new AuthenticationSupersededError();
@@ -350,6 +361,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }
 
+  /**
+   * Persists profile changes and refreshes identity only if the same session remains active.
+   * @param payload Allowed profile fields sent to the backend.
+   * @returns The refreshed authoritative user.
+   * @throws AuthenticationSupersededError when the account changes during the refresh.
+   */
   async function updateProfile(payload: ProfileUpdatePayload) {
     const revision = authRevisionRef.current;
     const token = getAuthToken();
@@ -418,6 +435,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Reads the active authentication context.
+ * @returns Session state and account lifecycle actions from the nearest provider.
+ * @throws When rendered outside `AuthProvider`.
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
 
