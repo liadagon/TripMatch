@@ -1,10 +1,23 @@
 # TripMatch
 
+## Live Demo
+
+- Frontend: [https://tripmatch-pi.vercel.app](https://tripmatch-pi.vercel.app)
+- Backend: [https://tripmatch-backend.onrender.com](https://tripmatch-backend.onrender.com)
+
+## Repository
+
+- GitHub: [https://github.com/liadagon/TripMatch](https://github.com/liadagon/TripMatch)
+
+## Demo Video
+
+- [TripMatch project walkthrough](https://drive.google.com/file/d/13AWF8nRKSsU76TJ8K9a5wOW0hvl1yXUU/view?usp=sharing)
+
 ## Project Overview
 
 TripMatch is a full-stack, end-to-end web application for people looking for compatible travel partners. It helps users move from creating a travel profile to discovering people with similar plans, expressing interest, forming reciprocal matches, and chatting with those matches.
 
-The core journey is: authenticate, complete onboarding and travel preferences, browse Discover, like or skip profiles, review received likes and matches, then use chat and the matches map. The repository contains a React client, an Express API, MongoDB persistence, GridFS media storage, and optional third-party integrations. It is documented for local development and does not assume a production deployment.
+The core journey is: authenticate, complete onboarding and travel preferences, browse Discover, like or skip profiles, review received likes and matches, then use chat and the matches map. The repository contains a React client, an Express API, MongoDB persistence, GridFS media storage, and optional third-party integrations. The application supports local development and is deployed with Vercel, Render, and MongoDB Atlas.
 
 ## Key Features
 
@@ -163,6 +176,14 @@ This video provides a walkthrough of the final TripMatch application and its cor
 - Project type: Solo project
 - Role: Full-stack development
 
+## Deployment
+
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
+- Frontend URL: [https://tripmatch-pi.vercel.app](https://tripmatch-pi.vercel.app)
+- Backend URL: [https://tripmatch-backend.onrender.com](https://tripmatch-backend.onrender.com)
+
 ## Prerequisites
 
 - Node.js and npm
@@ -172,7 +193,7 @@ This video provides a walkthrough of the final TripMatch application and its cor
 ## Clone
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/liadagon/TripMatch.git
 cd tripmatch
 ```
 
@@ -403,4 +424,4 @@ Representative `200 OK` response:
 }
 ```
 
-The `postman/` directory contains a Postman Collection v2.1, a safe local environment template, and import/run instructions. Use disposable local accounts, run Register and Login first, and never place real tokens or provider secrets in exported Postman files.
+The `postman/` directory contains a Postman Collection v2.1, the local `postman/TripMatch.local.postman_environment.json` environment, the `postman/TripMatch.production.postman_environment.json` production template, and import/run instructions. Use disposable accounts, run Register and Login first, and never place real tokens or provider secrets in exported Postman files.
