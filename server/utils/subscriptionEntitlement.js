@@ -9,12 +9,14 @@ const PAYPAL_STATUS_MAP = Object.freeze({
   EXPIRED: "expired",
 });
 
+/** Maps PayPal status values to the application's persisted status enum. */
 function normalizePayPalSubscriptionStatus(status) {
   if (typeof status !== "string") return "none";
   const normalized = status.trim().toUpperCase();
   return PAYPAL_STATUS_MAP[normalized] || "none";
 }
 
+/** Grants Boost only for an active subscription on the configured server plan. */
 function hasBoostAccess(user) {
   return (
     user?.subscriptionPlan === "boost" &&

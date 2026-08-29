@@ -33,6 +33,7 @@ export default function Register() {
     setErrorMessage("");
   }
 
+  /** Creates the account and follows server-derived onboarding state. */
   async function submitRegistration() {
     if (isSubmitting) return;
     const errors: RegisterFieldErrors = {};

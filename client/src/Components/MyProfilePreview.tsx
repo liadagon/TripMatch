@@ -72,10 +72,12 @@ type ProfilePreviewViewProps = {
   footerAction?: ReactNode;
 };
 
+/** Indicates whether an optional profile string contains displayable text. */
 function meaningful(value: string | undefined) {
   return value?.trim() || "";
 }
 
+/** Returns unique profile images in their persisted display order. */
 function getProfilePhotos(user: ProfilePreviewUser) {
   const galleryPhotos = (user.photos || [])
     .map((photo) => photo.trim())
@@ -87,6 +89,7 @@ function getProfilePhotos(user: ProfilePreviewUser) {
   return fallbackPhoto ? [fallbackPhoto] : [];
 }
 
+/** Renders a profile preview from normalized identity and travel data. */
 export function ProfilePreviewView({
   profile: user,
   backLabel,
@@ -421,12 +424,14 @@ export default function MyProfilePreview() {
     photos: getAuthenticatedProfilePhotos(user),
   };
 
+  /** Revokes a browser-owned preview without touching persisted image URLs. */
   function releaseDraftObjectUrl(url: string) {
     if (!draftObjectUrlsRef.current.has(url)) return;
     URL.revokeObjectURL(url);
     draftObjectUrlsRef.current.delete(url);
   }
 
+  /** Releases every temporary preview owned by the current edit session. */
   function releaseAllDraftObjectUrls() {
     draftObjectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     draftObjectUrlsRef.current.clear();
@@ -508,6 +513,7 @@ export default function MyProfilePreview() {
     setPhotoError("");
   }
 
+  /** Uploads new draft images, persists their order, and revokes previews. */
   async function savePhotos() {
     setIsSavingPhotos(true);
     setPhotoError("");

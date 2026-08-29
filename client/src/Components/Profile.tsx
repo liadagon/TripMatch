@@ -117,6 +117,7 @@ const emptyProfile: ProfileData = {
   imageUrl: "",
 };
 
+/** Maps authenticated user data into the editable profile model. */
 function profileFromUser(user: AuthUser | null): ProfileData {
   const identity = getAuthenticatedIdentity(user);
 
@@ -144,6 +145,7 @@ function profileFromUser(user: AuthUser | null): ProfileData {
   };
 }
 
+/** Returns a validation message when a selected profile image is unsupported. */
 function validateProfileImage(file: File) {
   if (!ALLOWED_PROFILE_IMAGE_TYPES.has(file.type)) {
     throw new Error("יש לבחור תמונת JPG, PNG, WEBP או GIF בלבד");
@@ -154,6 +156,7 @@ function validateProfileImage(file: File) {
   }
 }
 
+/** Extracts the most useful safe message from a profile-photo failure. */
 function getProfilePhotoError(error: unknown) {
   if (
     error instanceof Error &&
@@ -181,6 +184,7 @@ function getProfilePhotoError(error: unknown) {
   return "לא הצלחנו להעלות ולשמור את התמונה. יש לנסות שוב";
 }
 
+/** Reads a local image file into a preview data URL. */
 function readImagePreview(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -190,6 +194,7 @@ function readImagePreview(file: File) {
   });
 }
 
+/** Replaces the primary photo while preserving unique secondary images. */
 function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
   const remainingPhotos = (photos || [])
     .map((photo) => photo.trim())
@@ -199,6 +204,7 @@ function replacePrimaryPhoto(photos: string[] | undefined, imageUrl: string) {
   return [imageUrl, ...remainingPhotos];
 }
 
+/** Maps backend validation details to editable profile field errors. */
 function getBackendProfileFieldErrors(error: unknown): ProfileFieldErrors {
   if (!axios.isAxiosError(error) || error.response?.status !== 400) return {};
   const backendFields = error.response.data?.fields;
@@ -250,6 +256,7 @@ function getBackendProfileFieldErrors(error: unknown): ProfileFieldErrors {
   );
 }
 
+/** Keeps a persisted legacy value selectable alongside canonical options. */
 function optionsWithCurrent(
   options: readonly string[],
   currentValue: string,
@@ -259,6 +266,7 @@ function optionsWithCurrent(
     : options;
 }
 
+/** Indicates whether a location has the structured fields required by the API. */
 function hasValidTripLocation(location: TripLocation | null) {
   return Boolean(
     location &&
@@ -316,6 +324,7 @@ export default function Profile() {
 
     let isActive = true;
 
+    /** Loads private profile totals for the current authenticated account. */
     async function loadStatistics() {
       setStatistics(null);
       setStatisticsError(false);
@@ -347,6 +356,7 @@ export default function Profile() {
 
     let isActive = true;
 
+    /** Loads server-authoritative Boost entitlement without exposing provider data. */
     async function loadPrivateBoostStatus() {
       try {
         const subscription = await getMySubscription();
@@ -402,6 +412,7 @@ export default function Profile() {
     });
   }
 
+  /** Focuses the first invalid editable field after profile validation. */
   function focusFirstInvalidField(errors: ProfileFieldErrors) {
     const firstField = Object.keys(errors)[0] as ProfileField | undefined;
     if (!firstField) return;
@@ -423,6 +434,7 @@ export default function Profile() {
     focusFirstInvalidField(errors);
   }
 
+  /** Validates the complete editable profile before any persistence occurs. */
   function validateProfileDraft() {
     const errors: ProfileFieldErrors = {};
     const requireExistingValue = (currentValue: string, nextValue: string) =>
@@ -526,6 +538,7 @@ export default function Profile() {
     setProfileSaveError("");
   }
 
+  /** Validates and uploads a replacement primary profile photo. */
   async function handlePhotoSelection(
     event: ChangeEvent<HTMLInputElement>,
     destination: "profile" | "draft",
@@ -569,6 +582,7 @@ export default function Profile() {
     }
   }
 
+  /** Persists the validated profile draft and refreshes authenticated identity. */
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const normalizedAge = draftProfile.age.trim();
@@ -686,6 +700,7 @@ export default function Profile() {
     });
   }
 
+  /** Executes confirmed account deletion and returns to the public entry route. */
   async function handleDeleteAccount() {
     setIsDeletingAccount(true);
     setDeleteAccountError("");

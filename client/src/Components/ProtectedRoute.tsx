@@ -10,6 +10,7 @@ type ProtectedRouteProps = {
   children: ReactNode;
 };
 
+/** Enforces authentication and server-derived onboarding route access. */
 export default function ProtectedRoute({
   allowIncomplete = false,
   onboardingOnly = false,

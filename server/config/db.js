@@ -11,6 +11,7 @@ db.once("open", () => {
   logger.info("MongoDB connected successfully");
 });
 
+/** Connects Mongoose using the validated database URL or terminates startup. */
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.DATABASE_URL);

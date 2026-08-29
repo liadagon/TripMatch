@@ -37,6 +37,7 @@ type UsersResponse = {
   };
 };
 
+/** Fetches one ranked discovery page with an optional text search. */
 export const getUsers = async (page = 1, limit = 10, search = "") => {
   const response = await api.get<UsersResponse>("/api/users", {
     params: { page, limit, ...(search.trim() ? { search: search.trim() } : {}) },

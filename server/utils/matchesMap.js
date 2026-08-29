@@ -5,6 +5,7 @@ const PRIVACY_OFFSET_DEGREES = 0.003;
 
 const toRadians = (degrees) => degrees * Math.PI / 180;
 
+/** Indicates whether a trip location contains valid geographic coordinates. */
 const hasValidCoordinates = (tripLocation) =>
   Number.isFinite(tripLocation?.latitude) &&
   tripLocation.latitude >= -90 &&
@@ -40,6 +41,7 @@ const calculateDistanceKm = (firstLocation, secondLocation) => {
 const normalizePlacePart = (value) =>
   typeof value === "string" ? value.trim().toLocaleLowerCase("en") : "";
 
+/** Compares normalized city and country values for two destinations. */
 const isSameCityAndCountry = (firstLocation, secondLocation) => {
   const firstCity = normalizePlacePart(firstLocation?.city);
   const secondCity = normalizePlacePart(secondLocation?.city);
@@ -52,6 +54,7 @@ const isSameCityAndCountry = (firstLocation, secondLocation) => {
   );
 };
 
+/** Returns the most specific display label available for a trip destination. */
 const getDestinationLabel = (tripLocation) =>
   Array.from(
     new Set(
@@ -61,6 +64,7 @@ const getDestinationLabel = (tripLocation) =>
     )
   ).join(", ");
 
+/** Returns a city/country label suitable for geographic comparison. */
 const getGeographicDestinationLabel = (tripLocation) =>
   Array.from(
     new Set(
@@ -70,6 +74,7 @@ const getGeographicDestinationLabel = (tripLocation) =>
     )
   ).join(", ");
 
+/** Derives a stable non-secret seed used for privacy offsets. */
 const hashIdentifier = (identifier) => {
   let hash = 2166136261;
 
@@ -81,6 +86,7 @@ const hashIdentifier = (identifier) => {
   return hash >>> 0;
 };
 
+/** Restricts a numeric coordinate adjustment to a valid range. */
 const clamp = (value, minimum, maximum) =>
   Math.min(maximum, Math.max(minimum, value));
 

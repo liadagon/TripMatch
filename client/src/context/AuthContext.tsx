@@ -74,6 +74,11 @@ class AuthenticationSupersededError extends Error {
   }
 }
 
+/**
+ * Owns the tab-scoped TripMatch session and account-specific client state.
+ * @param children Application routes that consume authentication state.
+ * @returns The authentication context provider and its current loading state.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -88,12 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authRevisionRef = useRef(0);
   const previousAuthenticatedUserIdRef = useRef<string | null>(null);
 
+  /** Clears Redux and browser state that must not cross account boundaries. */
   function resetUserSpecificState(userId = user?._id) {
     dispatch(resetConversations());
     clearDemoConversationState(userId);
     clearBoostPromoSnooze();
   }
 
+  /** Removes the local JWT, identity, and account-scoped UI state. */
   function clearLocalAuthenticatedSession() {
     removeAuthToken();
     setUser(null);
@@ -110,11 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authRevisionRef.current;
   }
 
+  /**
+   * Checks that an asynchronous auth result still belongs to the active session.
+   * @param revision Revision captured when the operation began.
+   * @param token Optional JWT that must still be stored for this tab.
+   * @returns Whether the result may safely update authentication state.
+   */
   function isCurrentAuthenticationAttempt(revision: number, token?: string) {
     return authRevisionRef.current === revision &&
       (token === undefined || getAuthToken() === token);
   }
 
+  /** Signs out Firebase while allowing TripMatch session cleanup to continue on failure. */
   async function signOutFirebaseForAccountReplacement() {
     try {
       await signOutFromFirebase();
@@ -123,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  /** Invalidates pending auth work and clears both TripMatch and Firebase sessions. */
   async function clearAuthenticatedSession() {
     beginAuthenticationAttempt();
     await signOutFirebaseForAccountReplacement();
@@ -166,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isActive = true;
     const revision = ++authRevisionRef.current;
 
+    /** Restores the server-authoritative user for the JWT stored in this tab. */
     async function restoreUser() {
       removeLegacyLocalAuthToken();
 
@@ -228,6 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch, navigate, requiresInitialHistoryReauthentication]);
 
   useEffect(() => {
+    /** Invalidates local state when Axios confirms the active JWT expired. */
     function handleExpiredSession() {
       beginAuthenticationAttempt();
       navigate("/", { replace: true });
@@ -249,12 +266,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch, user?._id]);
 
   useEffect(() => {
+    /** Prevents account content from flashing during document-history transitions. */
     function handlePageHide() {
       flushSync(() => {
         setIsDocumentTransitionPending(true);
       });
     }
 
+    /** Clears rendered account state when the browser restores a cached document. */
     function handlePageShow(event: PageTransitionEvent) {
       if (!event.persisted) return;
 
@@ -275,6 +294,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [navigate]);
 
+  /**
+   * Replaces the current account with a password-authenticated session.
+   * @returns The server-authoritative authenticated user.
+   */
   async function login(email: string, password: string) {
     const revision = beginAuthenticationAttempt();
     await signOutFirebaseForAccountReplacement();
@@ -285,6 +308,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return establishAuthenticatedSession(response.data.token, revision);
   }
 
+  /**
+   * Creates a local account and establishes its isolated session.
+   * @returns The newly registered, server-authoritative user.
+   */
   async function register(payload: RegisterPayload) {
     const revision = beginAuthenticationAttempt();
     await signOutFirebaseForAccountReplacement();
@@ -295,6 +322,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return establishAuthenticatedSession(response.data.token, revision);
   }
 
+  /**
+   * Exchanges a Firebase identity for an isolated TripMatch session.
+   * @param idToken Firebase ID token from the Google popup.
+   * @param intent Whether the user selected login or registration.
+   * @returns The authenticated user and server-derived new-account flag.
+   */
   async function authenticateWithGoogle(
     idToken: string,
     intent: AuthenticationIntent,
@@ -338,6 +371,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }
 
+  /**
+   * Verifies an email OTP and replaces any previous account session.
+   * @param email Address that received the code.
+   * @param code User-entered one-time code.
+   * @param intent Whether the user selected login or registration.
+   * @returns The authenticated user and server-derived new-account flag.
+   */
   async function authenticateWithEmailCode(
     email: string,
     code: string,
@@ -391,10 +431,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authoritativeUser;
   }
 
+  /** Clears all local account state and signs out the Firebase session. */
   async function logout() {
     await clearAuthenticatedSession();
   }
 
+  /** Permanently deletes the account before clearing every local session store. */
   async function deleteAccount() {
     const deletedUserId = user?._id;
     await deleteCurrentAccount();

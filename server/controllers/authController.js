@@ -12,11 +12,13 @@ const {
   normalizeAuthenticatedUser,
 } = require("../utils/onboarding");
 
+/** Signs the application JWT used by authenticated API requests. */
 const createToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 
+/** Builds the normalized session payload shared by every authentication method. */
 const getAuthenticatedUserPayload = (user, { isNewUser = false } = {}) => {
   const data = normalizeAuthenticatedUser(user);
 
@@ -36,6 +38,7 @@ const getAuthenticatedUserPayload = (user, { isNewUser = false } = {}) => {
   };
 };
 
+/** Sends the stable response used when a login identity has no TripMatch account. */
 const sendAccountNotFound = (res) =>
   res.status(404).json({
     success: false,
@@ -43,6 +46,7 @@ const sendAccountNotFound = (res) =>
     message: "TripMatch account not found; register first",
   });
 
+/** Sends the stable conflict response for registration with an existing identity. */
 const sendAccountAlreadyExists = (res) =>
   res.status(409).json({
     success: false,
@@ -285,6 +289,12 @@ const requestEmailCode = async (req, res, next) => {
   }
 };
 
+/**
+ * Resolves an OTP-verified identity according to login or registration intent.
+ * @param {string} email Verified normalized email address.
+ * @param {"login"|"register"} intent Requested account operation.
+ * @returns {Promise<object>} Resolution result containing the account state.
+ */
 async function resolveVerifiedEmailUser(email, intent) {
   let user = await User.findOne({ email });
 

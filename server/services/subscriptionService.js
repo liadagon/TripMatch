@@ -52,6 +52,7 @@ class SubscriptionServiceError extends Error {
   }
 }
 
+/** Returns a required subscription setting or throws a typed 503 failure. */
 function getRequiredConfiguration(name) {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -70,6 +71,7 @@ function getApprovalUrl(subscription) {
   return typeof link?.href === "string" ? link.href : "";
 }
 
+/** Parses PayPal's next billing timestamp when it is present and valid. */
 function getCurrentPeriodEnd(subscription) {
   const nextBillingTime = subscription?.billing_info?.next_billing_time;
   if (!nextBillingTime) return undefined;
@@ -91,6 +93,7 @@ function getSafeSubscriptionState(user) {
   };
 }
 
+/** Builds the server-owned PayPal subscription request for one TripMatch user. */
 function buildSubscriptionPayload(user, planId) {
   const payload = {
     plan_id: planId,
@@ -182,6 +185,7 @@ function extractWebhookSubscriptionId(event) {
   );
 }
 
+/** Extracts the TripMatch user identifier carried by a supported webhook resource. */
 function extractWebhookCustomId(event) {
   return typeof event?.resource?.custom_id === "string"
     ? event.resource.custom_id
@@ -367,6 +371,7 @@ function createSubscriptionOperations(dependencies = {}) {
     return { cancelled: true, terminal: true };
   }
 
+  /** Resolves the account targeted by a verified PayPal webhook without trusting the client. */
   async function resolveWebhookUser(event, subscriptionId) {
     let user = subscriptionId
       ? await deps.UserModel.findOne({ paypalSubscriptionId: subscriptionId })

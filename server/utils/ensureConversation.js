@@ -1,5 +1,6 @@
 const Conversation = require("../models/Conversation");
 
+/** Upserts the single conversation associated with a match. */
 const ensureConversation = (match) =>
   Conversation.findOneAndUpdate(
     { match: match._id },

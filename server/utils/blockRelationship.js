@@ -1,5 +1,6 @@
 const Block = require("../models/Block");
 
+/** Returns the bidirectional block relationship between two users. */
 const getBlockStatus = async (currentUserId, otherUserId) => {
   const blocks = await Block.find({
     $or: [
@@ -16,6 +17,7 @@ const getBlockStatus = async (currentUserId, otherUserId) => {
   };
 };
 
+/** Returns every user ID blocked by or blocking the current user. */
 const getBlockedUserIds = async (currentUserId) => {
   const blocks = await Block.find({
     $or: [{ blocker: currentUserId }, { blocked: currentUserId }],
@@ -30,6 +32,7 @@ const getBlockedUserIds = async (currentUserId) => {
   );
 };
 
+/** Builds constant-time block lookups for all relationships involving one user. */
 const getBlockStatusMap = async (currentUserId) => {
   const blocks = await Block.find({
     $or: [{ blocker: currentUserId }, { blocked: currentUserId }],

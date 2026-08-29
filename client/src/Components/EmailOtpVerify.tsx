@@ -34,6 +34,7 @@ type OtpErrorResponse = {
   retryAfterSeconds?: number;
 };
 
+/** Safely reads the pending email address from router state. */
 function getEmailFromState(state: unknown) {
   if (typeof state !== "object" || state === null || !("email" in state)) {
     return "";
@@ -42,6 +43,7 @@ function getEmailFromState(state: unknown) {
   return typeof state.email === "string" ? state.email : "";
 }
 
+/** Safely reads the OTP resend deadline from router state. */
 function getCooldownFromState(state: unknown) {
   const routeState = state as OtpRouteState | null;
   return typeof routeState?.cooldownSeconds === "number"
@@ -49,6 +51,7 @@ function getCooldownFromState(state: unknown) {
     : 60;
 }
 
+/** Masks an email address while keeping it recognizable to its owner. */
 function maskEmail(email: string) {
   const [localPart, domain] = email.split("@");
 
@@ -159,6 +162,7 @@ export default function EmailOtpVerify() {
     inputsRef.current[Math.min(digits.length, 5)]?.focus();
   }
 
+  /** Verifies the complete OTP and follows the authoritative auth result. */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -217,6 +221,7 @@ export default function EmailOtpVerify() {
     }
   }
 
+  /** Requests a replacement OTP while enforcing the server-provided cooldown. */
   async function handleResend() {
     if (!email || cooldownSeconds > 0 || isResending) return;
 
@@ -252,6 +257,7 @@ export default function EmailOtpVerify() {
     navigate(pendingExistingAccountPath, { replace: true });
   }
 
+  /** Clears the discovered account before returning to the entry route. */
   async function exitExistingAccount() {
     setIsExiting(true);
 

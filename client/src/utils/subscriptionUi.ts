@@ -8,6 +8,7 @@ const PENDING_STATUSES = new Set<SubscriptionStatus>([
   "approved",
 ]);
 
+/** Indicates whether server state currently grants Boost access. */
 export function hasActiveBoost(subscription: SubscriptionState | null) {
   return Boolean(
     subscription?.active &&
@@ -16,10 +17,12 @@ export function hasActiveBoost(subscription: SubscriptionState | null) {
   );
 }
 
+/** Indicates whether PayPal approval or activation is still pending. */
 export function isPendingSubscription(subscription: SubscriptionState | null) {
   return Boolean(subscription && PENDING_STATUSES.has(subscription.status));
 }
 
+/** Returns an allowlisted PayPal Sandbox approval URL or null. */
 export function getSandboxApprovalUrl(value: unknown) {
   if (typeof value !== "string" || !value.trim()) return null;
 
@@ -38,6 +41,7 @@ export function getSandboxApprovalUrl(value: unknown) {
   }
 }
 
+/** Maps an internal subscription status to its localized UI label. */
 export function getSubscriptionStatusLabel(status: SubscriptionStatus) {
   const labels: Record<SubscriptionStatus, string> = {
     none: "ללא מנוי",

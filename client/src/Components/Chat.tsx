@@ -37,6 +37,7 @@ type BlockStatus = {
   blockedByMe: boolean;
 };
 
+/** Formats a persisted message timestamp for the current locale. */
 function formatMessageTime(value: string) {
   return new Date(value).toLocaleTimeString("he-IL", {
     hour: "2-digit",
@@ -92,6 +93,7 @@ export default function Chat() {
   useEffect(() => {
     let isActive = true;
 
+    /** Loads the selected real or demo conversation without mixing account state. */
     async function loadConversation() {
       setIsLoading(true);
 
@@ -170,6 +172,7 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConversation?.messages, demoMessages, isDemo]);
 
+  /** Sends a real or demo message through the correct account-scoped store. */
   async function sendMessage() {
     const cleanText = text.trim();
 
@@ -243,6 +246,7 @@ export default function Chat() {
     }
   }
 
+  /** Applies the confirmed block and removes the inaccessible conversation. */
   async function performBlockAction() {
     if (isBlockPending) return;
 
@@ -299,6 +303,7 @@ export default function Chat() {
     setShowBlockConfirmation(true);
   }
 
+  /** Clears the selected conversation only for the authenticated user. */
   async function deleteConversationForMe() {
     if (isDeletePending) return;
 

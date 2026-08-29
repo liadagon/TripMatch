@@ -35,6 +35,7 @@ type ProfileUpdateResponse = {
   data: AuthUser;
 };
 
+/** Uploads one validated profile image with the longer media timeout. */
 export const uploadProfileImage = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -47,6 +48,7 @@ export const uploadProfileImage = async (file: File) => {
   return uploadResponse.data.url;
 };
 
+/** Persists allowed fields on the authenticated user's profile. */
 export const updateCurrentProfile = async (payload: ProfileUpdatePayload) => {
   const response = await api.put<ProfileUpdateResponse>("/api/users/me", payload);
   return response.data.data;

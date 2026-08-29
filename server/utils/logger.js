@@ -17,6 +17,7 @@ const SENSITIVE_KEY_PARTS = [
   "otp",
 ];
 
+/** Redacts configured secrets and common credential patterns from log text. */
 function redactString(value) {
   const environmentRedacted = Object.entries(process.env)
     .filter(
@@ -44,11 +45,13 @@ function redactString(value) {
     );
 }
 
+/** Identifies structured-log keys that may contain confidential data. */
 function isSensitiveKey(key) {
   const normalizedKey = String(key).replace(/[^a-z0-9]/gi, "").toLowerCase();
   return SENSITIVE_KEY_PARTS.some((part) => normalizedKey.includes(part));
 }
 
+/** Recursively produces bounded, circular-safe and redacted log context. */
 function sanitize(value, key = "", seen = new WeakSet(), depth = 0) {
   if (isSensitiveKey(key)) return "[REDACTED]";
   if (typeof value === "string") return redactString(value);
@@ -92,6 +95,7 @@ function sanitize(value, key = "", seen = new WeakSet(), depth = 0) {
   );
 }
 
+/** Emits one structured log entry through the appropriate console sink. */
 function write(level, message, context) {
   const entry = {
     timestamp: new Date().toISOString(),

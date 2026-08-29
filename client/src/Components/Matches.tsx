@@ -18,6 +18,7 @@ import LoadingState from "./LoadingState";
 import SafeImage from "./SafeImage";
 import "./Matches.css";
 
+/** Converts an unknown matches request failure into display-safe text. */
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Unknown error";
 }
@@ -43,6 +44,7 @@ type DisplayConversation = {
   blocked: boolean;
 };
 
+/** Maps account-visible demo matches into the shared matches view model. */
 const getDemoMatches = (userId: string | undefined): DisplayMatch[] => {
   const matchedIds = new Set(getDemoMatchedUserIds(userId));
   return (
@@ -61,6 +63,7 @@ const getDemoMatches = (userId: string | undefined): DisplayMatch[] => {
   );
 };
 
+/** Builds demo conversation summaries that remain accessible to this account. */
 const getDemoConversations = (
   userId: string | undefined,
 ): DisplayConversation[] => {
@@ -83,6 +86,7 @@ const getDemoConversations = (
   );
 };
 
+/** Joins real conversation summaries with their matched-user records. */
 function mapRealConversations(
   conversations: ConversationSummary[],
   currentUserId: string | undefined,
@@ -141,6 +145,7 @@ export default function Matches() {
   useEffect(() => {
     let isActive = true;
 
+    /** Combines account-visible real and demo match conversations. */
     async function loadMatches() {
       setLoadError("");
 
@@ -201,6 +206,7 @@ export default function Matches() {
     };
   }, [conversationActions, dispatch, user?._id]);
 
+  /** Resolves the real conversation before navigating from a match card. */
   async function openMatchConversation(match: DisplayMatch) {
     if (openingMatchId) return;
 

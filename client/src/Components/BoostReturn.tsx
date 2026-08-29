@@ -30,6 +30,7 @@ export default function BoostReturn() {
     let isActive = true;
     let timeoutId: number | undefined;
 
+    /** Polls server-authoritative subscription state after the PayPal return. */
     async function verifySubscription(attempt = 1) {
       if (attempt === 1) {
         setIsLoading(true);

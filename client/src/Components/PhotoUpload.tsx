@@ -32,6 +32,7 @@ type PhotoItem = {
   previewUrl: string;
 };
 
+/** Normalizes persisted profile images into the fixed upload-slot model. */
 function getPersistedPhotos(user: AuthUser | null) {
   const urls = [
     ...(user?.photos || []),
@@ -64,6 +65,7 @@ const PhotoUpload = () => {
 
   const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
+  /** Creates a revocable browser preview for a newly selected image. */
   const createPhotoItem = (file: File): PhotoItem => {
     return {
       id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
@@ -72,6 +74,7 @@ const PhotoUpload = () => {
     };
   };
 
+  /** Validates the selected image type and size before upload. */
   const validateFile = (file: File) => {
     if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       return "אפשר להעלות קבצי תמונה בלבד.";
@@ -153,6 +156,7 @@ const PhotoUpload = () => {
     }
   };
 
+  /** Uploads selected images, persists their order, and advances onboarding. */
   const handleContinue = async () => {
     if (isSaving) return;
 

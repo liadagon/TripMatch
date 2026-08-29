@@ -8,6 +8,7 @@ export type MatchRecord = {
   updatedAt: string;
 };
 
+/** Fetches active, unblocked real matches for the current user. */
 export const getMatches = async () => {
   const response = await api.get<{
     success: true;
@@ -27,6 +28,7 @@ export type MatchedProfileData = {
   conversationId: string;
 };
 
+/** Fetches the expanded profile authorized by an existing match. */
 export const getMatchedProfile = async (userId: string) => {
   const response = await api.get<{
     success: true;

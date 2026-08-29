@@ -33,16 +33,19 @@ const EMPTY_STATE: DemoInteractionState = {
   messages: {},
 };
 
+/** Returns persistent browser storage when it is available. */
 function getDefaultStorage() {
   return typeof window === "undefined" ? null : window.localStorage;
 }
 
+/** Keeps only string identifiers from untrusted persisted data. */
 function safeStringList(value: unknown) {
   return Array.isArray(value)
     ? value.filter((entry): entry is string => typeof entry === "string")
     : [];
 }
 
+/** Validates persisted demo-message collections before they enter UI state. */
 function safeMessages(value: unknown): Record<string, DemoMessage[]> {
   if (!value || typeof value !== "object") return {};
   return Object.fromEntries(
@@ -62,6 +65,7 @@ function safeMessages(value: unknown): Record<string, DemoMessage[]> {
   );
 }
 
+/** Encodes an account identifier for use inside a browser-storage key. */
 function getSafeAccountScope(userId: string) {
   let first = 2166136261;
   let second = 5381;
@@ -75,10 +79,12 @@ function getSafeAccountScope(userId: string) {
   return `${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`;
 }
 
+/** Returns the account-scoped key used for demo interactions. */
 export function getDemoInteractionStorageKey(userId: string) {
   return `${DEMO_INTERACTIONS_PREFIX}${getSafeAccountScope(userId)}`;
 }
 
+/** Parses and normalizes the current account's persisted demo state. */
 export function getDemoInteractionState(
   userId: string | undefined,
   storage: Storage | null = getDefaultStorage(),
@@ -114,6 +120,7 @@ export function getDemoInteractionState(
   }
 }
 
+/** Persists one normalized demo-state snapshot for the authenticated account. */
 function writeDemoInteractionState(
   userId: string,
   state: DemoInteractionState,
@@ -123,6 +130,7 @@ function writeDemoInteractionState(
   storage.setItem(getDemoInteractionStorageKey(userId), JSON.stringify(state));
 }
 
+/** Filters demo profiles already swiped, dismissed or blocked by this account. */
 export function getEligibleDemoUserIds(
   userId: string | undefined,
   allDemoUserIds: readonly string[],
@@ -138,6 +146,7 @@ export function getEligibleDemoUserIds(
   return allDemoUserIds.filter((demoId) => !unavailableIds.has(demoId));
 }
 
+/** Records a demo swipe and applies the same reciprocal-match lifecycle as real data. */
 export function recordDemoSwipe(
   userId: string,
   demoUserId: string,
@@ -164,6 +173,7 @@ export function recordDemoSwipe(
   return action === "like" && demoHasLikedCurrentUser;
 }
 
+/** Returns demo users currently matched with the authenticated account. */
 export function getDemoMatchedUserIds(
   userId: string | undefined,
   storage: Storage | null = getDefaultStorage(),
@@ -171,6 +181,7 @@ export function getDemoMatchedUserIds(
   return getDemoInteractionState(userId, storage).matches;
 }
 
+/** Returns accessible, non-hidden demo conversation identifiers. */
 export function getDemoConversationUserIds(
   userId: string | undefined,
   storage: Storage | null = getDefaultStorage(),
@@ -180,6 +191,7 @@ export function getDemoConversationUserIds(
   return state.conversations.filter((demoId) => !hidden.has(demoId));
 }
 
+/** Returns persisted messages for an accessible demo conversation. */
 export function getDemoMessages(
   userId: string | undefined,
   demoUserId: string,
@@ -189,6 +201,7 @@ export function getDemoMessages(
   return getDemoInteractionState(userId, storage).messages[demoUserId] || [];
 }
 
+/** Appends a message after verifying that the demo conversation remains accessible. */
 export function appendDemoMessage(
   userId: string,
   demoUserId: string,
@@ -207,6 +220,7 @@ export function appendDemoMessage(
   return state.messages[demoUserId];
 }
 
+/** Indicates whether a demo conversation belongs to the current account. */
 export function isDemoConversationAvailable(
   userId: string | undefined,
   conversationId: string,
@@ -215,6 +229,7 @@ export function isDemoConversationAvailable(
   return getDemoConversationUserIds(userId, storage).includes(conversationId);
 }
 
+/** Indicates whether this account locally cleared a demo conversation. */
 export function isDemoConversationHidden(
   userId: string | undefined,
   conversationId: string,
@@ -224,6 +239,7 @@ export function isDemoConversationHidden(
     .hiddenConversations.includes(conversationId);
 }
 
+/** Hides a demo conversation for the current account without affecting others. */
 export function hideDemoConversation(
   userId: string,
   conversationId: string,
@@ -236,6 +252,7 @@ export function hideDemoConversation(
   writeDemoInteractionState(userId, state, storage);
 }
 
+/** Indicates whether the current account blocked a demo user. */
 export function isDemoUserBlocked(
   userId: string | undefined,
   demoUserId: string,
@@ -244,6 +261,7 @@ export function isDemoUserBlocked(
   return getDemoInteractionState(userId, storage).blocked.includes(demoUserId);
 }
 
+/** Returns every demo user blocked by the current account. */
 export function getBlockedDemoUserIds(
   userId: string | undefined,
   storage: Storage | null = getDefaultStorage(),
@@ -251,6 +269,7 @@ export function getBlockedDemoUserIds(
   return getDemoInteractionState(userId, storage).blocked;
 }
 
+/** Updates a demo block while preserving the account-scoped interaction state. */
 export function setDemoUserBlocked(
   userId: string,
   demoUserId: string,
@@ -264,6 +283,7 @@ export function setDemoUserBlocked(
   writeDemoInteractionState(userId, state, storage);
 }
 
+/** Removes only the selected account's persisted demo interactions. */
 export function clearDemoConversationState(
   userId: string | undefined,
   storage: Storage | null = getDefaultStorage(),

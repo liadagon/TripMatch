@@ -17,20 +17,24 @@ export default class ErrorBoundary extends Component<
     hasError: false,
   };
 
+  /** Switches the boundary to its recovery UI after a descendant render failure. */
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true };
   }
 
+  /** Reports unexpected React failures only in development builds. */
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     if (import.meta.env.DEV) {
       console.error("[Error boundary] Unexpected React error.", error, errorInfo);
     }
   }
 
+  /** Reloads the document to reconstruct application state from a clean startup. */
   private handleReload = () => {
     window.location.reload();
   };
 
+  /** Renders either the recovery page or the protected child tree. */
   render() {
     if (this.state.hasError) {
       return (

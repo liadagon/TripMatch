@@ -52,10 +52,12 @@ const STEPS = [
   { title: "ההתאמה הנכונה עבורי", helper: "עוד שלוש תשובות וסיימנו.", icon: Users },
 ] as const;
 
+/** Keeps a value only when it belongs to the current canonical option set. */
 function canonicalValue(value: string | undefined, options: readonly string[]) {
   return value && options.includes(value) ? value : "";
 }
 
+/** Indicates whether a selected destination is complete enough to persist. */
 function hasValidTripLocation(location: TripLocation | null) {
   return Boolean(
     location && location.placeId.trim() && location.name.trim() &&
@@ -76,6 +78,7 @@ type SelectFieldProps = {
   onChange: (field: keyof QuestionnaireForm, value: string) => void;
 };
 
+/** Renders a canonical questionnaire choice with localized option labels. */
 function SelectField({ label, field, value, options, error, icon: Icon, gender, onChange }: SelectFieldProps) {
   return (
     <label data-questionnaire-field={field} className={`questionnaire-form-field ${error ? "invalid" : ""}`}>
@@ -154,6 +157,7 @@ export default function Questionnaire() {
     clearError("interests");
   }
 
+  /** Returns all questionnaire errors for the current draft. */
   function getValidationErrors() {
     const nextErrors: QuestionnaireErrors = {};
     const name = form.name.trim();
@@ -182,6 +186,7 @@ export default function Questionnaire() {
     return nextErrors;
   }
 
+  /** Focuses the first invalid field on a selected questionnaire step. */
   function focusFirstInvalid(nextErrors: QuestionnaireErrors, stepIndex = currentStep) {
     const firstField = STEP_FIELDS[stepIndex].find((field) => nextErrors[field]);
     if (!firstField) return;
@@ -192,6 +197,7 @@ export default function Questionnaire() {
     });
   }
 
+  /** Restricts validation feedback to fields shown on the current step. */
   function validateCurrentStep() {
     const allErrors = getValidationErrors();
     const stepErrors = Object.fromEntries(
@@ -220,6 +226,7 @@ export default function Questionnaire() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  /** Maps backend validation details to questionnaire fields. */
   function getBackendErrors(error: unknown) {
     if (!axios.isAxiosError(error) || error.response?.status !== 400) return {};
     const fields = error.response.data?.fields;
@@ -239,6 +246,7 @@ export default function Questionnaire() {
     ) as QuestionnaireErrors;
   }
 
+  /** Persists the completed questionnaire and follows server registration state. */
   async function completeQuestionnaire(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSaving || !isLastStep) return;

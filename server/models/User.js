@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const { sanitizeUserPhotoFields } = require("../utils/profilePhotos");
 
+/** Removes credentials, internal virtuals and non-canonical photo fields from serialization. */
 const hideNonDefaultUserVirtuals = (_doc, ret) => {
   delete ret.password;
   delete ret.matches;

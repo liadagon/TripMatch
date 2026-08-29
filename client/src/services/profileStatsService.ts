@@ -8,6 +8,7 @@ export type ProfileStatistics = {
   conversations: number;
 };
 
+/** Fetches private match, like and conversation totals for the current user. */
 export async function getProfileStatistics(): Promise<ProfileStatistics> {
   const response = await api.get<{
     success: true;

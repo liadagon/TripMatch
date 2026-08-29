@@ -48,6 +48,7 @@ export default function Welcome() {
     return () => clearInterval(intervalId);
   }, []);
 
+  /** Completes Firebase Google sign-in and the TripMatch token exchange. */
   const handleGoogleAuthentication = async () => {
     setGoogleError("");
     setShowRegistrationCta(false);
@@ -121,6 +122,7 @@ export default function Welcome() {
     navigate(destination, { replace: true });
   }
 
+  /** Clears the discovered account before returning to the public entry route. */
   async function exitExistingAccount() {
     setIsLogoutLoading(true);
 

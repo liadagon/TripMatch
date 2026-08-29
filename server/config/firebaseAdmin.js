@@ -3,6 +3,7 @@ const { getAuth } = require("firebase-admin/auth");
 
 const FIREBASE_ADMIN_APP_NAME = "tripmatch-admin";
 
+/** Builds Firebase Admin credentials from environment variables without logging them. */
 const getFirebaseAdminConfig = () => {
   const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
@@ -25,6 +26,7 @@ const getFirebaseAdminConfig = () => {
   return { projectId, clientEmail, privateKey };
 };
 
+/** Returns the existing Firebase Admin app or initializes it once. */
 const getFirebaseAdminApp = () => {
   const existingApp = getApps().find(
     (app) => app.name === FIREBASE_ADMIN_APP_NAME
@@ -47,6 +49,7 @@ const getFirebaseAdminApp = () => {
   );
 };
 
+/** Returns the lazily initialized Firebase Admin authentication client. */
 const getFirebaseAdminAuth = () => {
   return getAuth(getFirebaseAdminApp());
 };

@@ -28,6 +28,7 @@ export type CreatePayPalSubscriptionResult = {
   reused: boolean;
 };
 
+/** Creates or reuses the authenticated user's server-configured PayPal subscription. */
 export async function createPayPalSubscription() {
   const response = await api.post<CreatePayPalSubscriptionResult>(
     "/api/subscriptions/paypal",
@@ -35,6 +36,7 @@ export async function createPayPalSubscription() {
   return response.data;
 }
 
+/** Fetches the server-authoritative subscription and entitlement state. */
 export async function getMySubscription() {
   const response = await api.get<{
     success: true;
@@ -43,6 +45,7 @@ export async function getMySubscription() {
   return response.data.data;
 }
 
+/** Cancels the PayPal subscription linked to the authenticated account. */
 export async function cancelPayPalSubscription() {
   const response = await api.post<{
     success: true;
@@ -52,6 +55,7 @@ export async function cancelPayPalSubscription() {
   return response.data.data;
 }
 
+/** Maps a subscription request failure to a safe user-facing message. */
 export function getSubscriptionErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error) && error.response?.status === 401) {
     return "פג תוקף החיבור. התחברי מחדש כדי לנהל את המנוי.";

@@ -79,6 +79,7 @@ function createAccountDeletionService(dependencies = {}) {
 
     await deps.cancelStoredSubscription(storedUser);
 
+    /** Removes the account's relational records and owned GridFS content. */
     const cleanup = async (session) => {
       const options = session ? { session } : {};
       const userId = storedUser._id;

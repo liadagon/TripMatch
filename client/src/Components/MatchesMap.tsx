@@ -65,6 +65,7 @@ function createDemoMarkers(
     });
 }
 
+/** Selects the least redundant geographic label for a map marker. */
 function getGeographicDestinationLabel(
   tripLocation: { city?: string; state?: string; country?: string } | undefined,
   fallbackLabel: string,
@@ -119,6 +120,7 @@ function createCurrentUserMapMarker(
   };
 }
 
+/** Keeps the Leaflet viewport fitted to the current user and visible matches. */
 function FitMapBounds({
   currentUser,
   matches,
@@ -277,6 +279,7 @@ export default function MatchesMap() {
   const apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY?.trim();
   const identity = getAuthenticatedIdentity(user);
 
+  /** Loads privacy-reduced real markers and eligible demo destinations. */
   async function loadMapData() {
     setIsLoading(true);
     setLoadError("");

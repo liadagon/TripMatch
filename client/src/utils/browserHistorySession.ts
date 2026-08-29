@@ -7,6 +7,7 @@ export type DocumentNavigationType =
 
 type NavigationPerformance = Pick<Performance, "getEntriesByType">;
 
+/** Returns the browser's navigation classification for the current document. */
 export function getDocumentNavigationType(
   performanceApi: NavigationPerformance | undefined = globalThis.performance,
 ): DocumentNavigationType {
@@ -30,6 +31,7 @@ export function isDocumentHistoryRestoration(
   return pageShowPersisted || navigationType === "back_forward";
 }
 
+/** Indicates whether startup followed a history or cached-document restoration. */
 export function wasDocumentRestoredThroughHistory() {
   return isDocumentHistoryRestoration(getDocumentNavigationType());
 }

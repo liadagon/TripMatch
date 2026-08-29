@@ -154,11 +154,13 @@ type CurrentUserResponse = {
   accountState: "registration_in_progress" | "registered";
 };
 
+/** Exchanges a Firebase ID token for a TripMatch session. */
 export const googleLogin = (
   idToken: string,
   intent: "login" | "register",
 ) => api.post<GoogleLoginResponse>("/api/auth/google", { idToken, intent });
 
+/** Requests a one-time code for the selected email authentication intent. */
 export const requestEmailOtp = (
   email: string,
   intent: "login" | "register",
@@ -167,6 +169,7 @@ export const requestEmailOtp = (
   intent,
 });
 
+/** Verifies an email code and returns the authoritative TripMatch session. */
 export const verifyEmailOtp = (
   email: string,
   code: string,
@@ -178,16 +181,20 @@ export const verifyEmailOtp = (
     intent,
   });
 
+/** Authenticates an existing local account with email and password. */
 export const emailLogin = (email: string, password: string) =>
   api.post<EmailLoginResponse>("/api/auth/login", { email, password });
 
+/** Starts local account registration with the validated identity fields. */
 export const registerUser = (payload: RegisterPayload) =>
   api.post<EmailLoginResponse>("/api/auth/register", payload);
 
+/** Restores the current user, optionally with an explicit candidate token. */
 export const getCurrentUser = (token?: string) =>
   api.get<CurrentUserResponse>("/api/auth/me", {
     ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
   });
 
+/** Permanently deletes the authenticated account and its owned server data. */
 export const deleteCurrentAccount = () =>
   api.delete<{ success: true }>("/api/users/me");

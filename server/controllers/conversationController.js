@@ -8,6 +8,10 @@ const ensureConversation = require("../utils/ensureConversation");
 const CONVERSATION_PROFILE_FIELDS =
   "name age preferredDestinations tripDates photo photoURL";
 
+/**
+ * Loads a conversation and verifies that the requesting user participates in it.
+ * @returns {Promise<{conversation: import("mongoose").Document|null, statusCode: number}>} Authorization result.
+ */
 const findAuthorizedConversation = async (conversationId, userId) => {
   const conversation = await Conversation.findById(conversationId);
 
@@ -26,16 +30,19 @@ const findAuthorizedConversation = async (conversationId, userId) => {
   return { conversation, statusCode: 200 };
 };
 
+/** Returns the participant ID that does not belong to the current user. */
 const getOtherParticipantId = (conversation, currentUserId) =>
   conversation.participants.find(
     (participantId) => String(participantId) !== String(currentUserId)
   );
 
+/** Returns the user-local conversation clear timestamp, when present. */
 const getClearedAt = (conversation, userId) =>
   conversation.clearedFor.find(
     (entry) => String(entry.user) === String(userId)
   )?.clearedAt;
 
+/** Filters embedded messages according to the user's local clear timestamp. */
 const getVisibleMessages = (conversation, userId) => {
   const clearedAt = getClearedAt(conversation, userId);
 
@@ -46,6 +53,7 @@ const getVisibleMessages = (conversation, userId) => {
   );
 };
 
+/** Indicates whether a cleared conversation has since received a visible message. */
 const hasIncomingMessageAfterClear = (conversation, userId) => {
   const clearedAt = getClearedAt(conversation, userId);
 

@@ -17,6 +17,7 @@ class EmailOtpError extends Error {
   }
 }
 
+/** Returns the server secret used to HMAC one-time email codes. */
 function getOtpHashSecret() {
   const secret = process.env.JWT_SECRET?.trim();
 
@@ -27,10 +28,12 @@ function getOtpHashSecret() {
   return secret;
 }
 
+/** Generates a cryptographically random six-digit one-time code. */
 function generateOtp() {
   return crypto.randomInt(0, 1_000_000).toString().padStart(OTP_LENGTH, "0");
 }
 
+/** Derives the stored HMAC for an email and one-time code. */
 function hashOtp(email, code) {
   return crypto
     .createHmac("sha256", getOtpHashSecret())
@@ -38,6 +41,7 @@ function hashOtp(email, code) {
     .digest("hex");
 }
 
+/** Creates the deliberately generic invalid-code error returned to callers. */
 function invalidOtpError() {
   return new EmailOtpError("Invalid or expired verification code", {
     code: "OTP_INVALID_OR_EXPIRED",
@@ -45,6 +49,7 @@ function invalidOtpError() {
   });
 }
 
+/** Creates the terminal error used after the OTP attempt limit is reached. */
 function tooManyAttemptsError() {
   return new EmailOtpError("Too many verification attempts", {
     code: "OTP_TOO_MANY_ATTEMPTS",
@@ -52,6 +57,7 @@ function tooManyAttemptsError() {
   });
 }
 
+/** Creates a resend-cooldown error with the remaining wait duration. */
 function cooldownError(lastSentAt = new Date()) {
   const elapsedMs = Date.now() - new Date(lastSentAt).getTime();
   const retryAfterSeconds = Math.max(
@@ -66,6 +72,7 @@ function cooldownError(lastSentAt = new Date()) {
   });
 }
 
+/** Builds the localized transactional email without persisting the plaintext code. */
 function buildOtpEmail(code) {
   return {
     subject: "קוד האימות שלך ל-TripMatch",

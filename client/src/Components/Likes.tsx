@@ -142,6 +142,7 @@ export default function Likes() {
     setIsBoostPromoHidden(false);
   }, [isBoostActive]);
 
+  /** Creates a subscription and redirects only to an allowlisted PayPal URL. */
   async function handleStartBoost() {
     if (isSubscriptionActionPending) return;
 
@@ -175,6 +176,7 @@ export default function Likes() {
     }
   }
 
+  /** Cancels Boost after confirmation and refreshes server entitlement state. */
   async function handleCancelSubscription() {
     const confirmed = window.confirm(
       "לבטל את מנוי TripMatch Boost? ההרשאה תוסר לפי מצב המנוי בשרת.",
@@ -206,6 +208,7 @@ export default function Likes() {
     navigate("/matches");
   }
 
+  /** Reloads server-authoritative subscription status after external approval. */
   async function handleRefreshSubscription() {
     if (isSubscriptionActionPending) return;
     setIsSubscriptionActionPending(true);

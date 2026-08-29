@@ -15,6 +15,7 @@ import { calculateProfileCompatibility } from "../utils/profileCompatibility";
 import { useAuth } from "../context/AuthContext";
 import { getSafeProfileReturnPath } from "../utils/profileNavigation";
 
+/** Builds the matched-profile view model for an account-visible demo match. */
 function getDemoMatchedProfile(profile: ProfilePreviewUser, currentUser: Parameters<typeof calculateProfileCompatibility>[0]): MatchedProfileData {
   return {
     profile,
@@ -36,6 +37,7 @@ export default function MatchedProfile() {
   useEffect(() => {
     let isActive = true;
 
+    /** Loads only the real or demo profile authorized by the current match. */
     async function loadProfile() {
       setData(null);
       setErrorMessage("");

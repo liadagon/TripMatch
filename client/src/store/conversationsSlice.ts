@@ -48,6 +48,7 @@ type ConversationsState = {
   clearRequestId: string | null;
 };
 
+/** Creates a fresh account-scoped conversation state for login and logout resets. */
 const createInitialState = (): ConversationsState => ({
   summaries: [],
   activeConversation: null,
@@ -68,6 +69,7 @@ const createInitialState = (): ConversationsState => ({
 
 const initialState = createInitialState();
 
+/** Preserves a safe message and optional HTTP status from a failed request. */
 function getRequestError(error: unknown): ConversationRequestError {
   return {
     message:
@@ -78,6 +80,7 @@ function getRequestError(error: unknown): ConversationRequestError {
   };
 }
 
+/** Indicates whether a rejected thunk value has the expected safe error shape. */
 export function isConversationRequestError(
   error: unknown,
 ): error is ConversationRequestError {
@@ -91,6 +94,7 @@ export function isConversationRequestError(
   );
 }
 
+/** Prevents real-API thunks from handling local demo conversations. */
 function isRealConversation({ conversationId }: ConversationIdArgument) {
   return !getConversationById(conversationId);
 }

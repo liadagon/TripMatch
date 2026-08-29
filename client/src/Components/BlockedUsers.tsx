@@ -110,6 +110,7 @@ export default function BlockedUsers() {
     };
   }, [currentUser?._id]);
 
+  /** Removes a server block and refreshes the account's visible list. */
   async function unblock(record: BlockedUserRecord) {
     const userId = record.blocked._id;
     if (pendingUserId) return;

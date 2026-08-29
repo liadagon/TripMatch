@@ -7,6 +7,7 @@ type SafeImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   fallbackClassName?: string;
 };
 
+/** Renders an accessible fallback when a profile image is absent or fails. */
 export default function SafeImage({
   src,
   alt = "",

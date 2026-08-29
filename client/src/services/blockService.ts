@@ -12,6 +12,7 @@ export type BlockedUserRecord = {
   createdAt: string;
 };
 
+/** Fetches the authenticated user's blocked-profile list. */
 export const getBlockedUsers = async () => {
   const response = await api.get<{
     success: true;
@@ -21,6 +22,7 @@ export const getBlockedUsers = async () => {
   return response.data.data;
 };
 
+/** Blocks an existing matched user and returns the resulting relationship state. */
 export const blockMatchedUser = async (userId: string) => {
   const response = await api.post<{
     success: true;
@@ -29,6 +31,7 @@ export const blockMatchedUser = async (userId: string) => {
   return response.data.blockStatus;
 };
 
+/** Removes the authenticated user's block for a matched user. */
 export const unblockMatchedUser = async (userId: string) => {
   const response = await api.delete<{
     success: true;

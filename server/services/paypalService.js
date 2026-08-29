@@ -31,6 +31,7 @@ class PayPalApiError extends Error {
   }
 }
 
+/** Removes trailing slashes before PayPal endpoint paths are appended. */
 function normalizeBaseUrl(baseUrl) {
   return baseUrl.replace(/\/+$/, "");
 }
@@ -47,6 +48,7 @@ function getPayPalConfigurationStatus() {
   };
 }
 
+/** Validates the required Sandbox API credentials and returns their normalized form. */
 function getPayPalConfiguration() {
   const clientId = process.env.PAYPAL_CLIENT_ID?.trim();
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim();
@@ -75,6 +77,7 @@ function getPayPalConfiguration() {
   return { baseUrl, clientId, clientSecret };
 }
 
+/** Parses a PayPal JSON response while tolerating an empty response body. */
 async function readResponseBody(response) {
   try {
     return await response.json();
@@ -83,6 +86,7 @@ async function readResponseBody(response) {
   }
 }
 
+/** Extracts a stable provider error identifier for diagnostics. */
 function getProviderError(responseBody, fallback) {
   if (typeof responseBody?.name === "string") return responseBody.name;
   if (typeof responseBody?.error === "string") return responseBody.error;
@@ -232,6 +236,7 @@ async function requestPayPalApi({
   return responseBody;
 }
 
+/** Builds one paginated PayPal resource URL from trusted query values. */
 function buildPagePath(path, page, query = {}) {
   const searchParams = new URLSearchParams({
     ...query,

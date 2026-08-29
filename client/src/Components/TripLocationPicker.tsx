@@ -31,6 +31,7 @@ type TripLocationPickerProps = {
 const MIN_QUERY_LENGTH = 3;
 const DEBOUNCE_MS = 350;
 
+/** Maps a complete Geoapify feature to the application's location model. */
 function locationFromFeature(feature: GeoapifyFeature): TripLocation | null {
   const properties = feature.properties;
 
@@ -60,12 +61,14 @@ function locationFromFeature(feature: GeoapifyFeature): TripLocation | null {
   };
 }
 
+/** Builds the concise destination label shown by location inputs. */
 export function getTripLocationLabel(location: TripLocation) {
   return Array.from(
     new Set([location.name, location.state, location.country].filter(Boolean)),
   ).join(", ");
 }
 
+/** Provides debounced Geoapify search and emits validated structured locations. */
 export default function TripLocationPicker({
   value,
   onChange,

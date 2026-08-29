@@ -1,5 +1,6 @@
 const logger = require("../utils/logger");
 
+/** Normalizes operational errors and records unexpected 5xx failures safely. */
 const errorHandler = (err, req, res, next) => {
   let message = err.message || "Internal server error";
 

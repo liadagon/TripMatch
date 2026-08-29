@@ -30,10 +30,12 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let sessionPersistencePromise: Promise<void> | null = null;
 
+/** Returns required Firebase client settings that are absent at runtime. */
 function getMissingConfigKeys() {
   return requiredConfigKeys.filter((key) => !firebaseConfig[key]);
 }
 
+/** Lazily initializes the configured Firebase application. */
 function getFirebaseApp() {
   const missingKeys = getMissingConfigKeys();
 
@@ -50,6 +52,7 @@ function getFirebaseApp() {
   return app;
 }
 
+/** Returns the singleton Firebase Auth client for the configured application. */
 export function getFirebaseAuth() {
   if (!auth) {
     auth = getAuth(getFirebaseApp());
@@ -58,6 +61,10 @@ export function getFirebaseAuth() {
   return auth;
 }
 
+/**
+ * Configures tab-scoped Firebase persistence once before interactive sign-in.
+ * @returns The shared persistence-initialization promise.
+ */
 export function ensureFirebaseSessionPersistence() {
   if (!sessionPersistencePromise) {
     sessionPersistencePromise = setPersistence(
@@ -75,6 +82,10 @@ export function ensureFirebaseSessionPersistence() {
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
+/**
+ * Opens Google sign-in after session persistence is ready.
+ * @returns A Firebase ID token for the backend token exchange.
+ */
 export async function signInWithGoogle() {
   let user;
 
@@ -102,19 +113,27 @@ export async function signInWithGoogle() {
   }
 }
 
+/** Signs out the Firebase identity associated with the current browser tab. */
 export async function signOutFromFirebase() {
   await signOut(getFirebaseAuth());
 }
 
+/** Extracts a provider error code without assuming a Firebase error shape. */
 function getErrorCode(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error
     ? String((error as { code?: unknown }).code)
     : undefined;
 }
 
+/** Converts an unknown provider failure into diagnostic text. */
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
+/**
+ * Maps Firebase failures to environment-aware, user-facing guidance.
+ * @param error Unknown error returned by Firebase authentication.
+ * @returns A localized message safe to display to the user.
+ */
 export function getGoogleAuthErrorMessage(error: unknown) {
   const code = getErrorCode(error) ?? "";
 

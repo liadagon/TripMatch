@@ -26,6 +26,7 @@ export const ONBOARDING_PATHS: readonly OnboardingPath[] = [
   "/questionnaire",
 ];
 
+/** Returns the preceding route in the ordered onboarding flow. */
 export function getPreviousOnboardingPath(
   pathname: OnboardingPath,
 ): "/" | OnboardingPath {
@@ -33,6 +34,7 @@ export function getPreviousOnboardingPath(
   return currentIndex <= 0 ? "/" : ONBOARDING_PATHS[currentIndex - 1];
 }
 
+/** Maps authoritative registration state to the next accessible route. */
 export function getProfileCompletionPath(
   user: AuthUser,
 ): ProfileCompletionPath {
@@ -49,6 +51,7 @@ export function getProfileCompletionPath(
     : "/photo-upload";
 }
 
+/** Selects the first route shown after a successful authentication result. */
 export function getAuthenticationPath(result: AuthenticationResult) {
   const completionPath = getProfileCompletionPath(result.user);
   return result.isNewUser && completionPath !== "/discover"
@@ -97,6 +100,7 @@ export function getOnboardingRouteRedirect(
 
 export const getGoogleLoginPath = getAuthenticationPath;
 
+/** Indicates whether registration discovered an existing account. */
 export function shouldConfirmExistingAccount(
   intent: AuthenticationIntent,
   isNewUser: boolean,
@@ -104,6 +108,7 @@ export function shouldConfirmExistingAccount(
   return intent === "register" && !isNewUser;
 }
 
+/** Indicates whether email login should show its existing-user transition. */
 export function shouldShowEmailLoginSuccessTransition(
   intent: AuthenticationIntent,
   isNewUser: boolean,
@@ -111,6 +116,7 @@ export function shouldShowEmailLoginSuccessTransition(
   return intent === "login" && !isNewUser;
 }
 
+/** Safely reads the requested authentication intent from router state. */
 export function getAuthenticationIntent(state: unknown): AuthenticationIntent {
   if (
     typeof state === "object" &&

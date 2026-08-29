@@ -50,6 +50,7 @@ type UsableDiscoverUser = DiscoverUser & {
   tripDates: string;
 };
 
+/** Determines whether a backend profile has every field required by Discover. */
 export function isUsableDiscoverProfile(
   user: DiscoverUser,
 ): user is UsableDiscoverUser {
@@ -73,6 +74,7 @@ export function isUsableDiscoverProfile(
   );
 }
 
+/** Maps a validated backend user to the card model rendered by Discover. */
 function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
   const tags = [
     ...filterCanonicalInterests(user.interests),
@@ -109,6 +111,7 @@ function mapUserToProfile(user: UsableDiscoverUser): DiscoverProfile {
   };
 }
 
+/** Maps a demo profile to the same card model and calculates local compatibility. */
 function mapDemoToProfile(profile: DemoProfile, currentUser: Parameters<typeof calculateProfileCompatibility>[0]): DiscoverProfile {
   const compatibility = calculateProfileCompatibility(currentUser, profile);
   return {
@@ -127,6 +130,7 @@ function mapDemoToProfile(profile: DemoProfile, currentUser: Parameters<typeof c
   };
 }
 
+/** Produces the proximity-aware destination heading shown on a profile card. */
 function getDestinationTitle(destinationInfo: DestinationInfo) {
   if (destinationInfo.sameCity) {
     const city = destinationInfo.label.split(",")[0]?.trim();
@@ -137,6 +141,7 @@ function getDestinationTitle(destinationInfo: DestinationInfo) {
   return destinationInfo.label;
 }
 
+/** Returns demo profiles still eligible for the current account's swipe state. */
 function getFreshDemoProfiles(userId: string | undefined, currentUser: Parameters<typeof calculateProfileCompatibility>[0] = {}) {
   const allDemoProfiles = getDemoDiscoverProfiles();
   const eligibleDemoIds = new Set(
@@ -168,6 +173,7 @@ export default function Discover() {
   const isPointerDownRef = useRef(false);
   const isAnimatingRef = useRef(false);
 
+  /** Loads server and eligible demo profiles for the active account. */
   async function loadProfiles() {
     setIsLoading(true);
     setSwipeError("");
@@ -233,6 +239,7 @@ export default function Discover() {
   const dragPower = Math.min(Math.abs(dragX) / 130, 1);
   const dragMode = dragX > 35 ? "drag-like" : dragX < -35 ? "drag-skip" : "";
 
+  /** Persists a swipe and advances the deck using the matching result. */
   async function moveToNextProfile(type: SwipeAction) {
     if (isAnimatingRef.current) return;
 
@@ -345,6 +352,7 @@ export default function Discover() {
     setIsDragging(false);
   }
 
+  /** Resolves the matched conversation before opening chat from Discover. */
   async function handleMessage() {
     if (isOpeningConversation) return;
     setSwipeError("");
@@ -365,6 +373,7 @@ export default function Discover() {
     }
   }
 
+  /** Applies a local account-scoped block to the active demo profile. */
   function blockDemoProfile() {
     if (!profile.isDemo || !user?._id) return;
     setDemoUserBlocked(user._id, profile.userId, true);

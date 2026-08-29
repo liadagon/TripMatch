@@ -1,5 +1,6 @@
 const APP_PROFILE_FILE_PATH = /^\/api\/file\/[a-f\d]{24}$/i;
 
+/** Parses a candidate photo URL into a pathname without trusting its origin. */
 function getPhotoPath(value) {
   if (typeof value !== "string" || !value.trim()) return "";
   try {
@@ -9,11 +10,13 @@ function getPhotoPath(value) {
   }
 }
 
+/** Indicates whether a URL belongs to TripMatch-managed profile-image storage. */
 function isAppOwnedPhotoUrl(value) {
   const pathname = getPhotoPath(value);
   return APP_PROFILE_FILE_PATH.test(pathname) || pathname.startsWith("/public/");
 }
 
+/** Returns the user's unique app-owned profile images in display order. */
 function getAppOwnedPhotoUrls(user) {
   const candidates = [
     user?.photoURL,
@@ -23,6 +26,7 @@ function getAppOwnedPhotoUrls(user) {
   return [...new Set(candidates.filter(isAppOwnedPhotoUrl))];
 }
 
+/** Removes external photos and normalizes the legacy photo fields in place. */
 function sanitizeUserPhotoFields(user) {
   if (!user || typeof user !== "object") return user;
   const appPhotos = getAppOwnedPhotoUrls(user);

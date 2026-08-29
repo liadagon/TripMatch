@@ -5,6 +5,7 @@ const { sanitizeUserPhotoFields } = require("../utils/profilePhotos");
 
 const BLOCKED_USER_FIELDS = "name photo photoURL";
 
+/** Returns the match shared by two users, if one exists. */
 const findMatch = (currentUserId, otherUserId) =>
   Match.exists({ users: { $all: [currentUserId, otherUserId] } });
 

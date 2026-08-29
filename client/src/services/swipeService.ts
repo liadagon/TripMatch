@@ -43,6 +43,7 @@ type SwipeMutationResponse = {
   } | null;
 };
 
+/** Persists a like or skip and returns any reciprocal match created by it. */
 export const createSwipe = async (
   targetUserId: string,
   action: SwipeAction,
@@ -55,6 +56,7 @@ export const createSwipe = async (
   return response.data;
 };
 
+/** Fetches swipe decisions made by the authenticated user. */
 export const getSwipes = async () => {
   const response = await api.get<{
     success: true;
@@ -64,6 +66,7 @@ export const getSwipes = async () => {
   return response.data.data;
 };
 
+/** Fetches entitlement-aware received-like data from the backend. */
 export const getReceivedLikes = async () => {
   const response = await api.get<
     ({ success: true } & ReceivedLikesResult)

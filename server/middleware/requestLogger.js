@@ -1,5 +1,6 @@
 const logger = require("../utils/logger");
 
+/** Records safe request metadata after the response finishes. */
 const requestLogger = (req, res, next) => {
   const startedAt = process.hrtime.bigint();
   const requestPath = req.path;

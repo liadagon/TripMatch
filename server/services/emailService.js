@@ -30,6 +30,7 @@ function getEmailConfigurationStatus() {
   };
 }
 
+/** Reads and validates the Brevo settings needed for transactional delivery. */
 function getBrevoConfiguration() {
   const apiKey = process.env.BREVO_API_KEY?.trim();
   const senderEmail = process.env.BREVO_SENDER_EMAIL?.trim();
@@ -55,6 +56,7 @@ function getBrevoConfiguration() {
   return { apiKey, senderEmail, senderName };
 }
 
+/** Normalizes a recipient value into Brevo's address-object format. */
 function normalizeRecipient(to) {
   const recipient =
     typeof to === "string"
@@ -73,6 +75,7 @@ function normalizeRecipient(to) {
   return recipient;
 }
 
+/** Parses a provider response when possible while tolerating an empty body. */
 async function readResponseBody(response) {
   try {
     return await response.json();
@@ -81,6 +84,7 @@ async function readResponseBody(response) {
   }
 }
 
+/** Builds a typed, client-safe delivery error from Brevo response metadata. */
 function createDeliveryError(response, responseBody) {
   const providerCode =
     typeof responseBody?.code === "string" ? responseBody.code : undefined;

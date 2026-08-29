@@ -24,6 +24,7 @@ const SAFE_RETURN_PATHS = new Set([
   "/boost/return",
 ]);
 
+/** Restricts profile return targets to known application routes. */
 function isSafeReturnPathname(pathname: string) {
   return (
     SAFE_RETURN_PATHS.has(pathname) ||
@@ -32,10 +33,15 @@ function isSafeReturnPathname(pathname: string) {
   );
 }
 
+/** Restricts nested-profile parents to profile routes. */
 function isSafeParentProfilePathname(pathname: string) {
   return pathname === "/profile" || /^\/matched-profile\/[^/]+$/.test(pathname);
 }
 
+/**
+ * Extracts a same-origin application path from untrusted router state.
+ * @returns A validated relative path, or null when the state is unsafe.
+ */
 function getSafeStatePath(
   state: unknown,
   key: "from" | "parentProfile",
@@ -60,10 +66,12 @@ function getSafeStatePath(
   }
 }
 
+/** Returns a validated outer return path from profile navigation state. */
 export function getSafeProfileReturnPath(state: unknown) {
   return getSafeStatePath(state, "from", isSafeReturnPathname);
 }
 
+/** Returns a validated parent-profile path from nested navigation state. */
 export function getSafeParentProfilePath(state: unknown) {
   return getSafeStatePath(
     state,
@@ -72,6 +80,7 @@ export function getSafeParentProfilePath(state: unknown) {
   );
 }
 
+/** Creates safe router state for opening a profile from the current location. */
 export function createProfileNavigationState(
   location: AppLocation,
 ): ProfileNavigationState | undefined {
@@ -79,6 +88,7 @@ export function createProfileNavigationState(
   return getSafeProfileReturnPath({ from }) ? { from } : undefined;
 }
 
+/** Preserves safe outer navigation while entering a nested profile. */
 export function createInnerProfileNavigationState(
   parentProfile: string,
   outerState: unknown,
@@ -93,6 +103,7 @@ export function createInnerProfileNavigationState(
   };
 }
 
+/** Restores safe outer navigation state when leaving a nested profile. */
 export function getOuterProfileNavigationState(
   innerState: unknown,
 ): ProfileNavigationState | undefined {

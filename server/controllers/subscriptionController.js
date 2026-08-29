@@ -1,5 +1,6 @@
 const subscriptionService = require("../services/subscriptionService");
 
+/** Converts typed subscription failures into the existing global error flow. */
 function forwardSubscriptionError(error, next) {
   if (
     error?.name === "PayPalApiError" ||
@@ -14,6 +15,7 @@ function forwardSubscriptionError(error, next) {
 }
 
 // Keep a controller-level guard behind the route's empty-body Joi schema.
+/** Indicates whether a server-owned subscription command received client fields. */
 function hasUnexpectedBody(body) {
   return Boolean(body && Object.keys(body).length > 0);
 }

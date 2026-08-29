@@ -31,6 +31,7 @@ const GENDERED_QUESTIONNAIRE_OPTION_LABELS: Readonly<
   },
 };
 
+/** Selects masculine, feminine, or neutral Hebrew copy for a user. */
 export function getGenderedHebrewCopy(
   gender: ApplicationGender | undefined,
   copy: GenderedCopy,
@@ -40,6 +41,7 @@ export function getGenderedHebrewCopy(
   return copy.neutral;
 }
 
+/** Maps a canonical questionnaire value to its gender-aware display label. */
 export function getGenderedQuestionnaireOptionLabel(
   value: string,
   gender: ApplicationGender | undefined,
