@@ -16,6 +16,7 @@ import "./BoostReturn.css";
 const MAX_AUTOMATIC_CHECKS = 4;
 const POLL_INTERVAL_MS = 2500;
 
+/** Resolves the authoritative subscription state after returning from PayPal. */
 export default function BoostReturn() {
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [isLoading, setIsLoading] = useState(true);

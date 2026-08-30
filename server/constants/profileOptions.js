@@ -79,6 +79,7 @@ const PROFILE_OPTIONS = {
 
 const canonicalInterests = new Set(PROFILE_OPTIONS.interests);
 
+/** Keeps only unique interests defined by the canonical profile options. */
 function filterCanonicalInterests(values) {
   if (!Array.isArray(values)) return [];
 

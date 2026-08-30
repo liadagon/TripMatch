@@ -13,6 +13,7 @@ type OtpErrorResponse = {
   retryAfterSeconds?: number;
 };
 
+/** Requests a one-time email code for the selected authentication intent. */
 export default function EmailOtpRequest() {
   const navigate = useNavigate();
   const location = useLocation();

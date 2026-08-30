@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { getProfileCompletionPath } from "../utils/authNavigation";
 import "./PostLoginWelcome.css";
 
+/** Introduces newly authenticated users to the remaining onboarding flow. */
 export default function PostLoginWelcome() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();

@@ -155,6 +155,7 @@ function getFreshDemoProfiles(userId: string | undefined, currentUser: Parameter
     .map((candidate) => mapDemoToProfile(candidate, currentUser));
 }
 
+/** Presents ranked real and demo profiles through the shared swipe lifecycle. */
 export default function Discover() {
   const navigate = useNavigate();
   const { user } = useAuth();

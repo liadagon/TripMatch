@@ -121,6 +121,7 @@ function mapRealConversations(
   });
 }
 
+/** Combines accessible real and demo matches with their conversation summaries. */
 export default function Matches() {
   const navigate = useNavigate();
   const { user } = useAuth();

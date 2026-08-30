@@ -60,10 +60,12 @@ export const demoProfiles: readonly DemoProfile[] = [
 
 export const demoDiscoverProfiles = demoProfiles;
 
+/** Finds one immutable demo profile by its public demo-user identifier. */
 export function getDemoProfile(userId: string | undefined) {
   return demoProfiles.find((profile) => profile.userId === userId);
 }
 
+/** Returns isolated copies of demo profiles suitable for discovery state. */
 export function getDemoDiscoverProfiles() {
   return demoProfiles.map((profile) => ({ ...profile, photos: [...profile.photos], interests: [...profile.interests], preferredDestinations: [...profile.preferredDestinations], questionnaire: { ...profile.questionnaire }, tripLocation: { ...profile.tripLocation } }));
 }

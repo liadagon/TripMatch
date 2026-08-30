@@ -265,6 +265,7 @@ const MatchPhotoMarker = memo(function MatchPhotoMarker({
   );
 });
 
+/** Maps privacy-safe match destinations and the current user's trip marker. */
 export default function MatchesMap() {
   const navigate = useNavigate();
   const { user } = useAuth();

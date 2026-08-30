@@ -96,6 +96,7 @@ function SelectField({ label, field, value, options, error, icon: Icon, gender, 
   );
 }
 
+/** Collects and persists the canonical multi-step matching questionnaire. */
 export default function Questionnaire() {
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();

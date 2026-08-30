@@ -280,6 +280,7 @@ function hasValidTripLocation(location: TripLocation | null) {
   );
 }
 
+/** Coordinates the authenticated profile view, editing and account controls. */
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();

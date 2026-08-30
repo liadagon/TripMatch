@@ -45,6 +45,7 @@ function formatMessageTime(value: string) {
   });
 }
 
+/** Runs an authorized real or account-scoped demo conversation. */
 export default function Chat() {
   const navigate = useNavigate();
   const { userId: conversationId } = useParams();

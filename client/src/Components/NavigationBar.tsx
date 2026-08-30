@@ -47,6 +47,7 @@ const routesWithoutNavigation = new Set([
   "/questionnaire",
 ]);
 
+/** Renders protected navigation with route-aware active states. */
 export default function NavigationBar() {
   const location = useLocation();
   const navigate = useNavigate();

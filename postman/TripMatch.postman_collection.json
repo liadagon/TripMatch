@@ -378,6 +378,46 @@
             "url": "{{baseUrl}}/api/users/{{otherUserId}}",
             "description": "Protected single-resource READ. Set otherUserId to a disposable user's real MongoDB ObjectId. Expected 200."
           }
+        },
+        {
+          "name": "Legacy Guard - Reject User Update by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Legacy user update is rejected with 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{otherUserId}}",
+            "description": "Protected legacy mutation guard. This route never updates data and intentionally returns 403 for a fully onboarded authenticated user."
+          }
+        },
+        {
+          "name": "Legacy Guard - Reject User Deletion by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Legacy user deletion is rejected with 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{otherUserId}}",
+            "description": "Protected legacy mutation guard. This route never deletes data and intentionally returns 403 for a fully onboarded authenticated user."
+          }
         }
       ]
     },

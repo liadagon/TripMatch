@@ -22,6 +22,7 @@ const heroImages = [
   "/pic5.png",
 ];
 
+/** Presents authentication choices while preserving explicit login/register intent. */
 export default function Welcome() {
   const navigate = useNavigate();
   const location = useLocation();

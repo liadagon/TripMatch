@@ -79,6 +79,7 @@ export const PROFILE_OPTIONS = {
 
 const canonicalInterests = new Set<string>(PROFILE_OPTIONS.interests);
 
+/** Keeps only unique interests defined by the shared questionnaire options. */
 export function filterCanonicalInterests(
   values: readonly unknown[] | null | undefined,
 ) {

@@ -24,6 +24,7 @@ function getDemoMatchedProfile(profile: ProfilePreviewUser, currentUser: Paramet
   };
 }
 
+/** Loads a profile only when the current account has a corresponding match. */
 export default function MatchedProfile() {
   const navigate = useNavigate();
   const location = useLocation();

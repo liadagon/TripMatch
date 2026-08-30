@@ -26,6 +26,7 @@ export const demoChatReplies = [
   "מגניב, אשמח לשמוע עוד 😊",
 ];
 
+/** Returns the demo conversation associated with a demo-user identifier. */
 export function getConversationById(userId: string | undefined) {
   return conversations.find((conversation) => conversation.id === userId);
 }

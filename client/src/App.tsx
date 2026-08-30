@@ -31,6 +31,7 @@ const MyProfilePreview = lazy(
 const MatchedProfile = lazy(() => import("./Components/MatchedProfile"));
 const NotFound = lazy(() => import("./Components/NotFound"));
 
+/** Wraps a page with the shared authentication and onboarding guard. */
 const protectedPage = (
   page: ReactNode,
   options: { allowIncomplete?: boolean; onboardingOnly?: boolean } = {},
@@ -38,6 +39,7 @@ const protectedPage = (
   <ProtectedRoute {...options}>{page}</ProtectedRoute>
 );
 
+/** Defines the lazy-loaded TripMatch route hierarchy. */
 export default function App() {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();

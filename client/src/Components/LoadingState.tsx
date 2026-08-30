@@ -5,6 +5,7 @@ type LoadingStateProps = {
   fullScreen?: boolean;
 };
 
+/** Provides the shared accessible loading presentation for pages and sections. */
 export default function LoadingState({
   message,
   fullScreen = false,

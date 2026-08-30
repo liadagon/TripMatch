@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./NotFound.css";
 
+/** Provides a recoverable destination for unmatched client routes. */
 export default function NotFound() {
   const { isAuthenticated } = useAuth();
   const returnPath = isAuthenticated ? "/discover" : "/";

@@ -392,6 +392,7 @@ export function ProfilePreviewView({
   );
 }
 
+/** Shows the current profile as others see it and exposes owner-only photo controls. */
 export default function MyProfilePreview() {
   const navigate = useNavigate();
   const location = useLocation();

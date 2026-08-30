@@ -13,6 +13,7 @@ type RegisterForm = {
 
 type RegisterFieldErrors = Partial<Record<keyof RegisterForm, boolean>>;
 
+/** Starts local account registration and routes users into onboarding. */
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();

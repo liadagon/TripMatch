@@ -6,6 +6,7 @@ type ExistingAccountDialogProps = {
   onExit: () => void;
 };
 
+/** Explains an authentication-method conflict without replacing the active account. */
 export default function ExistingAccountDialog({
   isExiting,
   onContinue,

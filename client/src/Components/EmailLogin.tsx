@@ -14,6 +14,7 @@ type LoginFieldErrors = {
   password?: string;
 };
 
+/** Authenticates an existing local account with email and password. */
 export default function EmailLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();

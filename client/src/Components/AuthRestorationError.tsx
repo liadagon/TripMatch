@@ -1,6 +1,7 @@
 import { RefreshCw, WifiOff } from "lucide-react";
 import "./AuthRestorationError.css";
 
+/** Presents a recoverable failure when the saved session cannot be restored. */
 export default function AuthRestorationError() {
   return (
     <main className="auth-restoration-error" dir="rtl">

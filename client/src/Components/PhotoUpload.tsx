@@ -52,6 +52,7 @@ function getPersistedPhotos(user: AuthUser | null) {
   return persistedPhotos;
 }
 
+/** Collects and persists the profile photos required during onboarding. */
 const PhotoUpload = () => {
   const navigate = useNavigate();
   const { user, updateProfile, logout } = useAuth();

@@ -62,6 +62,7 @@ function maskEmail(email: string) {
   return `${localPart.slice(0, 1)}${"*".repeat(Math.min(4, Math.max(2, localPart.length - 1)))}@${domain}`;
 }
 
+/** Verifies the pending email code and completes the authoritative login flow. */
 export default function EmailOtpVerify() {
   const navigate = useNavigate();
   const location = useLocation();

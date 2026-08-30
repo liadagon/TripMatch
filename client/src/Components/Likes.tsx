@@ -49,6 +49,7 @@ const boostBenefits = [
   "סטטוס Boost פרטי בפרופיל האישי שלך",
 ];
 
+/** Displays received-like visibility together with the current Boost entitlement. */
 export default function Likes() {
   const navigate = useNavigate();
   const { user } = useAuth();

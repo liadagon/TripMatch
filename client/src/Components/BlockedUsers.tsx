@@ -23,6 +23,7 @@ import { isAppOwnedProfilePhoto } from "../utils/authenticatedIdentity";
 import { useAuth } from "../context/AuthContext";
 import "./BlockedUsers.css";
 
+/** Renders a blocked account avatar with a stable failure fallback. */
 function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
   const image = [user.photoURL, user.photo].find(isAppOwnedProfilePhoto);
   const [imageFailed, setImageFailed] = useState(false);
@@ -46,6 +47,7 @@ function BlockedUserAvatar({ user }: { user: BlockedUserRecord["blocked"] }) {
   );
 }
 
+/** Renders the equivalent avatar state for an account-scoped demo user. */
 function DemoBlockedUserAvatar({ user }: { user: Conversation }) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = user.images[0];
@@ -69,6 +71,7 @@ function DemoBlockedUserAvatar({ user }: { user: Conversation }) {
   );
 }
 
+/** Lists and manages real and demo users blocked by the current account. */
 export default function BlockedUsers() {
   const navigate = useNavigate();
   const location = useLocation();
