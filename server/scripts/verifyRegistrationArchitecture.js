@@ -2,6 +2,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const User = require("../models/User");
+const PROFILE_OPTIONS = require("../constants/profileOptions");
+const { registerSchema } = require("../validation/authValidation");
 const {
   getAppOwnedPhotoUrls,
   isAppOwnedPhotoUrl,
@@ -10,6 +12,61 @@ const {
 
 const read = (relativePath) =>
   fs.readFileSync(path.join(__dirname, "..", relativePath), "utf8");
+
+const registrationIdentity = {
+  email: "registration-validation@example.com",
+  password: "safe-password",
+};
+
+const expectRegistrationAccepted = (profile = {}) => {
+  const { error } = registerSchema.validate({
+    ...registrationIdentity,
+    ...profile,
+  });
+  assert.equal(error, undefined);
+};
+
+const expectRegistrationRejected = (profile) => {
+  const { error } = registerSchema.validate({
+    ...registrationIdentity,
+    ...profile,
+  });
+  assert(error);
+};
+
+expectRegistrationAccepted();
+expectRegistrationAccepted({ interests: [PROFILE_OPTIONS.interests[0]] });
+expectRegistrationAccepted({
+  preferredDestinations: [PROFILE_OPTIONS.destinations[0]],
+});
+expectRegistrationAccepted({ travelStyle: PROFILE_OPTIONS.travelStyles[0] });
+expectRegistrationAccepted({ budget: PROFILE_OPTIONS.budgets[0] });
+expectRegistrationAccepted({ tripDates: PROFILE_OPTIONS.tripDates[0] });
+expectRegistrationAccepted({ tripDuration: PROFILE_OPTIONS.tripDurations[0] });
+expectRegistrationAccepted({
+  interests: [],
+  preferredDestinations: [],
+  travelStyle: "",
+  budget: "",
+  tripDates: "",
+  tripDuration: "",
+});
+
+expectRegistrationRejected({ interests: ["unknown-interest"] });
+expectRegistrationRejected({
+  interests: Array.from({ length: 11 }, () => PROFILE_OPTIONS.interests[0]),
+});
+expectRegistrationRejected({
+  preferredDestinations: ["unknown-destination"],
+});
+expectRegistrationRejected({
+  preferredDestinations: PROFILE_OPTIONS.destinations.slice(0, 2),
+});
+expectRegistrationRejected({ travelStyle: "unknown-travel-style" });
+expectRegistrationRejected({ budget: "unknown-budget" });
+expectRegistrationRejected({ tripDates: "unknown-trip-dates" });
+expectRegistrationRejected({ tripDuration: "unknown-trip-duration" });
+expectRegistrationRejected({ questionnaire: {} });
 
 assert.equal(
   isAppOwnedPhotoUrl("https://lh3.googleusercontent.com/provider-avatar"),

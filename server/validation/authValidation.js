@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const tripLocationSchema = require("./tripLocationValidation");
+const PROFILE_OPTIONS = require("../constants/profileOptions");
 
 const email = Joi.string().trim().lowercase().email();
 const password = Joi.string().min(8).max(128);
@@ -15,14 +16,34 @@ const registerSchema = Joi.object({
   age: Joi.number().integer().min(18).max(120).optional(),
   location: Joi.string().trim().max(100).allow("").optional(),
   tripLocation: tripLocationSchema.optional(),
-  interests: Joi.array().items(Joi.string().trim().max(50)).optional(),
-  preferredDestinations: Joi.array()
-    .items(Joi.string().trim().max(100))
+  interests: Joi.array()
+    .max(10)
+    .items(Joi.string().trim().valid(...PROFILE_OPTIONS.interests))
     .optional(),
-  travelStyle: Joi.string().trim().max(100).allow("").optional(),
-  budget: Joi.string().trim().max(100).allow("").optional(),
-  tripDates: Joi.string().trim().max(100).allow("").optional(),
-  tripDuration: Joi.string().trim().max(100).allow("").optional(),
+  preferredDestinations: Joi.array()
+    .max(1)
+    .items(Joi.string().trim().valid(...PROFILE_OPTIONS.destinations))
+    .optional(),
+  travelStyle: Joi.string()
+    .trim()
+    .valid(...PROFILE_OPTIONS.travelStyles)
+    .allow("")
+    .optional(),
+  budget: Joi.string()
+    .trim()
+    .valid(...PROFILE_OPTIONS.budgets)
+    .allow("")
+    .optional(),
+  tripDates: Joi.string()
+    .trim()
+    .valid(...PROFILE_OPTIONS.tripDates)
+    .allow("")
+    .optional(),
+  tripDuration: Joi.string()
+    .trim()
+    .valid(...PROFILE_OPTIONS.tripDurations)
+    .allow("")
+    .optional(),
 });
 
 const loginSchema = Joi.object({
