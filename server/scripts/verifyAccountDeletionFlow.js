@@ -192,11 +192,15 @@ async function verifyPayPalDeletionCancellation() {
 function verifyEndpointSecurity() {
   const routes = read("routes/userRoutes.js");
   const controller = read("controllers/userController.js");
+  const service = read("services/accountDeletionService.js");
   assert.match(routes, /router\.use\(protect\)[\s\S]*router\.delete\("\/me", deleteCurrentUser\)/);
   assert.match(routes, /router\.delete\("\/:id", rejectLegacyMutation\)/);
   assert.match(controller, /deleteUserAccount\(req\.user\)/);
   assert.doesNotMatch(controller, /deleteUserAccount\(req\.(?:body|params|query)/);
   assert.match(controller, /json\(\{ success: true \}\)/);
+  assert.match(service, /TRANSACTION_CAPABLE_TOPOLOGIES/);
+  assert.match(service, /topology\?\.description\?\.type/);
+  assert.doesNotMatch(service, /\.admin\(\)\s*\.command/);
 }
 
 async function verifyUnauthenticatedRequestRejected() {

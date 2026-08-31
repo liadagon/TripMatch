@@ -18,17 +18,20 @@ class AccountDeletionError extends Error {
   }
 }
 
-let transactionSupportPromise;
+const TRANSACTION_CAPABLE_TOPOLOGIES = new Set([
+  "ReplicaSetWithPrimary",
+  "Sharded",
+]);
 
-/** Determines whether the connected MongoDB deployment supports transactions. */
-function supportsMongoTransactions() {
-  if (!transactionSupportPromise) {
-    transactionSupportPromise = mongoose.connection.db
-      .admin()
-      .command({ hello: 1 })
-      .then((hello) => Boolean(hello.setName || hello.msg === "isdbgrid"));
-  }
-  return transactionSupportPromise;
+/**
+ * Determines transaction support from the connected driver topology.
+ * This avoids an admin command that production database roles may reject.
+ */
+async function supportsMongoTransactions() {
+  const topologyType = mongoose.connection
+    .getClient()
+    .topology?.description?.type;
+  return TRANSACTION_CAPABLE_TOPOLOGIES.has(topologyType);
 }
 
 /**
