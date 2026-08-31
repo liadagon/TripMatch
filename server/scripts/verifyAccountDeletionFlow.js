@@ -163,6 +163,33 @@ async function verifyPayPalDeletionCancellation() {
   });
   assert.equal(terminalNetworkCall, true);
 
+  let pendingCancellationAttempted = false;
+  const pendingOperations = createSubscriptionOperations({
+    async requestAccessToken() { return { accessToken: "sandbox-token" }; },
+    async getSubscription() {
+      return { id: "I-PENDING", status: "APPROVAL_PENDING" };
+    },
+    async cancelSubscription() {
+      pendingCancellationAttempted = true;
+      throw new Error("PayPal must not be asked to cancel pending approval");
+    },
+  });
+  assert.deepEqual(
+    await pendingOperations.cancelForAccountDeletion({
+      paypalSubscriptionId: "I-PENDING",
+      subscriptionStatus: "approval_pending",
+    }),
+    { cancelled: false, terminal: true },
+  );
+  assert.equal(pendingCancellationAttempted, false);
+
+  assert.deepEqual(
+    await pendingOperations.cancelForAccountDeletion({
+      subscriptionStatus: "approval_pending",
+    }),
+    { cancelled: false, terminal: true },
+  );
+
   await assert.rejects(
     terminalOperations.cancelForAccountDeletion({
       subscriptionStatus: "active",

@@ -317,6 +317,12 @@ function createSubscriptionOperations(dependencies = {}) {
     const subscriptionId = user?.paypalSubscriptionId?.trim();
 
     if (!subscriptionId) {
+      // Closing PayPal before approval can leave a local pending marker without
+      // a billable agreement. It is safe to remove that account locally.
+      if (user?.subscriptionStatus === "approval_pending") {
+        return { cancelled: false, terminal: true };
+      }
+
       if (EXISTING_SUBSCRIPTION_STATUSES.has(user?.subscriptionStatus)) {
         throw new SubscriptionServiceError(
           "SUBSCRIPTION_ID_MISSING",
@@ -340,6 +346,13 @@ function createSubscriptionOperations(dependencies = {}) {
     const remoteStatus = normalizePayPalSubscriptionStatus(
       remoteSubscription?.status,
     );
+    // PayPal does not allow cancelling an unapproved subscription and it can
+    // never charge until the customer approves it. Do not let that abandoned
+    // checkout block deletion of the TripMatch account.
+    if (remoteStatus === "approval_pending") {
+      return { cancelled: false, terminal: true };
+    }
+
     if (TERMINAL_STATUSES.has(remoteStatus)) {
       return { cancelled: false, terminal: true };
     }
