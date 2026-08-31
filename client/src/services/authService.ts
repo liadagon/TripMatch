@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 import type { TripLocation } from "../types/tripLocation";
 import type { ApplicationGender } from "../utils/genderedHebrew";
@@ -195,6 +196,45 @@ export const getCurrentUser = (token?: string) =>
     ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
   });
 
+const ACCOUNT_DELETE_RETRY_DELAY_MS = 750;
+
+/** Returns whether a failed account deletion is safe to retry once. */
+function isRetryableAccountDeletion(error: unknown) {
+  return axios.isAxiosError(error) &&
+    (!error.response || error.response.status >= 500);
+}
+
 /** Permanently deletes the authenticated account and its owned server data. */
-export const deleteCurrentAccount = () =>
-  api.delete<{ success: true }>("/api/users/me");
+export async function deleteCurrentAccount() {
+  let firstError: unknown;
+
+  try {
+    return await api.delete<{ success: true }>("/api/users/me");
+  } catch (error) {
+    if (!isRetryableAccountDeletion(error)) throw error;
+    firstError = error;
+  }
+
+  await new Promise((resolve) => {
+    window.setTimeout(resolve, ACCOUNT_DELETE_RETRY_DELAY_MS);
+  });
+
+  try {
+    return await api.delete<{ success: true }>("/api/users/me");
+  } catch (retryError) {
+    // A response can be lost after the first request completed. In that case
+    // the same JWT is rejected on retry because its user no longer exists.
+    if (
+      axios.isAxiosError(firstError) &&
+      !firstError.response &&
+      axios.isAxiosError(retryError) &&
+      retryError.response?.status === 401
+    ) {
+      return { data: { success: true } } as Awaited<
+        ReturnType<typeof api.delete<{ success: true }>>
+      >;
+    }
+
+    throw retryError;
+  }
+}

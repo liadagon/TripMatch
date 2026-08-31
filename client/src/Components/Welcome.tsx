@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   signInWithGoogle,
   getGoogleAuthErrorMessage,
+  prepareGoogleSignIn,
 } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -29,6 +30,7 @@ export default function Welcome() {
   const { authenticateWithGoogle, logout } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [googleError, setGoogleError] = useState("");
+  const [googleStatus, setGoogleStatus] = useState("");
   const [showRegistrationCta, setShowRegistrationCta] = useState(false);
   const [pendingExistingAccountPath, setPendingExistingAccountPath] = useState<
     ReturnType<typeof getAuthenticationPath> | null
@@ -49,15 +51,26 @@ export default function Welcome() {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    // Firebase persistence used to be initialized only after the click. Some
+    // browsers then treated the delayed popup as unrelated to the user action
+    // and silently blocked it.
+    void prepareGoogleSignIn().catch((error) => {
+      setGoogleError(getGoogleAuthErrorMessage(error));
+    });
+  }, []);
+
   /** Completes Firebase Google sign-in and the TripMatch token exchange. */
   const handleGoogleAuthentication = async () => {
     setGoogleError("");
+    setGoogleStatus("פותחים חלון מאובטח של Google...");
     setShowRegistrationCta(false);
     setPendingExistingAccountPath(null);
     setIsGoogleLoading(true);
 
     try {
       const { idToken } = await signInWithGoogle();
+      setGoogleStatus("חשבון Google אומת. משלימים את הכניסה...");
       const result = await authenticateWithGoogle(idToken, authMode);
 
       const destination = getAuthenticationPath(result);
@@ -98,12 +111,14 @@ export default function Welcome() {
         setGoogleError(getGoogleAuthErrorMessage(error));
       }
     } finally {
+      setGoogleStatus("");
       setIsGoogleLoading(false);
     }
   };
 
   function changeAuthMode(mode: AuthenticationIntent) {
     setGoogleError("");
+    setGoogleStatus("");
     setShowRegistrationCta(false);
     setPendingExistingAccountPath(null);
     setAuthMode(mode);
@@ -195,6 +210,17 @@ export default function Welcome() {
               </span>
             </button>
 
+            {googleStatus && (
+              <p className="google-status" role="status" aria-live="polite">
+                {googleStatus}
+              </p>
+            )}
+            {googleError && (
+              <p className="google-error" role="alert" aria-live="assertive">
+                {googleError}
+              </p>
+            )}
+
             <button
               type="button"
               className="main-action-btn"
@@ -218,7 +244,6 @@ export default function Welcome() {
               </button>
             </p>
 
-            {googleError && <p className="google-error">{googleError}</p>}
             {showRegistrationCta && (
               <button
                 type="button"

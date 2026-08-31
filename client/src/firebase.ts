@@ -79,6 +79,15 @@ export function ensureFirebaseSessionPersistence() {
   return sessionPersistencePromise;
 }
 
+/**
+ * Starts Firebase persistence setup before the user clicks the Google button.
+ * Preparing this outside the click handler preserves the browser's popup
+ * permission for the actual sign-in interaction.
+ */
+export async function prepareGoogleSignIn() {
+  await ensureFirebaseSessionPersistence();
+}
+
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 

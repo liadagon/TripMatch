@@ -11,7 +11,13 @@ const [profile, authContext, authService, demoState] = await Promise.all([
   read("../src/services/demoConversationState.ts"),
 ]);
 
-assert.match(authService, /api\.delete<\{ success: true \}>\("\/api\/users\/me"\)/);
+assert.match(authService, /isRetryableAccountDeletion/);
+assert.match(authService, /ACCOUNT_DELETE_RETRY_DELAY_MS/);
+assert.equal(
+  authService.match(/api\.delete<\{ success: true \}>\("\/api\/users\/me"\)/g)?.length,
+  2,
+);
+assert.match(authService, /retryError\.response\?\.status === 401/);
 assert.doesNotMatch(authService, /deleteCurrentAccount\s*=\s*\([^)]*(?:id|email|subscription)/i);
 assert.match(authContext, /await deleteCurrentAccount\(\)/);
 assert.match(authContext, /removeAuthToken\(\)/);
@@ -27,5 +33,6 @@ assert.match(profile, /לא ניתן לבטל פעולה זו/);
 assert.match(profile, /מחיקת החשבון לצמיתות/);
 assert.match(profile, /מנוי TripMatch Boost הפעיל יבוטל/);
 assert.match(profile, /await deleteAccount\(\)[\s\S]*navigate\("\/", \{ replace: true \}\)/);
+assert.match(profile, /השרת לא הצליח למחוק את החשבון:/);
 
 console.log("Frontend account deletion verification: PASS");

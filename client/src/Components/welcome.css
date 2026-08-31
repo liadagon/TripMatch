@@ -379,6 +379,14 @@ body {
   text-align: center;
 }
 
+.google-status {
+  margin: 10px 0 0;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .account-not-found-cta {
   display: inline-block;
   margin-top: 10px;

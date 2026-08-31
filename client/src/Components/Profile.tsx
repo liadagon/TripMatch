@@ -712,9 +712,21 @@ export default function Profile() {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         setDeleteAccountError("החיבור לחשבון פג. יש להתחבר מחדש ולנסות שוב.");
+      } else if (axios.isAxiosError(error) && !error.response) {
+        setDeleteAccountError(
+          error.message ||
+            "לא התקבלה תשובה מהשרת. החשבון לא נמחק; בדקו את החיבור ונסו שוב.",
+        );
+      } else if (axios.isAxiosError(error) && error.response?.status === 409) {
+        setDeleteAccountError(
+          error.response.data?.message ||
+            "לא ניתן להשלים כרגע את מחיקת החשבון. הנתונים נשמרו; נסו שוב.",
+        );
       } else {
         setDeleteAccountError(
-          "לא הצלחנו למחוק את החשבון בבטחה. החשבון נשמר ולא נמחק. יש לנסות שוב.",
+          axios.isAxiosError(error) && error.response?.data?.message
+            ? `השרת לא הצליח למחוק את החשבון: ${error.response.data.message}`
+            : "לא הצלחנו למחוק את החשבון בבטחה. החשבון נשמר ולא נמחק. יש לנסות שוב.",
         );
       }
     } finally {
