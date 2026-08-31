@@ -96,6 +96,19 @@ async function run() {
     assert.equal(await Match.countDocuments({ users: { $all: [userA._id, userB._id] } }), 0);
     assert.equal(await Conversation.countDocuments({ participants: { $all: [userA._id, userB._id] } }), 0);
 
+    const discoverAfterLike = await invoke(getUsers, { user: userA, query: { page: 1, limit: 10 } });
+    assert.equal(
+      discoverAfterLike.body.data.some((profile) => String(profile._id) === String(userB._id)),
+      false,
+    );
+    await invoke(createSwipe, { user: userA, body: { toUser: String(userB._id), action: "skip" } });
+    const discoverAfterSkip = await invoke(getUsers, { user: userA, query: { page: 1, limit: 10 } });
+    assert.equal(
+      discoverAfterSkip.body.data.some((profile) => String(profile._id) === String(userB._id)),
+      false,
+    );
+    await invoke(createSwipe, { user: userA, body: { toUser: String(userB._id), action: "like" } });
+
     const beforeMatchChat = await invoke(getConversationWithUser, { user: userA, params: { userId: String(userB._id) } });
     assert.equal(beforeMatchChat.statusCode, 404);
 
@@ -201,6 +214,7 @@ async function run() {
       unblockReusesConversationAndMatch: true,
       noDuplicateBlockMatchOrConversation: true,
       eligibleRealUsersVisibleWithPersistedData: true,
+      swipedUsersStayExcludedFromDiscover: true,
     });
   } finally {
     const userIds = users.map((user) => user._id);

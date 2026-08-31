@@ -90,7 +90,11 @@ assert.match(
 );
 assert.match(
   authContextSource,
-  /function resetUserSpecificState[\s\S]*clearDemoConversationState\(userId\)[\s\S]*function clearLocalAuthenticatedSession[\s\S]*resetUserSpecificState\(\)/,
+  /function resetUserSpecificState[\s\S]*dispatch\(resetConversations\(\)\)[\s\S]*function clearLocalAuthenticatedSession[\s\S]*resetUserSpecificState\(\)/,
+);
+assert.doesNotMatch(
+  authContextSource,
+  /function resetUserSpecificState[\s\S]*clearDemoConversationState[\s\S]*function clearLocalAuthenticatedSession/,
 );
 assert.match(
   authContextSource,
@@ -126,7 +130,7 @@ console.log("Authenticated identity verification passed", {
   navigationAndProfileShareAuthenticatedUser: true,
   googleToEmailSwitchIsolated: true,
   emailToGoogleSwitchIsolated: true,
-  logoutClearsUserScopedClientState: true,
+  logoutPreservesAccountScopedDemoHistory: true,
   deletionClearsOnlyDeletedUserDemoState: true,
   refreshUsesAuthoritativeCurrentUser: true,
   everyAuthenticationMethodUsesAuthoritativeCurrentUser: true,

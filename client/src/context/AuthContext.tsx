@@ -93,10 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const authRevisionRef = useRef(0);
   const previousAuthenticatedUserIdRef = useRef<string | null>(null);
 
-  /** Clears Redux and browser state that must not cross account boundaries. */
-  function resetUserSpecificState(userId = user?._id) {
+  /** Clears in-memory state that must not cross account boundaries. */
+  function resetUserSpecificState() {
     dispatch(resetConversations());
-    clearDemoConversationState(userId);
     clearBoostPromoSnooze();
   }
 

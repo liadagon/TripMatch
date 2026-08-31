@@ -62,11 +62,19 @@ const PROFILE_FIELDS = [
 /** Returns eligible discovery profiles for the authenticated user. */
 const getUsers = async (req, res, next) => {
   try {
-    const blockedUserIds = await getBlockedUserIds(req.user._id);
+    const [blockedUserIds, swipedUserIds] = await Promise.all([
+      getBlockedUserIds(req.user._id),
+      Swipe.distinct("toUser", { fromUser: req.user._id }),
+    ]);
+    const unavailableUserIds = [
+      ...new Set(
+        [...blockedUserIds, ...swipedUserIds].map((userId) => String(userId)),
+      ),
+    ];
     const filter = {
       _id: {
         $ne: req.user._id,
-        ...(blockedUserIds.length ? { $nin: blockedUserIds } : {}),
+        ...(unavailableUserIds.length ? { $nin: unavailableUserIds } : {}),
       },
     };
     const { page, limit, search } = req.query;
